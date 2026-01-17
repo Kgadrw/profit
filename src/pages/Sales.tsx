@@ -810,19 +810,19 @@ const Sales = () => {
 
   return (
     <AppLayout title="Sales">
-      <div className="flex flex-col h-[calc(100vh-3rem)]">
+      <div className="flex flex-col min-h-0 pb-4">
       {/* Record New Sale Form - Static */}
       <div className="form-card mb-6 border-transparent flex-shrink-0">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
           <h3 className="section-title flex items-center gap-2 text-gray-800">
             <Plus size={20} className="text-blue-700" />
             Record New Sale
           </h3>
-          <div className="flex gap-2">
+          <div className="flex gap-2 w-full sm:w-auto">
             {!isBulkMode && (
               <Button
                 onClick={() => setIsBulkMode(true)}
-                className="bg-blue-500 text-white hover:bg-blue-600 border border-transparent shadow-sm hover:shadow transition-all font-medium px-4 py-2 gap-2"
+                className="bg-blue-500 text-white hover:bg-blue-600 border border-transparent shadow-sm hover:shadow transition-all font-medium px-4 py-2 gap-2 w-full sm:w-auto"
               >
                 <Plus size={16} />
                 Bulk Add
@@ -835,7 +835,7 @@ const Sales = () => {
                   setBulkSales([{ product: "", quantity: "1", sellingPrice: "", paymentMethod: "cash", saleDate: getTodayDate() }]);
                 }}
                 variant="ghost"
-                className="hover:bg-gray-100 text-gray-700"
+                className="hover:bg-gray-100 text-gray-700 w-full sm:w-auto"
               >
                 Single Sale
               </Button>
@@ -857,8 +857,8 @@ const Sales = () => {
               </Button>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full">
+            <div className="overflow-x-auto -mx-4 px-4">
+              <table className="w-full min-w-[600px]">
                 <thead className="bg-white border-b border-transparent">
                   <tr>
                     <th className="text-left p-2 text-xs font-medium text-foreground">Product</th>
@@ -1025,7 +1025,7 @@ const Sales = () => {
       </div>
 
       {/* Sales History Table - Static Header with Scrollable Body */}
-      <div className="bg-white shadow-sm flex-1 flex flex-col min-h-0 overflow-hidden">
+      <div className="bg-white shadow-sm flex-1 flex flex-col min-h-0 overflow-hidden rounded-lg">
         {/* Filter Section */}
         <div className="bg-white border-b border-gray-200 px-4 py-3 flex-shrink-0">
           <div className="flex flex-col gap-4">
@@ -1033,7 +1033,7 @@ const Sales = () => {
               <Filter size={18} className="text-gray-700" />
               <h3 className="text-sm font-semibold text-gray-800">Filter Sales</h3>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
               {/* Search Input */}
               <div className="relative">
                 <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10" />
@@ -1129,7 +1129,9 @@ const Sales = () => {
           </div>
         </div>
         
-        <div className="overflow-auto flex-1">
+        <div className="overflow-auto flex-1 pb-4">
+          {/* Desktop Table View */}
+          <div className="hidden md:block">
           <table className="w-full">
             <thead className="sticky top-0 z-10 bg-white">
               <tr className="border-b border-gray-200">
@@ -1204,6 +1206,66 @@ const Sales = () => {
               )}
             </tbody>
           </table>
+          </div>
+          
+          {/* Mobile Card View */}
+          <div className="md:hidden p-4 pb-6 space-y-4">
+            {filteredSales.length > 0 ? (
+              filteredSales.map((sale) => {
+                const saleId = (sale as any)._id || sale.id;
+                const idString = saleId?.toString() || '';
+                const isSelected = selectedSales.has(idString);
+                return (
+                  <div key={saleId || sale.id} className={cn("bg-white border border-gray-200 rounded-lg p-4 shadow-sm", isSelected && "bg-blue-50 border-blue-300")}>
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => handleSelectSale(idString)}
+                            className="border-2 border-gray-400 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 shrink-0"
+                          />
+                          <h4 className="text-base font-semibold text-gray-900 truncate">{sale.product}</h4>
+                        </div>
+                        <div className="text-sm text-gray-600 mb-2">
+                          {formatDateWithTime(sale.date)}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteSingle(sale)}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors shrink-0"
+                        title="Delete sale"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-sm border-t border-gray-100 pt-3">
+                      <div>
+                        <span className="text-gray-500">Quantity:</span>
+                        <span className="ml-2 font-medium text-gray-900">{sale.quantity}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Revenue:</span>
+                        <span className="ml-2 font-semibold text-gray-900">{sale.revenue.toLocaleString()} rwf</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Cost:</span>
+                        <span className="ml-2 text-gray-600">{sale.cost.toLocaleString()} rwf</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Profit:</span>
+                        <span className="ml-2 font-semibold text-green-600">{sale.profit.toLocaleString()} rwf</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                No sales found matching your filters
+              </div>
+            )}
+          </div>
         </div>
       </div>
       </div>

@@ -399,23 +399,25 @@ const Products = () => {
           {/* Filter Section */}
           <div className="bg-white border-b border-gray-200 px-4 py-3 flex-shrink-0">
             <div className="flex flex-col gap-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <Filter size={18} className="text-gray-700" />
                   <h3 className="text-sm font-semibold text-gray-800">Filter Products</h3>
                 </div>
-                <div className="flex gap-2">
-                  <Button onClick={openAddModal} className="bg-blue-700 text-white hover:bg-blue-800 shadow-sm hover:shadow transition-all font-semibold px-4 py-2 gap-2">
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                  <Button onClick={openAddModal} className="bg-blue-700 text-white hover:bg-blue-800 shadow-sm hover:shadow transition-all font-semibold px-4 py-2 gap-2 w-full sm:w-auto">
                     <Plus size={18} />
-                    Add Product
+                    <span className="hidden xs:inline">Add Product</span>
+                    <span className="xs:hidden">Add</span>
                   </Button>
-                  <Button onClick={openBulkAddModal} className="bg-blue-500 text-white hover:bg-blue-600 border border-transparent shadow-sm hover:shadow transition-all font-medium px-4 py-2 gap-2">
+                  <Button onClick={openBulkAddModal} className="bg-blue-500 text-white hover:bg-blue-600 border border-transparent shadow-sm hover:shadow transition-all font-medium px-4 py-2 gap-2 w-full sm:w-auto">
                     <Plus size={18} />
-                    Bulk Add
+                    <span className="hidden xs:inline">Bulk Add</span>
+                    <span className="xs:hidden">Bulk</span>
                   </Button>
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3">
                 {/* Search Input */}
                 <div className="relative">
                   <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10" />
@@ -522,6 +524,8 @@ const Products = () => {
         {/* Table - Sticky Header with Scrollable Body */}
         <div className="overflow-auto flex-1">
             <div className="rounded-b-lg overflow-hidden">
+          {/* Desktop Table View */}
+          <div className="hidden md:block">
           <table className="w-full">
               <thead className="sticky top-0 z-10 bg-white">
               <tr className="border-b border-gray-200">
@@ -616,6 +620,89 @@ const Products = () => {
                 )}
             </tbody>
           </table>
+          </div>
+          
+          {/* Mobile Card View */}
+          <div className="md:hidden p-4 space-y-4">
+            {filteredProducts.length > 0 ? (
+              filteredProducts.map((product) => {
+                const status = getStockStatus(product);
+                const productId = (product as any)._id || product.id;
+                return (
+                  <div key={productId} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap mb-2">
+                          <h4 className="text-base font-semibold text-gray-900 truncate">{product.name}</h4>
+                          {product.isPackage && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-700 rounded shrink-0">
+                              <Package size={12} />
+                              Box of {product.packageQuantity}
+                            </span>
+                          )}
+                        </div>
+                        {product.productType && (
+                          <span className="inline-flex px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded mb-2">
+                            {product.productType}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex gap-1 ml-2 shrink-0">
+                        <button
+                          onClick={() => openEditModal(product)}
+                          className="p-2 text-blue-700 hover:bg-blue-50 rounded transition-colors"
+                          title="Edit product"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteClick(product)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
+                          title="Delete product"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <span className="text-gray-500">Cost:</span>
+                        <span className="ml-2 font-medium text-gray-900">{product.costPrice.toLocaleString()} rwf</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Price:</span>
+                        <span className="ml-2 font-semibold text-gray-900">{product.sellingPrice.toLocaleString()} rwf</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Stock:</span>
+                        <span className="ml-2 font-medium text-gray-900">
+                          {product.stock}
+                          {product.minStock && (
+                            <span className="text-xs text-gray-500 ml-1">(min: {product.minStock})</span>
+                          )}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Status:</span>
+                        <span className={cn("ml-2 inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded", status.className)}>
+                          {status.icon && <status.icon size={12} />}
+                          {status.label}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="mt-2 pt-2 border-t border-gray-100">
+                      <span className="text-xs text-gray-500">Category: </span>
+                      <span className="text-xs font-medium text-gray-700">{product.category}</span>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                No products found
+              </div>
+            )}
+          </div>
             </div>
         </div>
       </div>

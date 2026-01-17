@@ -665,12 +665,12 @@ const Reports = () => {
             </Select>
           </div>
         </div>
-        <div className="flex flex-wrap gap-3">
-          <Button onClick={() => handleExport("pdf")} className="bg-blue-500 text-white hover:bg-blue-600 border border-transparent shadow-sm hover:shadow transition-all font-medium px-4 py-2 gap-2">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Button onClick={() => handleExport("pdf")} className="bg-blue-500 text-white hover:bg-blue-600 border border-transparent shadow-sm hover:shadow transition-all font-medium px-4 py-2 gap-2 w-full sm:w-auto">
             <Download size={16} />
             Export PDF
           </Button>
-          <Button onClick={() => handleExport("excel")} className="bg-blue-500 text-white hover:bg-blue-600 border border-transparent shadow-sm hover:shadow transition-all font-medium px-4 py-2 gap-2">
+          <Button onClick={() => handleExport("excel")} className="bg-blue-500 text-white hover:bg-blue-600 border border-transparent shadow-sm hover:shadow transition-all font-medium px-4 py-2 gap-2 w-full sm:w-auto">
             <Download size={16} />
             Export Excel
           </Button>
@@ -705,15 +705,16 @@ const Reports = () => {
           {/* Charts Section */}
           <div className="grid grid-cols-1 gap-6">
             {/* Sales Over Time Histogram - Based on Report Type */}
-            <div className="bg-white shadow-sm rounded-lg p-6">
+            <div className="bg-white shadow-sm rounded-lg p-4 sm:p-6 overflow-x-auto">
               <div className="flex items-center gap-2 mb-4">
-                <BarChart3 size={20} className="text-orange-600" />
-                <h3 className="text-lg font-semibold text-gray-800">
+                <BarChart3 size={20} className="text-orange-600 shrink-0" />
+                <h3 className="text-base sm:text-lg font-semibold text-gray-800">
                   Sales Over Time - {reportType === "daily" ? "Daily" : reportType === "weekly" ? "Weekly" : "Monthly"}
                 </h3>
               </div>
               {salesOverTimeData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={400}>
+                <div className="w-full overflow-x-auto">
+                  <ResponsiveContainer width="100%" minWidth={300} height={400}>
                   <BarChart data={salesOverTimeData} margin={{ top: 20, right: 30, left: 20, bottom: reportType === "daily" ? 80 : 60 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis 
@@ -778,6 +779,7 @@ const Reports = () => {
                     <Bar dataKey="profit" fill="#10b981" name="Profit" radius={[2, 2, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
+                </div>
               ) : (
                 <div className="flex items-center justify-center h-[400px] text-gray-500">
                   No sales data available

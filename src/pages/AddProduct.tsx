@@ -274,10 +274,10 @@ const AddProduct = () => {
             <Button
               variant="ghost"
               onClick={() => navigate("/products")}
-              className="hover:bg-blue-500 hover:text-white"
+              className="hover:bg-blue-500 hover:text-white p-2"
+              title="Back to Products"
             >
-              <ArrowLeft size={18} className="mr-2" />
-              Back to Products
+              <ArrowLeft size={18} />
             </Button>
           </div>
           <div className="flex gap-2">
