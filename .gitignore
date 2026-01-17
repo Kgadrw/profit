@@ -1,23 +1,43 @@
 # Ignore everything
 *
-
 # But allow backend folder
 !backend/
-
 # Allow .gitignore itself
 !.gitignore
 
-# Ignore backend node_modules
+# Frontend files needed for deployment
+!package.json
+!package-lock.json
+!render.yaml
+!vite.config.ts
+!tsconfig.json
+!tsconfig.app.json
+!tsconfig.node.json
+!tailwind.config.ts
+!postcss.config.js
+!eslint.config.js
+!components.json
+!index.html
+!src/
+!public/
+!electron/
+!bun.lockb
+
+# But ignore node_modules everywhere
+node_modules/
 backend/node_modules/
+**/node_modules/
+
+# Ignore build outputs
+dist/
+build/
+*.log
+logs/
 
 # Ignore backend .env files
 backend/.env
 backend/.env.local
 backend/.env.*.local
-
-# Ignore logs
-*.log
-logs/
 
 # Ignore editor files
 .vscode/

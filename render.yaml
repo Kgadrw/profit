@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: profit-pilot
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm run preview
+    staticPublishPath: ./dist
+    envVars:
+      - key: NODE_ENV
+        value: production
+    # Important: Root directory should be "." (project root), not "src"
+    # This ensures package.json is found at the correct location
