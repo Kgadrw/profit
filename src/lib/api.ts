@@ -1,5 +1,5 @@
 // API Configuration and Utilities
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://profit-backend-e4w1.onrender.com/api';
 
 export interface ApiResponse<T = any> {
   message?: string;
@@ -66,7 +66,7 @@ async function request<T>(
     const errorMessage = error instanceof Error ? error.message : 'Network error occurred';
     if (errorMessage.includes('Failed to fetch') || errorMessage.includes('ERR_CONNECTION_REFUSED') || errorMessage.includes('NetworkError')) {
       throw new ApiError(
-        'Connection refused: Backend server is not running. Please start the server at http://localhost:3000',
+        'Connection refused: Backend server is not reachable. Please check your connection or try again later.',
         0,
         { connectionError: true }
       );
