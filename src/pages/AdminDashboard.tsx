@@ -3,6 +3,16 @@ import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { 
   Users, 
   Package, 
@@ -15,7 +25,8 @@ import {
   Clock,
   AlertCircle,
   Radio,
-  BarChart3
+  BarChart3,
+  Trash2
 } from "lucide-react";
 import {
   BarChart,
@@ -148,6 +159,9 @@ const AdminDashboard = () => {
   const [health, setHealth] = useState<SystemHealth | null>(null);
   const [apiStats, setApiStats] = useState<ApiStats | null>(null);
   const [activeTab, setActiveTab] = useState<"overview" | "users" | "activity" | "health">("overview");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const loadApiStats = async () => {
     try {
@@ -221,6 +235,43 @@ const AdminDashboard = () => {
     const hours = Math.floor((seconds % 86400) / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     return `${days}d ${hours}h ${minutes}m`;
+  };
+
+  const handleDeleteClick = (user: User) => {
+    setUserToDelete(user);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!userToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      await adminApi.deleteUser(userToDelete._id);
+      
+      // Remove user from local state
+      setUsers(prev => prev.filter(u => u._id !== userToDelete._id));
+      
+      // Reload dashboard data to update stats
+      await loadDashboardData();
+      
+      toast({
+        title: "User Deleted",
+        description: `User "${userToDelete.name}" and all their data have been deleted successfully.`,
+      });
+      
+      setDeleteDialogOpen(false);
+      setUserToDelete(null);
+    } catch (error: any) {
+      console.error("Error deleting user:", error);
+      toast({
+        title: "Error",
+        description: error.response?.error || error.message || "Failed to delete user. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   if (loading && !stats) {
@@ -389,6 +440,7 @@ const AdminDashboard = () => {
                       <th className="text-left p-2 text-sm">Revenue</th>
                       <th className="text-left p-2 text-sm">Profit</th>
                       <th className="text-left p-2 text-sm">Joined</th>
+                      <th className="text-left p-2 text-sm">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -407,6 +459,17 @@ const AdminDashboard = () => {
                         </td>
                         <td className="p-2 text-sm text-muted-foreground">
                           {formatDate(user.createdAt)}
+                        </td>
+                        <td className="p-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteClick(user)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            title="Delete user and all their data"
+                          >
+                            <Trash2 size={16} />
+                          </Button>
                         </td>
                       </tr>
                     ))}
@@ -913,6 +976,36 @@ const AdminDashboard = () => {
             Refresh Data
           </Button>
         </div>
+
+        {/* Delete User Confirmation Dialog */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete User?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete <strong>{userToDelete?.name}</strong>? 
+                This action will permanently delete:
+                <ul className="list-disc list-inside mt-2 space-y-1">
+                  <li>The user account</li>
+                  <li>All products ({userToDelete?.productCount || 0})</li>
+                  <li>All sales ({userToDelete?.saleCount || 0})</li>
+                  <li>All associated data</li>
+                </ul>
+                <span className="text-red-600 font-semibold mt-2 block">This action cannot be undone.</span>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteConfirm}
+                disabled={isDeleting}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {isDeleting ? "Deleting..." : "Delete User"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </AdminLayout>
   );

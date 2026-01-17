@@ -44,40 +44,56 @@ const Settings = () => {
   // Load user data when component mounts or user changes
   useEffect(() => {
     const loadUserData = async () => {
-      try {
-        // Try to load from backend first
-        const response = await authApi.getCurrentUser();
-        if (response?.user) {
-          const backendUser = response.user;
-          setOwnerName(backendUser.name || "John Trader");
-          setEmail(backendUser.email || "");
-          setBusinessName(backendUser.businessName || backendUser.name || "My Trading Co.");
-          
-          // Also update localStorage for backward compatibility
-          updateUser({
-            name: backendUser.name,
-            email: backendUser.email,
-            businessName: backendUser.businessName,
-          });
-        } else if (user) {
-          // Fallback to localStorage user
-          setOwnerName(user.name || "John Trader");
-          setEmail(user.email || "");
-          setBusinessName(user.businessName || user.name || "My Trading Co.");
+      // Get current userId from localStorage to ensure we don't switch users
+      const currentUserId = localStorage.getItem("profit-pilot-user-id");
+      
+      // Only load from backend if we have a userId and it matches current user
+      if (currentUserId && user) {
+        try {
+          // Try to load from backend first, but verify it's the same user
+          const response = await authApi.getCurrentUser();
+          if (response?.user) {
+            const backendUser = response.user;
+            const backendUserId = (backendUser as any)._id || (backendUser as any).id;
+            
+            // Only update if the backend user matches the current logged-in user
+            // This prevents auto-switching users
+            if (backendUserId && backendUserId.toString() === currentUserId.toString()) {
+              setOwnerName(backendUser.name || user.name || "John Trader");
+              setEmail(backendUser.email || user.email || "");
+              setBusinessName(backendUser.businessName || backendUser.name || user.businessName || user.name || "My Trading Co.");
+            } else {
+              // Backend returned different user - use localStorage data instead
+              console.warn("Backend user ID mismatch, using localStorage data");
+              setOwnerName(user.name || "John Trader");
+              setEmail(user.email || "");
+              setBusinessName(user.businessName || user.name || "My Trading Co.");
+            }
+          } else {
+            // No backend user, use localStorage
+            setOwnerName(user.name || "John Trader");
+            setEmail(user.email || "");
+            setBusinessName(user.businessName || user.name || "My Trading Co.");
+          }
+        } catch (error) {
+          // If backend fails, use localStorage data (don't switch users)
+          console.error("Failed to load user from backend:", error);
+          if (user) {
+            setOwnerName(user.name || "John Trader");
+            setEmail(user.email || "");
+            setBusinessName(user.businessName || user.name || "My Trading Co.");
+          }
         }
-      } catch (error) {
-        // If backend fails, use localStorage data
-        console.error("Failed to load user from backend:", error);
-        if (user) {
-          setOwnerName(user.name || "John Trader");
-          setEmail(user.email || "");
-          setBusinessName(user.businessName || user.name || "My Trading Co.");
-        }
+      } else if (user) {
+        // No userId or no user in localStorage, just use what we have
+        setOwnerName(user.name || "John Trader");
+        setEmail(user.email || "");
+        setBusinessName(user.businessName || user.name || "My Trading Co.");
       }
     };
 
     loadUserData();
-  }, [user, updateUser]);
+  }, [user]); // Removed updateUser from dependencies to prevent unnecessary re-runs
 
   const handleSaveBusinessInfo = async () => {
     initAudio();
@@ -105,6 +121,18 @@ const Settings = () => {
     }
 
     try {
+      // Verify we still have the same userId before updating
+      const currentUserId = localStorage.getItem("profit-pilot-user-id");
+      if (!currentUserId) {
+        playErrorBeep();
+        toast({
+          title: "Session Error",
+          description: "User session not found. Please log in again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Update user data in backend
       await authApi.updateUser({
         name: ownerName.trim(),
@@ -112,12 +140,18 @@ const Settings = () => {
         businessName: businessName.trim() || undefined,
       });
 
-      // Also update localStorage for backward compatibility
-      updateUser({
-        name: ownerName.trim(),
-        email: email.trim() || undefined,
-        businessName: businessName.trim() || undefined,
-      });
+      // Verify userId hasn't changed before updating localStorage
+      const userIdAfterUpdate = localStorage.getItem("profit-pilot-user-id");
+      if (userIdAfterUpdate === currentUserId) {
+        // Only update localStorage if userId hasn't changed (prevent user switching)
+        updateUser({
+          name: ownerName.trim(),
+          email: email.trim() || undefined,
+          businessName: businessName.trim() || undefined,
+        });
+      } else {
+        console.warn("User ID changed during update, skipping localStorage update");
+      }
       
     playUpdateBeep();
     toast({

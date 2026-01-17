@@ -263,4 +263,11 @@ export const adminApi = {
       method: 'GET',
     });
   },
+
+  // Delete user and all their data
+  async deleteUser(userId: string): Promise<ApiResponse> {
+    return request(`/admin/users/${userId}`, {
+      method: 'DELETE',
+    });
+  },
 };

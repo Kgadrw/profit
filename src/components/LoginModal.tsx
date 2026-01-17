@@ -290,7 +290,7 @@ export function LoginModal({ open, onOpenChange, defaultTab = "login" }: LoginMo
                   setLoginEmail(e.target.value);
                   setErrors((prev) => ({ ...prev, email: undefined }));
                 }}
-                placeholder="Enter your email (optional, use 'admin' for admin login)"
+                placeholder="Enter your email (optional)"
                 className={errors.email ? "border-red-500" : ""}
               />
               {errors.email && (

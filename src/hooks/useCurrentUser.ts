@@ -50,8 +50,15 @@ export const useCurrentUser = () => {
     };
   }, [loadUser]);
 
-  // Update user data
+  // Update user data (only updates name, email, businessName - never changes userId)
   const updateUser = useCallback((userData: Partial<CurrentUser>) => {
+    // Ensure we have a userId before updating user data (prevents switching users)
+    const currentUserId = localStorage.getItem("profit-pilot-user-id");
+    if (!currentUserId) {
+      console.warn("Cannot update user data: No userId found in localStorage");
+      return;
+    }
+
     if (userData.name) {
       localStorage.setItem(USER_NAME_KEY, userData.name);
     }
@@ -68,6 +75,13 @@ export const useCurrentUser = () => {
       } else {
         localStorage.removeItem(BUSINESS_NAME_KEY);
       }
+    }
+    
+    // Verify userId hasn't changed after update (safety check)
+    const userIdAfterUpdate = localStorage.getItem("profit-pilot-user-id");
+    if (userIdAfterUpdate !== currentUserId) {
+      console.error("User ID changed during update! Restoring original userId.");
+      localStorage.setItem("profit-pilot-user-id", currentUserId);
     }
     
     // Trigger event to update other components
