@@ -41,11 +41,6 @@ const Home = () => {
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-black/20"></div>
-              <div className="absolute inset-0 bg-gradient-to-t from-blue-900/80 via-blue-900/40 to-transparent opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 flex items-end pointer-events-none md:pointer-events-auto">
-                <p className="text-white text-sm p-4 leading-relaxed">
-                  Effortlessly manage your product inventory with real-time tracking and stock level monitoring
-                </p>
-              </div>
             </div>
 
             {/* Card 2 */}
@@ -56,11 +51,6 @@ const Home = () => {
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-black/20"></div>
-              <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-gray-900/40 to-transparent opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 flex items-end pointer-events-none md:pointer-events-auto">
-                <p className="text-white text-sm p-4 leading-relaxed">
-                  Solve business challenges with smart inventory management that replaces outdated methods
-                </p>
-              </div>
             </div>
 
             {/* Card 3 */}
@@ -71,11 +61,6 @@ const Home = () => {
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-black/20"></div>
-              <div className="absolute inset-0 bg-gradient-to-t from-green-900/80 via-green-900/40 to-transparent opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 flex items-end pointer-events-none md:pointer-events-auto">
-                <p className="text-white text-sm p-4 leading-relaxed">
-                  Track stock levels efficiently and organize your products with an intuitive management system
-                </p>
-              </div>
             </div>
 
             {/* Card 4 */}
@@ -86,11 +71,6 @@ const Home = () => {
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-black/20"></div>
-              <div className="absolute inset-0 bg-gradient-to-t from-purple-900/80 via-purple-900/40 to-transparent opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 flex items-end pointer-events-none md:pointer-events-auto">
-                <p className="text-white text-sm p-4 leading-relaxed">
-                  Take full control of your inventory with organized stock management and real-time updates
-                </p>
-              </div>
             </div>
 
             {/* Card 5 */}
@@ -101,11 +81,6 @@ const Home = () => {
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-black/20"></div>
-              <div className="absolute inset-0 bg-gradient-to-t from-indigo-900/80 via-indigo-900/40 to-transparent opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 flex items-end pointer-events-none md:pointer-events-auto">
-                <p className="text-white text-sm p-4 leading-relaxed">
-                  Grow your business with powerful analytics, profit tracking, and comprehensive sales insights
-                </p>
-              </div>
             </div>
           </div>
 
