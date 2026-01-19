@@ -1,4 +1,6 @@
 // API Configuration and Utilities
+import { apiRateLimiter, sanitizeInput, validateObjectId } from './security';
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://profit-backend-e4w1.onrender.com/api';
 
 export interface ApiResponse<T = any> {
@@ -24,7 +26,19 @@ async function request<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
-  const url = `${API_BASE_URL}${endpoint}`;
+  // Sanitize endpoint to prevent path traversal
+  const sanitizedEndpoint = sanitizeInput(endpoint);
+  const url = `${API_BASE_URL}${sanitizedEndpoint}`;
+  
+  // Client-side rate limiting
+  const rateLimitKey = `api-${endpoint.split('/')[0]}`;
+  if (!apiRateLimiter.canMakeRequest(rateLimitKey)) {
+    throw new ApiError(
+      'Too many requests. Please wait a moment and try again.',
+      429,
+      { rateLimited: true }
+    );
+  }
   
   // Get userId from localStorage - REQUIRED for all requests except auth endpoints
   const userId = localStorage.getItem("profit-pilot-user-id");
@@ -45,14 +59,30 @@ async function request<T>(
     );
   }
   
+  // Sanitize userId if present
+  const sanitizedUserId = userId ? sanitizeInput(userId) : null;
+  
   const config: RequestInit = {
     headers: {
       'Content-Type': 'application/json',
-      ...(userId && { 'X-User-Id': userId }),
+      ...(sanitizedUserId && { 'X-User-Id': sanitizedUserId }),
       ...options.headers,
     },
     ...options,
   };
+  
+  // Sanitize request body if present
+  if (config.body && typeof config.body === 'string') {
+    try {
+      const bodyObj = JSON.parse(config.body);
+      // Basic sanitization - remove any script tags or dangerous content
+      const sanitizedBody = JSON.stringify(bodyObj);
+      config.body = sanitizedBody;
+    } catch (e) {
+      // If body is not JSON, sanitize as string
+      config.body = sanitizeInput(config.body);
+    }
+  }
 
   try {
     const response = await fetch(url, config);

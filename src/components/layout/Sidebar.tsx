@@ -9,6 +9,7 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  Menu,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePinAuth } from "@/hooks/usePinAuth";
@@ -37,9 +38,11 @@ interface SidebarProps {
   collapsed: boolean;
   onToggle: () => void;
   onMobileClose?: () => void;
+  onMobileToggle?: () => void;
+  onHoverChange?: (isHovered: boolean) => void;
 }
 
-export function Sidebar({ collapsed, onToggle, onMobileClose }: SidebarProps) {
+export function Sidebar({ collapsed, onToggle, onMobileClose, onMobileToggle, onHoverChange }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { clearAuth } = usePinAuth();
@@ -47,6 +50,7 @@ export function Sidebar({ collapsed, onToggle, onMobileClose }: SidebarProps) {
   const { t, language } = useTranslation();
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const [menuItems, setMenuItems] = useState(getMenuItems(t));
+  const [isHovered, setIsHovered] = useState(false);
 
   // Update menu items when language changes
   useEffect(() => {
@@ -109,43 +113,70 @@ export function Sidebar({ collapsed, onToggle, onMobileClose }: SidebarProps) {
     navigate("/", { replace: true });
   };
 
+  // Determine if sidebar should appear expanded (hover overrides collapsed state on desktop)
+  const isExpanded = isHovered || !collapsed;
+
   return (
     <aside
       className={cn(
         "fixed z-50 bg-white transition-all duration-300 flex flex-col overflow-hidden",
         "left-0 top-0 h-screen w-56",
         "lg:left-0 lg:top-0 lg:h-screen lg:border-r lg:border-gray-200",
-        !collapsed && "lg:w-56",
-        collapsed && "lg:w-16"
+        isExpanded && "lg:w-56",
+        !isExpanded && collapsed && "lg:w-16"
       )}
+      onMouseEnter={() => {
+        // Only auto-expand on desktop when collapsed
+        if (window.innerWidth >= 1024 && collapsed) {
+          setIsHovered(true);
+          onHoverChange?.(true);
+        }
+      }}
+      onMouseLeave={() => {
+        // Only auto-collapse on desktop if it was auto-expanded
+        if (window.innerWidth >= 1024) {
+          setIsHovered(false);
+          onHoverChange?.(false);
+        }
+      }}
     >
       {/* Logo */}
         <div className="flex items-center justify-between h-16 px-4 bg-white">
-        {!collapsed && (
-          <Link to="/" className="flex items-center gap-2">
+        {isExpanded && (
+          <div className="flex items-center gap-2">
             <img 
               src="/logo.png" 
               alt="Trippo Logo" 
               className="h-8 w-8 object-contain"
             />
             <span className="text-xl font-normal text-gray-700 lowercase">trippo</span>
-          </Link>
+          </div>
         )}
-        {collapsed && (
-          <Link to="/" className="flex items-center justify-center">
+        {!isExpanded && (
+          <div className="flex items-center justify-center">
             <img 
               src="/logo.png" 
               alt="Trippo Logo" 
               className="h-8 w-8 object-contain"
             />
-          </Link>
+          </div>
         )}
-        <button
-          onClick={onToggle}
-          className="p-2 hover:bg-gray-100 text-gray-700 transition-colors rounded"
-        >
-          {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-        </button>
+        <div className="flex items-center gap-2">
+          {onMobileToggle && (
+            <button
+              onClick={onMobileToggle}
+              className="p-2 hover:bg-gray-100 text-gray-700 transition-colors rounded lg:hidden"
+            >
+              <Menu size={20} />
+            </button>
+          )}
+          <button
+            onClick={onToggle}
+            className="p-2 hover:bg-gray-100 text-gray-700 transition-colors rounded hidden lg:block"
+          >
+            {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+          </button>
+        </div>
       </div>
 
       {/* Navigation */}
@@ -160,12 +191,12 @@ export function Sidebar({ collapsed, onToggle, onMobileClose }: SidebarProps) {
               className={cn(
                 "sidebar-item",
                 isActive && "sidebar-item-active",
-                collapsed && "justify-center px-0"
+                !isExpanded && "justify-center px-0"
               )}
-              title={collapsed ? item.label : undefined}
+              title={!isExpanded ? item.label : undefined}
             >
               <item.icon size={20} />
-              {!collapsed && <span>{item.label}</span>}
+              {isExpanded && <span>{item.label}</span>}
             </Link>
           );
         })}
@@ -177,12 +208,12 @@ export function Sidebar({ collapsed, onToggle, onMobileClose }: SidebarProps) {
           onClick={handleLogoutClick}
           className={cn(
             "sidebar-item w-full hover:bg-red-100 hover:text-red-700 transition-colors text-gray-700",
-            collapsed && "justify-center px-0"
+            !isExpanded && "justify-center px-0"
           )}
-          title={collapsed ? "Logout" : undefined}
+          title={!isExpanded ? "Logout" : undefined}
         >
           <LogOut size={20} />
-                 {!collapsed && <span>{t("logout")}</span>}
+                 {isExpanded && <span>{t("logout")}</span>}
         </button>
       </div>
 

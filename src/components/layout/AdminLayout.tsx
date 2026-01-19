@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { AdminSidebar } from "./AdminSidebar";
-import { Header } from "./Header";
 import { cn } from "@/lib/utils";
 
 interface AdminLayoutProps {
@@ -13,6 +12,7 @@ interface AdminLayoutProps {
 export function AdminLayout({ children, title, activeSection, onSectionChange }: AdminLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [sidebarHovered, setSidebarHovered] = useState(false);
 
   // Handle responsive sidebar
   useEffect(() => {
@@ -34,14 +34,6 @@ export function AdminLayout({ children, title, activeSection, onSectionChange }:
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header with Menu Button */}
-      <Header
-        title={title}
-        showMenuButton={true}
-        onMenuClick={handleMenuToggle}
-        sidebarCollapsed={sidebarCollapsed}
-      />
-
       {/* Mobile overlay */}
       {mobileMenuOpen && (
         <div
@@ -65,6 +57,8 @@ export function AdminLayout({ children, title, activeSection, onSectionChange }:
             }
           }}
           onMobileClose={() => setMobileMenuOpen(false)}
+          onMobileToggle={handleMenuToggle}
+          onHoverChange={setSidebarHovered}
           activeSection={activeSection}
           onSectionChange={onSectionChange}
         />
@@ -73,11 +67,13 @@ export function AdminLayout({ children, title, activeSection, onSectionChange }:
       {/* Main content */}
       <div
         className={cn(
-          "transition-all duration-300 pt-16",
-          sidebarCollapsed ? "lg:ml-16" : "lg:ml-64"
+          "transition-all duration-300",
+          // If sidebar is hovered and collapsed, expand it (push content)
+          // Otherwise use the normal collapsed/expanded state
+          (sidebarHovered && sidebarCollapsed) || !sidebarCollapsed ? "lg:ml-56" : "lg:ml-16"
         )}
       >
-        <main className="p-6 pt-6 animate-fade-in">{children}</main>
+        <main className="p-6 animate-fade-in">{children}</main>
       </div>
     </div>
   );

@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { Sidebar } from "./Sidebar";
-import { Header } from "./Header";
 import { cn } from "@/lib/utils";
 
 interface AppLayoutProps {
@@ -11,6 +10,7 @@ interface AppLayoutProps {
 export function AppLayout({ children, title }: AppLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [sidebarHovered, setSidebarHovered] = useState(false);
 
   // Handle responsive sidebar
   useEffect(() => {
@@ -32,14 +32,6 @@ export function AppLayout({ children, title }: AppLayoutProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header with Menu Button */}
-      <Header
-        title={title}
-        showMenuButton={true}
-        onMenuClick={handleMenuToggle}
-        sidebarCollapsed={sidebarCollapsed}
-      />
-
       {/* Mobile overlay */}
       {mobileMenuOpen && (
         <div
@@ -63,17 +55,21 @@ export function AppLayout({ children, title }: AppLayoutProps) {
             }
           }}
           onMobileClose={() => setMobileMenuOpen(false)}
+          onMobileToggle={handleMenuToggle}
+          onHoverChange={setSidebarHovered}
         />
       </div>
 
       {/* Main content */}
       <div
         className={cn(
-          "transition-all duration-300 pt-16",
-          sidebarCollapsed ? "lg:ml-16" : "lg:ml-56"
+          "transition-all duration-300",
+          // If sidebar is hovered and collapsed, expand it (push content)
+          // Otherwise use the normal collapsed/expanded state
+          (sidebarHovered && sidebarCollapsed) || !sidebarCollapsed ? "lg:ml-56" : "lg:ml-16"
         )}
       >
-        <main className="p-6 pt-6 animate-fade-in">{children}</main>
+        <main className="p-6 animate-fade-in">{children}</main>
       </div>
     </div>
   );

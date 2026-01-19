@@ -8,6 +8,7 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  Menu,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePinAuth } from "@/hooks/usePinAuth";
@@ -34,6 +35,8 @@ interface AdminSidebarProps {
   collapsed: boolean;
   onToggle: () => void;
   onMobileClose?: () => void;
+  onMobileToggle?: () => void;
+  onHoverChange?: (isHovered: boolean) => void;
   activeSection: string;
   onSectionChange: (section: string) => void;
 }
@@ -42,6 +45,8 @@ export function AdminSidebar({
   collapsed, 
   onToggle, 
   onMobileClose,
+  onMobileToggle,
+  onHoverChange,
   activeSection,
   onSectionChange 
 }: AdminSidebarProps) {
@@ -49,6 +54,7 @@ export function AdminSidebar({
   const { clearAuth } = usePinAuth();
   const { toast } = useToast();
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   const handleNavClick = (section: string) => {
     onSectionChange(section);
@@ -86,29 +92,56 @@ export function AdminSidebar({
     setLogoutDialogOpen(false);
   };
 
+  // Determine if sidebar should appear expanded (hover overrides collapsed state on desktop)
+  const isExpanded = isHovered || !collapsed;
+
   return (
     <aside
       className={cn(
         "fixed z-50 bg-blue-500 transition-all duration-300 flex flex-col shadow-lg overflow-hidden",
         "left-0 top-0 h-screen w-56",
         "lg:left-2 lg:top-2 lg:h-[calc(100vh-1rem)] lg:border lg:border-blue-600 lg:rounded-lg",
-        !collapsed && "lg:w-56",
-        collapsed && "lg:w-16"
+        isExpanded && "lg:w-56",
+        !isExpanded && collapsed && "lg:w-16"
       )}
+      onMouseEnter={() => {
+        // Only auto-expand on desktop when collapsed
+        if (window.innerWidth >= 1024 && collapsed) {
+          setIsHovered(true);
+          onHoverChange?.(true);
+        }
+      }}
+      onMouseLeave={() => {
+        // Only auto-collapse on desktop if it was auto-expanded
+        if (window.innerWidth >= 1024) {
+          setIsHovered(false);
+          onHoverChange?.(false);
+        }
+      }}
     >
       {/* Logo */}
       <div className="flex items-center justify-between h-16 px-4 border-b border-blue-600 bg-blue-500 lg:rounded-t-lg">
-        {!collapsed && (
+        {isExpanded && (
           <span className="text-lg font-bold text-white">
             Admin
           </span>
         )}
-        <button
-          onClick={onToggle}
-          className="p-2 hover:bg-blue-600 text-white transition-colors rounded"
-        >
-          {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-        </button>
+        <div className="flex items-center gap-2">
+          {onMobileToggle && (
+            <button
+              onClick={onMobileToggle}
+              className="p-2 hover:bg-blue-600 text-white transition-colors rounded lg:hidden"
+            >
+              <Menu size={20} />
+            </button>
+          )}
+          <button
+            onClick={onToggle}
+            className="p-2 hover:bg-blue-600 text-white transition-colors rounded hidden lg:block"
+          >
+            {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+          </button>
+        </div>
       </div>
 
       {/* Navigation */}
@@ -122,12 +155,12 @@ export function AdminSidebar({
               className={cn(
                 "flex items-center gap-3 px-4 py-3 w-full text-left text-white hover:bg-blue-600 transition-colors cursor-pointer rounded-md",
                 isActive && "bg-blue-700 text-white font-semibold shadow-sm",
-                collapsed && "justify-center px-0"
+                !isExpanded && "justify-center px-0"
               )}
-              title={collapsed ? item.label : undefined}
+              title={!isExpanded ? item.label : undefined}
             >
               <item.icon size={20} className="text-white" />
-              {!collapsed && <span className="text-white">{item.label}</span>}
+              {isExpanded && <span className="text-white">{item.label}</span>}
             </button>
           );
         })}
@@ -139,12 +172,12 @@ export function AdminSidebar({
           onClick={handleLogoutClick}
           className={cn(
             "sidebar-item w-full hover:bg-red-600 hover:text-white transition-colors text-white",
-            collapsed && "justify-center px-0"
+            !isExpanded && "justify-center px-0"
           )}
-          title={collapsed ? "Logout" : undefined}
+          title={!isExpanded ? "Logout" : undefined}
         >
           <LogOut size={20} />
-          {!collapsed && <span>Logout</span>}
+          {isExpanded && <span>Logout</span>}
         </button>
       </div>
 

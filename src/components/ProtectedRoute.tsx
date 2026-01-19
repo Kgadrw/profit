@@ -13,7 +13,7 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    // Check authentication status
+    // Check authentication status - run on every location change
     const checkAuth = () => {
       const userId = localStorage.getItem("profit-pilot-user-id");
       const authenticated = sessionStorage.getItem("profit-pilot-authenticated") === "true";
@@ -47,6 +47,7 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
       setIsChecking(false);
     };
 
+    // Check immediately on mount and location change
     checkAuth();
 
     // Listen for authentication changes
@@ -68,30 +69,34 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
       window.removeEventListener("pin-auth-changed", handleAuthChange);
       window.removeEventListener("storage", handleStorageChange);
     };
-  }, [requireAdmin]);
+  }, [requireAdmin, location.pathname]); // Re-check on route change
 
-  // Prevent back button navigation after logout
+  // Prevent back button navigation to protected routes without authentication
   useEffect(() => {
-    const handlePopState = (e: PopStateEvent) => {
-      const userId = localStorage.getItem("profit-pilot-user-id");
-      const authenticated = sessionStorage.getItem("profit-pilot-authenticated") === "true";
+    const handlePopState = () => {
+      // Small delay to allow location to update
+      setTimeout(() => {
+        const userId = localStorage.getItem("profit-pilot-user-id");
+        const authenticated = sessionStorage.getItem("profit-pilot-authenticated") === "true";
+        const currentPath = window.location.pathname;
+        const protectedRoutes = ['/dashboard', '/products', '/sales', '/reports', '/settings', '/admin-dashboard'];
+        const isProtectedRoute = protectedRoutes.some(route => currentPath.startsWith(route));
 
-      if (!userId || !authenticated) {
-        // User is not authenticated, prevent back navigation
-        e.preventDefault();
-        window.history.pushState(null, "", location.pathname);
-      }
+        if (isProtectedRoute && (!userId || !authenticated)) {
+          // User is not authenticated but trying to access protected route via back button
+          // Replace current history entry and redirect to home
+          window.history.replaceState(null, "", "/");
+          window.location.replace("/");
+        }
+      }, 0);
     };
-
-    // Push current state to prevent back navigation to logged-out state
-    window.history.pushState(null, "", location.pathname);
 
     window.addEventListener("popstate", handlePopState);
 
     return () => {
       window.removeEventListener("popstate", handlePopState);
     };
-  }, [location.pathname]);
+  }, []);
 
   if (isChecking) {
     return (

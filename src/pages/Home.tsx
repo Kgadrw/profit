@@ -32,12 +32,29 @@ const Home = () => {
       }
     };
 
+    // Prevent back button navigation to protected routes
+    const handlePopState = () => {
+      const userId = localStorage.getItem("profit-pilot-user-id");
+      const authenticated = sessionStorage.getItem("profit-pilot-authenticated") === "true";
+      const currentPath = window.location.pathname;
+      const protectedRoutes = ['/dashboard', '/products', '/sales', '/reports', '/settings', '/admin-dashboard'];
+      const isProtectedRoute = protectedRoutes.some(route => currentPath.startsWith(route));
+
+      if (isProtectedRoute && (!userId || !authenticated)) {
+        // User tried to access protected route via back button without auth
+        window.history.replaceState(null, "", "/");
+        window.location.href = "/";
+      }
+    };
+
     window.addEventListener("pin-auth-changed", handleAuthChange);
     window.addEventListener("storage", handleAuthChange);
+    window.addEventListener("popstate", handlePopState);
 
     return () => {
       window.removeEventListener("pin-auth-changed", handleAuthChange);
       window.removeEventListener("storage", handleAuthChange);
+      window.removeEventListener("popstate", handlePopState);
     };
   }, []);
 

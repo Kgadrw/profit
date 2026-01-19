@@ -722,91 +722,91 @@ const Products = () => {
               <div className="grid grid-cols-2 gap-4">
                 {/* Column 1 */}
                 <div className="space-y-4">
-                  <div className="space-y-2">
+              <div className="space-y-2">
                     <Label>{t("productName")}</Label>
-                    <Input
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="input-field"
+                <Input
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="input-field"
                       placeholder={t("enterProductName")}
-                    />
-                  </div>
-                  <div className="space-y-2">
+                />
+              </div>
+              <div className="space-y-2">
                     <Label>{t("category")}</Label>
-                    <Input
-                      value={formData.category}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      className="input-field"
+                <Input
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  className="input-field"
                       placeholder={t("enterCategory")}
-                    />
-                  </div>
-                  <div className="space-y-2">
+                />
+              </div>
+              <div className="space-y-2">
                     <Label>{t("productTypeVariant")}</Label>
-                    <Input
-                      value={formData.productType}
-                      onChange={(e) => setFormData({ ...formData, productType: e.target.value })}
-                      className="input-field"
-                      placeholder="e.g., Small, Large, Medium, etc."
-                    />
+                <Input
+                  value={formData.productType}
+                  onChange={(e) => setFormData({ ...formData, productType: e.target.value })}
+                  className="input-field"
+                  placeholder="e.g., Small, Large, Medium, etc."
+                />
                     <p className="text-xs text-muted-foreground">{t("language") === "rw" ? "Kubwibicuruzwa bifite ibihindurwa nk'ubunini" : "For products with variants like sizes (Small, Large, etc.)"}</p>
-                  </div>
-                  <div className="space-y-2">
+              </div>
+              <div className="space-y-2">
                     <Label>{t("packageQuantity")} ({t("language") === "rw" ? "Bibasha" : "Optional"})</Label>
-                    <Input
-                      type="number"
-                      min="1"
-                      value={formData.packageQuantity}
-                      onChange={(e) => setFormData({ ...formData, packageQuantity: e.target.value })}
-                      className="input-field"
-                      placeholder="e.g., 12 (for a box of 12)"
-                    />
+                <Input
+                  type="number"
+                  min="1"
+                  value={formData.packageQuantity}
+                  onChange={(e) => setFormData({ ...formData, packageQuantity: e.target.value })}
+                  className="input-field"
+                  placeholder="e.g., 12 (for a box of 12)"
+                />
                     <p className="text-xs text-muted-foreground">{t("language") === "rw" ? "Reka ubusa niba icuruzwa nticyari mu gipaki" : "Leave empty if product is not packaged. Number of individual items in one package/box"}</p>
                   </div>
-                </div>
+              </div>
 
                 {/* Column 2 */}
                 <div className="space-y-4">
-                  <div className="space-y-2">
+                <div className="space-y-2">
                     <Label>{t("costPrice")} (rwf)</Label>
-                    <Input
-                      type="number"
-                      value={formData.costPrice}
-                      onChange={(e) => setFormData({ ...formData, costPrice: e.target.value })}
-                      className="input-field"
-                      placeholder="0.00"
-                    />
-                  </div>
-                  <div className="space-y-2">
+                  <Input
+                    type="number"
+                    value={formData.costPrice}
+                    onChange={(e) => setFormData({ ...formData, costPrice: e.target.value })}
+                    className="input-field"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div className="space-y-2">
                     <Label>{t("sellingPrice")} (rwf)</Label>
-                    <Input
-                      type="number"
-                      value={formData.sellingPrice}
-                      onChange={(e) => setFormData({ ...formData, sellingPrice: e.target.value })}
-                      className="input-field"
-                      placeholder="0.00"
-                    />
-                  </div>
-                  <div className="space-y-2">
+                  <Input
+                    type="number"
+                    value={formData.sellingPrice}
+                    onChange={(e) => setFormData({ ...formData, sellingPrice: e.target.value })}
+                    className="input-field"
+                    placeholder="0.00"
+                  />
+                </div>
+              <div className="space-y-2">
                     <Label>{t("stockQuantity")}</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      value={formData.stock}
-                      onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                      className="input-field"
-                      placeholder="0"
-                    />
-                  </div>
-                  <div className="space-y-2">
+                <Input
+                  type="number"
+                    min="0"
+                  value={formData.stock}
+                  onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                  className="input-field"
+                  placeholder="0"
+                />
+                </div>
+                <div className="space-y-2">
                     <Label>{t("minStockAlert")}</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      value={formData.minStock}
-                      onChange={(e) => setFormData({ ...formData, minStock: e.target.value })}
-                      className="input-field"
-                      placeholder="5"
-                    />
+                  <Input
+                    type="number"
+                    min="0"
+                    value={formData.minStock}
+                    onChange={(e) => setFormData({ ...formData, minStock: e.target.value })}
+                    className="input-field"
+                    placeholder="5"
+                  />
                     <p className="text-xs text-muted-foreground">{t("language") === "rw" ? "Icyitonderwa igihe ubwiyubwibwe bugera kuri ubu buryo" : "Alert when stock reaches this level"}</p>
                   </div>
                 </div>

@@ -345,12 +345,12 @@ const Sales = () => {
 
     // Initialize audio immediately on button click (user interaction ensures audio works)
     initAudio();
-    
+
     // Set loading state
     setIsRecordingSale(true);
 
     try {
-      if (isBulkMode) {
+    if (isBulkMode) {
       // Bulk add mode
       // Validate all bulk sales before creating them
       const invalidSales: string[] = [];
@@ -407,7 +407,7 @@ const Sales = () => {
         return;
       }
 
-        if (salesToCreate.length > 0) {
+      if (salesToCreate.length > 0) {
           await bulkAddSales(salesToCreate as any);
           await refreshSales();
 
@@ -421,38 +421,38 @@ const Sales = () => {
             title: "Sales Recorded",
             description: `Successfully recorded ${salesToCreate.length} sale(s).`,
           });
-        } else {
-          playWarningBeep();
-          toast({
-            title: "No Sales Recorded",
-            description: "Please fill in at least one complete sale entry.",
-            variant: "destructive",
-          });
-        }
       } else {
-        // Single sale mode
-        if (!selectedProduct || !quantity || !sellingPrice || !paymentMethod) {
-          // Play error beep immediately (we're in user interaction context)
-          playErrorBeep();
-          toast({
-            title: "Missing Information",
-            description: "Please fill in all required fields.",
-            variant: "destructive",
-          });
-          setIsRecordingSale(false);
-          return;
-        }
-
-        const product = products.find((p) => {
-          const id = (p as any)._id || p.id;
-          return id.toString() === selectedProduct;
+        playWarningBeep();
+        toast({
+          title: "No Sales Recorded",
+          description: "Please fill in at least one complete sale entry.",
+          variant: "destructive",
         });
+      }
+    } else {
+      // Single sale mode
+      if (!selectedProduct || !quantity || !sellingPrice || !paymentMethod) {
+        // Play error beep immediately (we're in user interaction context)
+        playErrorBeep();
+        toast({
+          title: "Missing Information",
+          description: "Please fill in all required fields.",
+          variant: "destructive",
+        });
+          setIsRecordingSale(false);
+        return;
+      }
+
+      const product = products.find((p) => {
+        const id = (p as any)._id || p.id;
+        return id.toString() === selectedProduct;
+      });
         if (!product) {
           setIsRecordingSale(false);
           return;
         }
 
-        const qty = parseInt(quantity);
+      const qty = parseInt(quantity);
         
         // Validate quantity is valid
         if (isNaN(qty) || qty <= 0) {
@@ -478,21 +478,21 @@ const Sales = () => {
           return;
         }
         
-        const price = parseFloat(sellingPrice);
-        const revenue = qty * price;
-        const cost = qty * product.costPrice;
-        const profit = revenue - cost;
+      const price = parseFloat(sellingPrice);
+      const revenue = qty * price;
+      const cost = qty * product.costPrice;
+      const profit = revenue - cost;
 
-        const newSale = {
-          product: product.name,
-          productId: (product as any)._id || product.id,
-          quantity: qty,
-          revenue,
-          cost,
-          profit,
-          date: saleDate,
-          paymentMethod: paymentMethod,
-        };
+      const newSale = {
+        product: product.name,
+        productId: (product as any)._id || product.id,
+        quantity: qty,
+        revenue,
+        cost,
+        profit,
+        date: saleDate,
+        paymentMethod: paymentMethod,
+      };
 
         await addSale(newSale as any);
         await refreshSales();
@@ -513,13 +513,13 @@ const Sales = () => {
           description: `Successfully recorded sale of ${qty}x ${product.name}`,
         });
       }
-    } catch (error) {
-      playErrorBeep();
-      toast({
-        title: "Record Failed",
-        description: "Failed to record sale. Please try again.",
-        variant: "destructive",
-      });
+      } catch (error) {
+        playErrorBeep();
+        toast({
+          title: "Record Failed",
+          description: "Failed to record sale. Please try again.",
+          variant: "destructive",
+        });
     } finally {
       // Always reset loading state
       setIsRecordingSale(false);
@@ -1045,14 +1045,14 @@ const Sales = () => {
             </div>
 
             <div className="flex justify-end mt-4">
-            <Button
-              onClick={handleRecordSale}
+              <Button
+                onClick={handleRecordSale}
               disabled={isRecordingSale}
               className="bg-green-600 text-white hover:bg-green-700 shadow-sm hover:shadow transition-all font-semibold px-4 py-2 border border-transparent gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ShoppingCart size={16} />
+              >
+                <ShoppingCart size={16} />
               {isRecordingSale ? t("recording") : t("recordSales")}
-            </Button>
+              </Button>
             </div>
           </div>
         ) : (

@@ -272,79 +272,62 @@ const Reports = () => {
     const margin = 14;
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
-    let yPosition = 35; // Start lower to accommodate header
+    
+    // Add header with logo and report info on same line
+    addHeader(doc, pageWidth, margin, reportType, startDate, endDate);
+    
+    // Start content after header
+    let yPosition = 30;
 
-    // Header - Trippo Logo/Title
-    doc.setFillColor(59, 130, 246); // Blue color
-    doc.rect(0, 0, pageWidth, 25, 'F'); // Blue header bar
-    
-    doc.setTextColor(255, 255, 255); // White text
-    doc.setFontSize(24);
-    doc.setFont("helvetica", "bold");
-    doc.text("TRACKA", margin, 18);
-    
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.text("Business Management System", margin + 45, 18);
-    
-    // Reset text color for body
-    doc.setTextColor(0, 0, 0); // Black text
-    
-    // Draw a line separator
-    doc.setDrawColor(200, 200, 200);
-    doc.line(margin, 27, pageWidth - margin, 27);
-    
-    // Title
-    doc.setFontSize(18);
-    doc.setFont("helvetica", "bold");
-    doc.text(t("salesReport"), margin, yPosition);
-    yPosition += 10;
+    // Header already added above
 
-    // Report Info
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Report Type: ${reportType.charAt(0).toUpperCase() + reportType.slice(1)}`, margin, yPosition);
-    yPosition += 6;
-    doc.text(`Date Range: ${startDate} to ${endDate}`, margin, yPosition);
-    yPosition += 6;
-    doc.text(`Generated: ${new Date().toLocaleString()}`, margin, yPosition);
-    yPosition += 12;
-
-    // Add header to first page
-    addHeader(doc, pageWidth);
-
-    // Summary Section
+    // Summary Section - Display as columns/headers
     doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
+    doc.setFont("helvetica", "normal");
     doc.text("Summary", margin, yPosition);
     yPosition += 8;
 
-    // Summary Table
-    const summaryTableData = [
-      ['Total Revenue', `rwf ${totalRevenue.toLocaleString()}`],
-      ['Total Cost', `rwf ${totalCost.toLocaleString()}`],
-      ['Total Profit', `rwf ${totalProfit.toLocaleString()}`],
-      ['Total Quantity Sold', totalQuantity.toString()],
-      ['Best-Selling Product', bestSelling.product],
-      ['Best-Selling Quantity', `${bestSelling.quantity} units`],
-      ['Profit Margin', totalRevenue > 0 ? `${((totalProfit / totalRevenue) * 100).toFixed(1)}%` : '0.0%'],
+    // Summary as columns (headers with values below)
+    const summaryHeaders = [
+      'Total Revenue',
+      'Total Cost', 
+      'Total Profit',
+      'Quantity Sold',
+      'Best-Selling',
+      'Best Qty',
+      'Profit Margin'
+    ];
+    
+    const summaryValues = [
+      `rwf ${totalRevenue.toLocaleString()}`,
+      `rwf ${totalCost.toLocaleString()}`,
+      `rwf ${totalProfit.toLocaleString()}`,
+      totalQuantity.toString(),
+      bestSelling.product.length > 15 ? bestSelling.product.substring(0, 15) + '...' : bestSelling.product,
+      `${bestSelling.quantity}`,
+      totalRevenue > 0 ? `${((totalProfit / totalRevenue) * 100).toFixed(1)}%` : '0.0%'
     ];
 
     autoTable(doc, {
       startY: yPosition,
-      head: [['Metric', 'Value']],
-      body: summaryTableData,
+      head: [summaryHeaders],
+      body: [summaryValues],
       theme: 'striped',
-      headStyles: { fillColor: [59, 130, 246], textColor: 255, fontStyle: 'bold' },
-      styles: { fontSize: 10 },
+      headStyles: { fillColor: [107, 114, 128], textColor: 255, fontStyle: 'normal', fontSize: 9 }, // Gray-500
+      styles: { fontSize: 9, textColor: [31, 41, 55], halign: 'center' }, // Gray-800, centered
       margin: { left: margin, right: margin },
       columnStyles: {
-        0: { cellWidth: 60, fontStyle: 'bold' },
-        1: { cellWidth: 'auto' },
+        0: { cellWidth: 'auto', halign: 'center' },
+        1: { cellWidth: 'auto', halign: 'center' },
+        2: { cellWidth: 'auto', halign: 'center' },
+        3: { cellWidth: 'auto', halign: 'center' },
+        4: { cellWidth: 'auto', halign: 'center' },
+        5: { cellWidth: 'auto', halign: 'center' },
+        6: { cellWidth: 'auto', halign: 'center' },
       },
       didDrawPage: (data: any) => {
         // Add header and footer on each page
-        addHeader(doc, pageWidth);
+        addHeader(doc, pageWidth, margin, reportType, startDate, endDate);
         addFooter(doc, pageWidth, pageHeight, margin);
       },
     });
@@ -353,7 +336,7 @@ const Reports = () => {
     // Sales by Product Table
     if (salesByProduct.length > 0) {
       doc.setFontSize(14);
-      doc.setFont("helvetica", "bold");
+      doc.setFont("helvetica", "normal");
       doc.text("Sales by Product", margin, yPosition);
       yPosition += 8;
 
@@ -374,12 +357,13 @@ const Reports = () => {
         head: [['Product', 'Quantity', 'Revenue', 'Cost', 'Profit', 'Profit Margin']],
         body: tableData,
         theme: 'striped',
-        headStyles: { fillColor: [59, 130, 246], textColor: 255, fontStyle: 'bold' },
-        styles: { fontSize: 9 },
+        headStyles: { fillColor: [107, 114, 128], textColor: 255, fontStyle: 'normal' }, // Gray-500
+        alternateRowStyles: { fillColor: [249, 250, 251] }, // Gray-50
+        styles: { fontSize: 9, textColor: [31, 41, 55] }, // Gray-800
         margin: { left: margin, right: margin },
         didDrawPage: (data: any) => {
           // Add header and footer on each page
-          addHeader(doc, pageWidth);
+          addHeader(doc, pageWidth, margin, reportType, startDate, endDate);
           addFooter(doc, pageWidth, pageHeight, margin);
         },
       });
@@ -391,12 +375,12 @@ const Reports = () => {
       // Check if we need a new page
       if (yPosition > 250) {
         doc.addPage();
-        addHeader(doc, pageWidth);
-        yPosition = 35; // Start after header
+        addHeader(doc, pageWidth, margin, reportType, startDate, endDate);
+        yPosition = 30; // Start after header
       }
 
       doc.setFontSize(14);
-      doc.setFont("helvetica", "bold");
+      doc.setFont("helvetica", "normal");
       doc.text(`Sales Over Time (${reportType.charAt(0).toUpperCase() + reportType.slice(1)})`, margin, yPosition);
       yPosition += 8;
 
@@ -423,12 +407,13 @@ const Reports = () => {
           head: [['Period', 'Revenue', 'Profit', 'Quantity']],
           body: timeTableData,
           theme: 'striped',
-          headStyles: { fillColor: [16, 185, 129], textColor: 255, fontStyle: 'bold' },
-          styles: { fontSize: 9 },
+          headStyles: { fillColor: [107, 114, 128], textColor: 255, fontStyle: 'normal' }, // Gray-500
+          alternateRowStyles: { fillColor: [249, 250, 251] }, // Gray-50
+          styles: { fontSize: 9, textColor: [31, 41, 55] }, // Gray-800
           margin: { left: margin, right: margin },
           didDrawPage: (data: any) => {
             // Add header and footer on each page
-            addHeader(doc, pageWidth);
+            addHeader(doc, pageWidth, margin, reportType, startDate, endDate);
             addFooter(doc, pageWidth, pageHeight, margin);
           },
         });
@@ -447,27 +432,64 @@ const Reports = () => {
     doc.save(fileName);
   };
 
-  // Helper function to add header to each page
-  const addHeader = (doc: jsPDF, pageWidth: number) => {
-    const margin = 14;
-    doc.setFillColor(59, 130, 246); // Blue color
-    doc.rect(0, 0, pageWidth, 25, 'F'); // Blue header bar
+  // Helper function to add header to each page (logo and report info on same line)
+  const addHeader = (doc: jsPDF, pageWidth: number, margin: number, reportType?: string, startDate?: string, endDate?: string) => {
+    // Try to add logo image
+    let logoX = margin;
+    let logoHeight = 6;
+    let logoY = 12; // Vertical center alignment
     
-    doc.setTextColor(255, 255, 255); // White text
-    doc.setFontSize(24);
-    doc.setFont("helvetica", "bold");
-    doc.text("TRACKA", margin, 18);
+    try {
+      // Get logo from DOM if available (for synchronous access)
+      const logoElement = document.querySelector('img[src="/logo.png"]') as HTMLImageElement;
+      if (logoElement && logoElement.complete) {
+        // Create canvas to convert image to base64
+        const canvas = document.createElement('canvas');
+        canvas.width = logoElement.naturalWidth || 32;
+        canvas.height = logoElement.naturalHeight || 32;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(logoElement, 0, 0);
+          const imgData = canvas.toDataURL('image/png');
+          // Add logo image (6mm height, vertically centered)
+          doc.addImage(imgData, 'PNG', margin, logoY, logoHeight, logoHeight);
+          logoX = margin + logoHeight + 2; // 2mm spacing between logo and text
+        }
+      }
+    } catch (error) {
+      // Logo failed, continue with text only
+    }
     
-    doc.setFontSize(10);
+    // Add "trippo" text next to logo (vertically aligned)
+    doc.setTextColor(55, 65, 81); // Gray-700 text
+    doc.setFontSize(12);
     doc.setFont("helvetica", "normal");
-    doc.text("Business Management System", margin + 45, 18);
+    // Calculate text Y position to align with logo center (logoY + logoHeight/2 - textHeight/2)
+    const textY = logoY + logoHeight / 2 + 2; // +2 for slight adjustment
+    doc.text("trippo", logoX, textY);
+    
+    // Add report info on the same line (right side)
+    if (reportType && startDate && endDate) {
+      const reportTypeText = `Report Type: ${reportType.charAt(0).toUpperCase() + reportType.slice(1)}`;
+      const dateRangeText = `Date Range: ${startDate} to ${endDate}`;
+      const generatedText = `Generated: ${new Date().toLocaleString()}`;
+      const separator = "  •  ";
+      const fullInfoText = `${reportTypeText}${separator}${dateRangeText}${separator}${generatedText}`;
+      
+      doc.setFontSize(8);
+      doc.setTextColor(107, 114, 128); // Gray-500
+      // Calculate text width and position it on the right, aligned with logo/text line
+      const textWidth = doc.getTextWidth(fullInfoText);
+      const infoX = pageWidth - margin - textWidth;
+      doc.text(fullInfoText, infoX, textY); // Use same Y position as "trippo" text
+    }
+    
+    // Draw a subtle line separator
+    doc.setDrawColor(229, 231, 235); // Gray-200
+    doc.line(margin, 20, pageWidth - margin, 20);
     
     // Reset text color for body
     doc.setTextColor(0, 0, 0); // Black text
-    
-    // Draw a line separator
-    doc.setDrawColor(200, 200, 200);
-    doc.line(margin, 27, pageWidth - margin, 27);
   };
 
   // Helper function to add footer to each page
@@ -485,11 +507,6 @@ const Reports = () => {
     // Left side - Generated by Trippo
     doc.text("Generated by Trippo", margin, footerY);
     
-    // Center - Description
-    const centerText = "Profit Pilot - Sales Analytics & Reporting System";
-    const centerX = pageWidth / 2;
-    doc.text(centerText, centerX, footerY, { align: 'center' });
-    
     // Right side - Page number and date
     const rightText = currentPage && totalPages 
       ? `Page ${currentPage} of ${totalPages} | ${new Date().toLocaleDateString()}`
@@ -505,7 +522,7 @@ const Reports = () => {
 
     // Summary Sheet
     const summaryData = [
-      ['Sales Report Summary'],
+      ['Report Summary'],
       [''],
       ['Report Type', reportType.charAt(0).toUpperCase() + reportType.slice(1)],
       ['Start Date', startDate],
@@ -680,7 +697,7 @@ const Reports = () => {
       </div>
 
       {/* Report Summary Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-2">
             <KPICard
               title={t("totalRevenue")}
               value={`rwf ${totalRevenue.toLocaleString()}`}
@@ -707,9 +724,9 @@ const Reports = () => {
           {/* Charts Section */}
           <div className="grid grid-cols-1 gap-6">
             {/* Sales Over Time Histogram - Based on Report Type */}
-            <div className="bg-white shadow-sm rounded-lg p-4 sm:p-6 overflow-x-auto">
-              <div className="flex items-center gap-2 mb-4">
-                <BarChart3 size={20} className="text-orange-600 shrink-0" />
+            <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 overflow-x-auto">
+              <div className="flex items-center gap-2 mb-6">
+                <BarChart3 size={20} className="text-gray-600 shrink-0" />
                 <h3 className="text-base sm:text-lg font-semibold text-gray-800">
                   {t("salesTrend")} - {reportType === "daily" ? (t("language") === "rw" ? "Buri munsi" : "Daily") : reportType === "weekly" ? (t("language") === "rw" ? "Buri cyumweru" : "Weekly") : (t("language") === "rw" ? "Buri kwezi" : "Monthly")}
                 </h3>
@@ -749,9 +766,12 @@ const Reports = () => {
                       contentStyle={{
                         backgroundColor: '#ffffff',
                         border: '1px solid #e5e7eb',
-                        borderRadius: '8px',
-                        padding: '12px',
+                        borderRadius: '6px',
+                        padding: '10px',
+                        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
                       }}
+                      labelStyle={{ color: '#374151', fontWeight: 600, marginBottom: '4px' }}
+                      itemStyle={{ color: '#6b7280' }}
                       labelFormatter={(value) => {
                         const item = salesOverTimeData.find(d => d.monthDay === value);
                         if (!item) return value;
@@ -776,9 +796,12 @@ const Reports = () => {
                         return [value, name];
                       }}
                     />
-                    <Legend />
-                    <Bar dataKey="revenue" fill="#3b82f6" name={t("revenue")} radius={[2, 2, 0, 0]} />
-                    <Bar dataKey="profit" fill="#10b981" name={t("profit")} radius={[2, 2, 0, 0]} />
+                    <Legend 
+                      wrapperStyle={{ paddingTop: '20px' }}
+                      iconType="rect"
+                    />
+                    <Bar dataKey="revenue" fill="#6b7280" name={t("revenue")} radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="profit" fill="#9ca3af" name={t("profit")} radius={[2, 2, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
                 </div>

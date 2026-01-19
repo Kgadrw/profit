@@ -313,7 +313,7 @@ const AddProduct = () => {
                 >
                   <Plus size={18} />
                   <span className="ml-2">{t("addProduct")}</span>
-                </Button>
+                  </Button>
               </div>
               
               {/* Mobile Card Layout */}
