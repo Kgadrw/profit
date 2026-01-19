@@ -757,11 +757,11 @@ const Dashboard = () => {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="cash">Cash</SelectItem>
-                            <SelectItem value="momo">Momo Pay</SelectItem>
-                            <SelectItem value="card">Card</SelectItem>
-                            <SelectItem value="airtel">Airtel Pay</SelectItem>
-                            <SelectItem value="transfer">Bank Transfer</SelectItem>
+                            <SelectItem value="cash">{t("cash")}</SelectItem>
+                            <SelectItem value="momo">{t("momoPay")}</SelectItem>
+                            <SelectItem value="card">{t("card")}</SelectItem>
+                            <SelectItem value="airtel">{t("airtelPay")}</SelectItem>
+                            <SelectItem value="transfer">{t("bankTransfer")}</SelectItem>
                           </SelectContent>
                         </Select>
                       </td>
@@ -890,9 +890,11 @@ const Dashboard = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="cash">Cash</SelectItem>
-                  <SelectItem value="card">Card</SelectItem>
-                  <SelectItem value="transfer">Bank Transfer</SelectItem>
+                  <SelectItem value="cash">{t("cash")}</SelectItem>
+                  <SelectItem value="momo">{t("momoPay")}</SelectItem>
+                  <SelectItem value="card">{t("card")}</SelectItem>
+                  <SelectItem value="airtel">{t("airtelPay")}</SelectItem>
+                  <SelectItem value="transfer">{t("bankTransfer")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
