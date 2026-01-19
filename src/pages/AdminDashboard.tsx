@@ -220,10 +220,9 @@ const AdminDashboard = () => {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount);
+    // Format as RWF (Rwandan Franc)
+    // RWF doesn't use decimal places, so format as whole number
+    return `${amount.toLocaleString("en-US")} RWF`;
   };
 
   const formatDate = (dateString: string) => {
@@ -352,10 +351,10 @@ const AdminDashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl">
-                    {stats?.totalRevenue ? formatCurrency(stats.totalRevenue) : "$0"}
+                    {stats?.totalRevenue ? formatCurrency(stats.totalRevenue) : formatCurrency(0)}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Profit: {stats?.totalProfit ? formatCurrency(stats.totalProfit) : "$0"}
+                    Profit: {stats?.totalProfit ? formatCurrency(stats.totalProfit) : formatCurrency(0)}
                   </p>
                 </CardContent>
               </Card>
@@ -384,7 +383,7 @@ const AdminDashboard = () => {
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">Total Revenue</span>
                     <span>
-                      {stats?.totalRevenue ? formatCurrency(stats.totalRevenue) : "$0"}
+                      {stats?.totalRevenue ? formatCurrency(stats.totalRevenue) : formatCurrency(0)}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">

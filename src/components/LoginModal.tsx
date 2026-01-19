@@ -109,6 +109,10 @@ export function LoginModal({ open, onOpenChange, defaultTab = "login" }: LoginMo
           localStorage.setItem("profit-pilot-business-name", "System Administrator");
           localStorage.setItem("profit-pilot-is-admin", "true");
           
+          // Store a special admin userId (required for ProtectedRoute)
+          // Use a special identifier for admin since backend doesn't return _id for admin
+          localStorage.setItem("profit-pilot-user-id", "admin");
+          
           // Set authentication flag in sessionStorage
           sessionStorage.setItem("profit-pilot-authenticated", "true");
           

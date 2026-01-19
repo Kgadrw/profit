@@ -120,14 +120,14 @@ export function AdminSidebar({
               key={item.section}
               onClick={() => handleNavClick(item.section)}
               className={cn(
-                "sidebar-item w-full text-left",
-                isActive && "sidebar-item-active",
+                "flex items-center gap-3 px-4 py-3 w-full text-left text-white hover:bg-blue-600 transition-colors cursor-pointer rounded-md",
+                isActive && "bg-blue-700 text-white font-semibold shadow-sm",
                 collapsed && "justify-center px-0"
               )}
               title={collapsed ? item.label : undefined}
             >
-              <item.icon size={20} />
-              {!collapsed && <span>{item.label}</span>}
+              <item.icon size={20} className="text-white" />
+              {!collapsed && <span className="text-white">{item.label}</span>}
             </button>
           );
         })}

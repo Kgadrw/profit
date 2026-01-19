@@ -34,7 +34,10 @@ async function request<T>(
                          endpoint.startsWith('/auth/login') ||
                          endpoint.startsWith('/auth/me');
   
-  if (!isAuthEndpoint && !userId) {
+  // Admin endpoints don't require regular userId (admin has special userId)
+  const isAdminEndpoint = endpoint.startsWith('/admin/');
+  
+  if (!isAuthEndpoint && !isAdminEndpoint && !userId) {
     throw new ApiError(
       'User not authenticated. Please login to access your data.',
       401,

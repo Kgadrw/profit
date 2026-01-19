@@ -1,12 +1,34 @@
 import { Navbar } from "@/components/layout/Navbar";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LoginModal } from "@/components/LoginModal";
 import { User } from "lucide-react";
 
 const Home = () => {
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [loginModalTab, setLoginModalTab] = useState<"login" | "create">("create");
+
+  // Reset login modal state when user logs out (listen for auth changes)
+  useEffect(() => {
+    const handleAuthChange = () => {
+      const userId = localStorage.getItem("profit-pilot-user-id");
+      const authenticated = sessionStorage.getItem("profit-pilot-authenticated") === "true";
+      
+      // If user is logged out, ensure modal can be opened
+      if (!userId || !authenticated) {
+        setLoginModalOpen(false);
+        setLoginModalTab("login");
+      }
+    };
+
+    window.addEventListener("pin-auth-changed", handleAuthChange);
+    window.addEventListener("storage", handleAuthChange);
+
+    return () => {
+      window.removeEventListener("pin-auth-changed", handleAuthChange);
+      window.removeEventListener("storage", handleAuthChange);
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-white">

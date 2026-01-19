@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { LoginModal } from "./LoginModal";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -12,7 +11,6 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
   const [isChecking, setIsChecking] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
 
   useEffect(() => {
     // Check authentication status
@@ -21,27 +19,31 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
       const authenticated = sessionStorage.getItem("profit-pilot-authenticated") === "true";
       const adminStatus = localStorage.getItem("profit-pilot-is-admin") === "true";
 
-      // If no userId or not authenticated, require login
+      // For admin routes, check admin status instead of regular userId
+      if (requireAdmin) {
+        if (adminStatus && authenticated && userId === "admin") {
+          setIsAuthenticated(true);
+          setIsAdmin(true);
+          setIsChecking(false);
+          return;
+        } else {
+          setIsAuthenticated(false);
+          setIsAdmin(false);
+          setIsChecking(false);
+          return;
+        }
+      }
+
+      // For regular routes, require userId and authentication
       if (!userId || !authenticated) {
         setIsAuthenticated(false);
         setIsAdmin(false);
-        setShowLoginModal(true);
-        setIsChecking(false);
-        return;
-      }
-
-      // Check admin requirement
-      if (requireAdmin && !adminStatus) {
-        setIsAuthenticated(false);
-        setIsAdmin(false);
-        setShowLoginModal(true);
         setIsChecking(false);
         return;
       }
 
       setIsAuthenticated(true);
       setIsAdmin(adminStatus);
-      setShowLoginModal(false);
       setIsChecking(false);
     };
 
@@ -78,7 +80,6 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
         // User is not authenticated, prevent back navigation
         e.preventDefault();
         window.history.pushState(null, "", location.pathname);
-        setShowLoginModal(true);
       }
     };
 
@@ -104,29 +105,13 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
   }
 
   if (!isAuthenticated) {
-    return (
-      <>
-        <Navigate to="/" replace />
-        <LoginModal
-          open={showLoginModal}
-          onOpenChange={setShowLoginModal}
-          defaultTab="login"
-        />
-      </>
-    );
+    // Just redirect to home - Home page has its own login modal
+    return <Navigate to="/" replace />;
   }
 
   if (requireAdmin && !isAdmin) {
-    return (
-      <>
-        <Navigate to="/" replace />
-        <LoginModal
-          open={showLoginModal}
-          onOpenChange={setShowLoginModal}
-          defaultTab="login"
-        />
-      </>
-    );
+    // Just redirect to home - Home page has its own login modal
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;

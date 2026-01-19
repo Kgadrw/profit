@@ -94,14 +94,11 @@ export function Sidebar({ collapsed, onToggle, onMobileClose }: SidebarProps) {
     // Clear browser history and redirect to homepage
     // This prevents back button from accessing protected pages
     window.history.replaceState(null, "", "/");
-    navigate("/", { replace: true });
-    
-    // Force a page reload to clear any cached state
-    setTimeout(() => {
-      window.location.href = "/";
-    }, 100);
     
     setLogoutDialogOpen(false);
+    
+    // Navigate to home page (don't force reload immediately to allow login)
+    navigate("/", { replace: true });
   };
 
   return (
