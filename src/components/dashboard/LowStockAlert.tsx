@@ -20,6 +20,7 @@ interface LowStockItem {
   name: string;
   stock: number;
   minStock?: number;
+  isOutOfStock?: boolean;
 }
 
 export function LowStockAlert() {
@@ -33,20 +34,28 @@ export function LowStockAlert() {
     defaultValue: [],
   });
 
-  // Filter products with low stock
+  // Filter products with low stock and out of stock (stock = 0)
   const lowStockItems = useMemo(() => {
     return products
       .filter((product) => {
         const minStock = product.minStock || 0;
-        return product.stock <= minStock;
+        // Show products with stock <= minStock OR stock = 0 (out of stock)
+        return product.stock <= minStock || product.stock === 0;
       })
       .map((product) => ({
         id: product._id || product.id || '',
         name: product.name,
         stock: product.stock,
         minStock: product.minStock,
+        isOutOfStock: product.stock === 0,
       }))
-      .slice(0, 5); // Show top 5 low stock items
+      .sort((a, b) => {
+        // Sort: out of stock products first, then by stock level (lowest first)
+        if (a.isOutOfStock && !b.isOutOfStock) return -1;
+        if (!a.isOutOfStock && b.isOutOfStock) return 1;
+        return a.stock - b.stock;
+      })
+      .slice(0, 10); // Show top 10 low stock items (including out of stock)
   }, [products]);
 
   const [editingId, setEditingId] = useState<string | number | null>(null);
@@ -119,10 +128,19 @@ export function LowStockAlert() {
           lowStockItems.map((item) => (
           <div
             key={item.id}
-            className="flex items-center justify-between py-2 border-b border-transparent last:border-0 gap-2 hover:bg-gray-100 transition-colors rounded-md px-2"
+            className={cn(
+              "flex items-center justify-between py-2 border-b border-transparent last:border-0 gap-2 hover:bg-gray-100 transition-colors rounded-md px-2",
+              item.isOutOfStock && "bg-red-50 border-red-200"
+            )}
           >
-            <span className="font-medium text-gray-800 text-sm flex-1 min-w-0 truncate">
+            <span className={cn(
+              "font-medium text-sm flex-1 min-w-0 truncate",
+              item.isOutOfStock ? "text-red-700 font-semibold" : "text-gray-800"
+            )}>
               {item.name}
+              {item.isOutOfStock && (
+                <span className="ml-2 text-xs text-red-600 font-normal">(Out of Stock)</span>
+              )}
             </span>
             {editingId === item.id ? (
               <div className="flex items-center gap-2">
@@ -153,8 +171,13 @@ export function LowStockAlert() {
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-gray-700 whitespace-nowrap bg-gray-100 px-2 py-1 rounded">
-                  {item.stock} left
+                <span className={cn(
+                  "text-sm font-bold whitespace-nowrap px-2 py-1 rounded",
+                  item.isOutOfStock 
+                    ? "text-red-700 bg-red-100 border border-red-300" 
+                    : "text-gray-700 bg-gray-100"
+                )}>
+                  {item.isOutOfStock ? "Out of Stock" : `${item.stock} left`}
                 </span>
                 <Button
                   size="sm"

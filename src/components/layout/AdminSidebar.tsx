@@ -55,6 +55,11 @@ export function AdminSidebar({
   const { toast } = useToast();
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
+  const [touchEnd, setTouchEnd] = useState<{ x: number; y: number } | null>(null);
+
+  // Minimum swipe distance
+  const minSwipeDistance = 50;
 
   const handleNavClick = (section: string) => {
     onSectionChange(section);
@@ -95,6 +100,51 @@ export function AdminSidebar({
   // Determine if sidebar should appear expanded (hover overrides collapsed state on desktop)
   const isExpanded = isHovered || !collapsed;
 
+  // Handle touch start for swipe detection
+  const onTouchStart = (e: React.TouchEvent) => {
+    // Only handle on mobile
+    if (window.innerWidth >= 1024) return;
+    
+    setTouchEnd(null);
+    setTouchStart({
+      x: e.targetTouches[0].clientX,
+      y: e.targetTouches[0].clientY,
+    });
+  };
+
+  // Handle touch move for swipe detection
+  const onTouchMove = (e: React.TouchEvent) => {
+    // Only handle on mobile
+    if (window.innerWidth >= 1024) return;
+    
+    setTouchEnd({
+      x: e.targetTouches[0].clientX,
+      y: e.targetTouches[0].clientY,
+    });
+  };
+
+  // Handle touch end and detect swipe to close
+  const onTouchEnd = () => {
+    // Only handle on mobile
+    if (window.innerWidth >= 1024) return;
+    
+    if (!touchStart || !touchEnd) return;
+
+    const distanceX = touchStart.x - touchEnd.x;
+    const distanceY = touchStart.y - touchEnd.y;
+    const isLeftSwipe = distanceX > minSwipeDistance;
+    const isVerticalSwipe = Math.abs(distanceY) > Math.abs(distanceX);
+
+    // Only handle horizontal swipes
+    if (isVerticalSwipe) return;
+
+    // Swipe from right edge of sidebar (within 30px from right) to left to close
+    const sidebarWidth = 224; // 56 * 4 = 224px (w-56)
+    if (isLeftSwipe && touchStart.x > sidebarWidth - 30 && onMobileClose) {
+      onMobileClose();
+    }
+  };
+
   return (
     <aside
       className={cn(
@@ -118,6 +168,10 @@ export function AdminSidebar({
           onHoverChange?.(false);
         }
       }}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      style={{ touchAction: 'pan-y' }}
     >
       {/* Logo */}
       <div className="flex items-center justify-between h-16 px-4 border-b border-blue-600 bg-blue-500 lg:rounded-t-lg">

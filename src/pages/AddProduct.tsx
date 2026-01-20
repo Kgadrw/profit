@@ -10,6 +10,16 @@ import { useApi } from "@/hooks/useApi";
 import { playProductBeep, playErrorBeep, playWarningBeep, initAudio } from "@/lib/sound";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useTranslation } from "@/hooks/useTranslation";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Product {
   id?: number;
@@ -49,6 +59,7 @@ const AddProduct = () => {
     items: products,
     isLoading,
     add: addProduct,
+    update: updateProduct,
     refresh: refreshProducts,
   } = useApi<Product>({
     endpoint: "products",
@@ -73,6 +84,11 @@ const AddProduct = () => {
   const [bulkProducts, setBulkProducts] = useState<ProductFormData[]>([
     { name: "", category: categoryFromUrl || "", costPrice: "", sellingPrice: "", stock: "", isPackage: false, packageQuantity: "", productType: "", minStock: "" }
   ]);
+  
+  // State for out-of-stock duplicate dialog
+  const [outOfStockDialogOpen, setOutOfStockDialogOpen] = useState(false);
+  const [outOfStockProduct, setOutOfStockProduct] = useState<Product | null>(null);
+  const [pendingProductData, setPendingProductData] = useState<any>(null);
 
 
   const addBulkRow = () => {
@@ -91,13 +107,13 @@ const AddProduct = () => {
     setBulkProducts(updated);
   };
 
-  // Helper function to check if a product is a duplicate
-  const isDuplicate = (product: { name: string; category: string; productType?: string }) => {
+  // Helper function to check if a product is a duplicate and return the existing product
+  const findDuplicate = (product: { name: string; category: string; productType?: string }) => {
     const normalizedName = product.name.trim().toLowerCase();
     const normalizedCategory = product.category.trim().toLowerCase();
     const productType = product.productType?.trim() || null;
 
-    return products.some((existingProduct) => {
+    return products.find((existingProduct) => {
       const existingName = existingProduct.name.trim().toLowerCase();
       const existingCategory = existingProduct.category.trim().toLowerCase();
       const existingType = existingProduct.productType?.trim() || null;
@@ -108,6 +124,54 @@ const AddProduct = () => {
         existingType === productType
       );
     });
+  };
+  
+  // Helper function to check if a product is a duplicate (for backward compatibility)
+  const isDuplicate = (product: { name: string; category: string; productType?: string }) => {
+    return findDuplicate(product) !== undefined;
+  };
+  
+  // Handle updating out-of-stock product instead of creating duplicate
+  const handleUpdateOutOfStockProduct = async () => {
+    if (!outOfStockProduct || !pendingProductData) return;
+    
+    try {
+      const productId = outOfStockProduct._id || outOfStockProduct.id;
+      const newStock = parseInt(pendingProductData.stock) || 0;
+      const currentStock = outOfStockProduct.stock || 0;
+      
+      // Update product with new stock (add to existing stock)
+      const updatedProduct = {
+        ...outOfStockProduct,
+        stock: currentStock + newStock,
+        // Update other fields if provided
+        costPrice: pendingProductData.costPrice !== undefined ? parseFloat(pendingProductData.costPrice) : outOfStockProduct.costPrice,
+        sellingPrice: pendingProductData.sellingPrice !== undefined ? parseFloat(pendingProductData.sellingPrice) : outOfStockProduct.sellingPrice,
+        minStock: pendingProductData.minStock ? parseInt(pendingProductData.minStock) : outOfStockProduct.minStock,
+      };
+      
+      await updateProduct(updatedProduct as any);
+      await refreshProducts();
+      
+      setOutOfStockDialogOpen(false);
+      setOutOfStockProduct(null);
+      setPendingProductData(null);
+      
+      playProductBeep();
+      toast({
+        title: "Product Restocked",
+        description: `Successfully updated ${outOfStockProduct.name}. Stock increased by ${newStock} to ${currentStock + newStock}.`,
+      });
+      
+      navigate("/products");
+    } catch (error) {
+      playErrorBeep();
+      toast({
+        title: "Update Failed",
+        description: "Failed to update product. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSave = async () => {
@@ -130,15 +194,99 @@ const AddProduct = () => {
         }));
       
       if (newProducts.length > 0) {
-        // Check for duplicates
-        const duplicates = newProducts.filter((product) => isDuplicate(product));
-        if (duplicates.length > 0) {
+        // Check for duplicates and separate out-of-stock ones
+        const outOfStockDuplicates: { product: any; existing: Product }[] = [];
+        const regularDuplicates: any[] = [];
+        
+        newProducts.forEach((product) => {
+          const existing = findDuplicate(product);
+          if (existing) {
+            if (existing.stock === 0) {
+              outOfStockDuplicates.push({ product, existing });
+            } else {
+              regularDuplicates.push(product);
+            }
+          }
+        });
+        
+        if (regularDuplicates.length > 0) {
           playWarningBeep();
           toast({
             title: "Duplicate Products Found",
-            description: `The following product(s) already exist with the same name, category, and type: ${duplicates.map(p => p.name).join(", ")}`,
+            description: `The following product(s) already exist: ${regularDuplicates.map(p => p.name).join(", ")}`,
             variant: "destructive",
           });
+          return;
+        }
+        
+        // Handle out-of-stock duplicates - update them instead
+        if (outOfStockDuplicates.length > 0) {
+          try {
+            let updatedCount = 0;
+            for (const { product, existing } of outOfStockDuplicates) {
+              const productId = existing._id || existing.id;
+              const newStock = parseInt(product.stock) || 0;
+              const currentStock = existing.stock || 0;
+              
+              const updatedProduct = {
+                ...existing,
+                stock: currentStock + newStock,
+                costPrice: product.costPrice !== undefined ? parseFloat(product.costPrice) : existing.costPrice,
+                sellingPrice: product.sellingPrice !== undefined ? parseFloat(product.sellingPrice) : existing.sellingPrice,
+              };
+              
+              await updateProduct(updatedProduct as any);
+              updatedCount++;
+            }
+            
+            // Remove out-of-stock duplicates from newProducts
+            const outOfStockNames = new Set(outOfStockDuplicates.map(d => d.product.name.toLowerCase()));
+            const productsToAdd = newProducts.filter(p => !outOfStockNames.has(p.name.toLowerCase()));
+            
+            // Add remaining new products
+            let addedCount = 0;
+            for (const product of productsToAdd) {
+              try {
+                await addProduct(product as any);
+                addedCount++;
+              } catch (error: any) {
+                if (error?.status === 409 && error?.response?.outOfStock && error?.response?.existingProduct) {
+                  // Handle backend-detected out-of-stock duplicates
+                  const existing = error.response.existingProduct;
+                  const productId = existing._id;
+                  const newStock = parseInt(product.stock) || 0;
+                  const updatedProduct = {
+                    ...existing,
+                    stock: (existing.stock || 0) + newStock,
+                    costPrice: product.costPrice !== undefined ? parseFloat(product.costPrice) : existing.costPrice,
+                    sellingPrice: product.sellingPrice !== undefined ? parseFloat(product.sellingPrice) : existing.sellingPrice,
+                  };
+                  await updateProduct(updatedProduct as any);
+                  updatedCount++;
+                } else {
+                  console.warn(`Failed to add product: ${product.name}`, error);
+                }
+              }
+            }
+            
+            await refreshProducts();
+            
+            if (addedCount > 0 || updatedCount > 0) {
+              playProductBeep();
+              toast({
+                title: "Products Processed",
+                description: `Successfully added ${addedCount} new product(s) and restocked ${updatedCount} out-of-stock product(s).`,
+              });
+              navigate("/products");
+            }
+          } catch (error) {
+            playErrorBeep();
+            toast({
+              title: "Processing Failed",
+              description: "Failed to process some products. Please try again.",
+              variant: "destructive",
+            });
+          }
           return;
         }
 
@@ -218,14 +366,24 @@ const AddProduct = () => {
       };
 
       // Check for duplicate
-      if (isDuplicate(newProduct)) {
-        playWarningBeep();
-        toast({
-          title: "Duplicate Product",
-          description: "A product with the same name, category, and type already exists.",
-          variant: "destructive",
-        });
-        return;
+      const existingProduct = findDuplicate(newProduct);
+      if (existingProduct) {
+        // If duplicate is out of stock, offer to update instead
+        if (existingProduct.stock === 0) {
+          setOutOfStockProduct(existingProduct);
+          setPendingProductData(newProduct);
+          setOutOfStockDialogOpen(true);
+          playWarningBeep();
+          return;
+        } else {
+          playWarningBeep();
+          toast({
+            title: "Duplicate Product",
+            description: "A product with the same name, category, and type already exists.",
+            variant: "destructive",
+          });
+          return;
+        }
       }
       
       try {
@@ -239,8 +397,12 @@ const AddProduct = () => {
         navigate("/products");
       } catch (error: any) {
         playErrorBeep();
-        // Check if it's a duplicate error from the backend
-        if (error?.message?.toLowerCase().includes("duplicate") || error?.response?.duplicate || error?.status === 409) {
+        // Check if it's a duplicate error from the backend with out of stock info
+        if (error?.status === 409 && error?.response?.outOfStock && error?.response?.existingProduct) {
+          setOutOfStockProduct(error.response.existingProduct);
+          setPendingProductData(newProduct);
+          setOutOfStockDialogOpen(true);
+        } else if (error?.message?.toLowerCase().includes("duplicate") || error?.response?.duplicate || error?.status === 409) {
           toast({
             title: "Duplicate Product",
             description: "A product with the same name, category, and type already exists.",
@@ -641,6 +803,39 @@ const AddProduct = () => {
           </div>
         </div>
       </div>
+      
+      {/* Out of Stock Duplicate Dialog */}
+      <AlertDialog open={outOfStockDialogOpen} onOpenChange={setOutOfStockDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Product Already Exists (Out of Stock)</AlertDialogTitle>
+            <AlertDialogDescription>
+              A product named "{outOfStockProduct?.name}" already exists in category "{outOfStockProduct?.category}" 
+              {outOfStockProduct?.productType && ` (Type: ${outOfStockProduct.productType})`} but is currently out of stock.
+              <br /><br />
+              Would you like to update the existing product and increase its stock instead of creating a duplicate?
+              <br /><br />
+              <strong>Current stock:</strong> {outOfStockProduct?.stock || 0}
+              <br />
+              <strong>New stock to add:</strong> {pendingProductData?.stock || 0}
+              <br />
+              <strong>Total stock after update:</strong> {(outOfStockProduct?.stock || 0) + (parseInt(pendingProductData?.stock) || 0)}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setOutOfStockDialogOpen(false);
+              setOutOfStockProduct(null);
+              setPendingProductData(null);
+            }}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleUpdateOutOfStockProduct} className="bg-green-600 hover:bg-green-700">
+              Yes, Update & Restock
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 };

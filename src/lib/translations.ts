@@ -51,6 +51,7 @@ export interface Translations {
   recordSale: string;
   recordSales: string;
   quantity: string;
+  enterQuantity: string;
   paymentMethod: string;
   saleDate: string;
   cash: string;
@@ -290,6 +291,7 @@ export const translations: Record<Language, Translations> = {
     recordSale: "Record Sale",
     recordSales: "Record Sales",
     quantity: "Quantity",
+    enterQuantity: "Enter quantity",
     paymentMethod: "Payment Method",
     saleDate: "Sale Date",
     cash: "Cash",
@@ -527,6 +529,7 @@ export const translations: Record<Language, Translations> = {
     recordSale: "Andika ubucuruzi",
     recordSales: "Andika ubucuruzi",
     quantity: "Umubare",
+    enterQuantity: "Andika umubare",
     paymentMethod: "Uburyo bwo kwishyura",
     saleDate: "Itariki y'ubucuruzi",
     cash: "Amafaranga",

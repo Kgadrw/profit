@@ -121,7 +121,9 @@ const Products = () => {
   }, [products]);
 
   const filteredProducts = useMemo(() => {
-    let filtered = [...products];
+    // Always exclude products with stock = 0 from the product list
+    // (they are shown in Low Stock Alert instead)
+    let filtered = products.filter(p => p.stock > 0);
     
     // Filter by search query (name, category, productType)
     if (searchQuery.trim()) {
@@ -138,7 +140,7 @@ const Products = () => {
       filtered = filtered.filter(p => p.category === selectedCategory);
     }
     
-    // Filter by stock status
+    // Filter by stock status (only in-stock and low-stock, out-of-stock is always excluded)
     if (stockStatusFilter !== "all") {
       filtered = filtered.filter(p => {
         const minStock = p.minStock || 5;
@@ -147,8 +149,7 @@ const Products = () => {
             return p.stock > minStock;
           case "low-stock":
             return p.stock <= minStock && p.stock > 0;
-          case "out-of-stock":
-            return p.stock === 0;
+          // out-of-stock filter removed - products with stock = 0 are never shown in product list
           default:
             return true;
         }
@@ -399,7 +400,7 @@ const Products = () => {
       <div className="flex flex-col h-[calc(100vh-3rem)]">
       <div className="bg-white shadow-sm flex-1 flex flex-col min-h-0 overflow-hidden">
           {/* Filter Section */}
-          <div className="bg-white border-b border-gray-200 px-4 py-3 flex-shrink-0">
+          <div className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 px-4 py-4 flex-shrink-0 shadow-sm">
             <div className="flex flex-col gap-4">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
@@ -455,7 +456,7 @@ const Products = () => {
                     <SelectItem value="all">{t("allStatus")}</SelectItem>
                     <SelectItem value="in-stock">{t("inStock")}</SelectItem>
                     <SelectItem value="low-stock">{t("lowStock")}</SelectItem>
-                    <SelectItem value="out-of-stock">{t("outOfStock")}</SelectItem>
+                    {/* Out of stock products are shown in Low Stock Alert, not in product list */}
                   </SelectContent>
                 </Select>
                 
@@ -528,41 +529,44 @@ const Products = () => {
             <div className="rounded-b-lg overflow-hidden">
           {/* Desktop Table View */}
           <div className="hidden md:block">
-          <table className="w-full">
-              <thead className="sticky top-0 z-10 bg-white">
-              <tr className="border-b border-gray-200">
-                  <th className="text-left text-xs font-semibold text-gray-700 uppercase tracking-wider py-3 px-4 rounded-tl-lg">{t("productName")}</th>
-                  <th className="text-left text-xs font-semibold text-gray-700 uppercase tracking-wider py-3 px-4">{t("productType")}</th>
-                <th className="text-left text-xs font-semibold text-gray-700 uppercase tracking-wider py-3 px-4">{t("costPrice")}</th>
-                <th className="text-left text-xs font-semibold text-gray-700 uppercase tracking-wider py-3 px-4">{t("sellingPrice")}</th>
-                <th className="text-left text-xs font-semibold text-gray-700 uppercase tracking-wider py-3 px-4">{t("stock")}</th>
-                <th className="text-left text-xs font-semibold text-gray-700 uppercase tracking-wider py-3 px-4">{t("status")}</th>
-                  <th className="text-left text-xs font-semibold text-gray-700 uppercase tracking-wider py-3 px-4 rounded-tr-lg">{t("actions")}</th>
+          <table className="w-full border-collapse">
+              <thead className="sticky top-0 z-10 bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-300 shadow-sm">
+              <tr>
+                  <th className="text-left text-xs font-bold text-gray-800 uppercase tracking-wider py-4 px-6 border-r border-gray-200">{t("productName")}</th>
+                  <th className="text-left text-xs font-bold text-gray-800 uppercase tracking-wider py-4 px-6 border-r border-gray-200">{t("productType")}</th>
+                <th className="text-left text-xs font-bold text-orange-700 uppercase tracking-wider py-4 px-6 border-r border-gray-200">{t("costPrice")}</th>
+                <th className="text-left text-xs font-bold text-blue-700 uppercase tracking-wider py-4 px-6 border-r border-gray-200">{t("sellingPrice")}</th>
+                <th className="text-left text-xs font-bold text-purple-700 uppercase tracking-wider py-4 px-6 border-r border-gray-200">{t("stock")}</th>
+                <th className="text-left text-xs font-bold text-gray-800 uppercase tracking-wider py-4 px-6 border-r border-gray-200">{t("status")}</th>
+                  <th className="text-left text-xs font-bold text-gray-800 uppercase tracking-wider py-4 px-6">{t("actions")}</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-100">
+            <tbody className="bg-white divide-y divide-gray-200">
                 {filteredProducts.length > 0 ? (
                   filteredProducts.map((product, index) => {
                     const status = getStockStatus(product);
-                    const isLastRow = index === filteredProducts.length - 1;
                     const productId = (product as any)._id || product.id;
                 return (
-                  <tr key={productId} className={cn("transition-colors", index % 2 === 0 ? "bg-white" : "bg-gray-50/50", "hover:bg-gray-100")}>
-                        <td className={cn("py-3 px-4 whitespace-nowrap", isLastRow && "rounded-bl-lg")}>
+                  <tr key={productId} className={cn(
+                    "transition-all duration-150 border-b border-gray-100",
+                    index % 2 === 0 ? "bg-white" : "bg-gray-50/30",
+                    "hover:bg-blue-50/50 hover:shadow-sm"
+                  )}>
+                        <td className="py-4 px-6 whitespace-nowrap border-r border-gray-100">
                           <div className="flex items-center gap-2">
-                      <div className="text-sm font-medium text-gray-900">{product.name}</div>
+                      <div className="text-sm font-semibold text-gray-900">{product.name}</div>
                             {product.isPackage && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-700 rounded">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-700 rounded border border-purple-200">
                                 <Package size={12} />
                                 Box of {product.packageQuantity}
                               </span>
                             )}
                           </div>
                     </td>
-                    <td className="py-3 px-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-600">
+                    <td className="py-4 px-6 whitespace-nowrap border-r border-gray-100">
+                          <div className="text-sm">
                             {product.productType ? (
-                              <span className="inline-flex px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded">
+                              <span className="inline-flex px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded border border-gray-200">
                                 {product.productType}
                               </span>
                             ) : (
@@ -570,14 +574,14 @@ const Products = () => {
                             )}
                           </div>
                     </td>
-                    <td className="py-3 px-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{product.costPrice.toLocaleString()} rwf</div>
+                    <td className="py-4 px-6 whitespace-nowrap border-r border-gray-100">
+                      <div className="text-sm font-medium text-orange-700">{product.costPrice.toLocaleString()} rwf</div>
                     </td>
-                    <td className="py-3 px-4 whitespace-nowrap">
-                      <div className="text-sm font-semibold text-gray-900">{product.sellingPrice.toLocaleString()} rwf</div>
+                    <td className="py-4 px-6 whitespace-nowrap border-r border-gray-100">
+                      <div className="text-sm font-bold text-blue-700">{product.sellingPrice.toLocaleString()} rwf</div>
                     </td>
-                    <td className="py-3 px-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
+                    <td className="py-4 px-6 whitespace-nowrap border-r border-gray-100">
+                          <div className="text-sm font-medium text-purple-700">
                             {product.stock}
                             {product.minStock && (
                               <span className="text-xs text-gray-500 ml-1">
@@ -586,24 +590,28 @@ const Products = () => {
                             )}
                           </div>
                     </td>
-                    <td className="py-3 px-4 whitespace-nowrap">
-                          <span className={cn("inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded", status.className)}>
+                    <td className="py-4 px-6 whitespace-nowrap border-r border-gray-100">
+                          <span className={cn("inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded border", 
+                            status.label === "Low Stock" 
+                              ? "bg-red-50 text-red-700 border-red-200" 
+                              : "bg-green-50 text-green-700 border-green-200"
+                          )}>
                             {status.icon && <status.icon size={12} />}
                         {status.label}
                       </span>
                     </td>
-                        <td className={cn("py-3 px-4 whitespace-nowrap", isLastRow && "rounded-br-lg")}>
-                      <div className="flex gap-1">
+                        <td className="py-4 px-6 whitespace-nowrap">
+                      <div className="flex gap-2">
                         <button
                           onClick={() => openEditModal(product)}
-                          className="p-2 text-gray-700 hover:bg-gray-50 transition-colors"
+                          className="p-2 text-blue-600 hover:bg-blue-50 hover:text-blue-700 transition-all rounded-lg border border-transparent hover:border-blue-200"
                           title={t("editProduct")}
                         >
                           <Pencil size={16} />
                         </button>
                         <button
                           onClick={() => handleDeleteClick(product)}
-                          className="p-2 text-red-600 hover:bg-red-50 transition-colors"
+                          className="p-2 text-red-600 hover:bg-red-50 hover:text-red-700 transition-all rounded-lg border border-transparent hover:border-red-200"
                           title={t("deleteProduct")}
                         >
                           <Trash2 size={16} />
@@ -615,8 +623,12 @@ const Products = () => {
                   })
                 ) : (
                   <tr>
-                    <td colSpan={7} className="py-8 text-center text-gray-500 rounded-b-lg">
-                      {t("noProducts")}
+                    <td colSpan={7} className="py-12 text-center">
+                      <div className="flex flex-col items-center justify-center text-gray-400">
+                        <Package size={48} className="mb-4 opacity-50" />
+                        <p className="text-base font-medium">{t("noProducts")}</p>
+                        <p className="text-sm mt-1">Try adjusting your filters or add a new product</p>
+                      </div>
                     </td>
                   </tr>
                 )}

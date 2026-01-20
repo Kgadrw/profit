@@ -14,16 +14,18 @@ interface KPICardProps {
   showMoneyToggle?: boolean;
   showMoney?: boolean;
   onToggleMoney?: () => void;
+  bgColor?: string;
+  valueColor?: string;
 }
 
-export function KPICard({ title, value, subtitle, icon: Icon, trend, showMoneyToggle, showMoney, onToggleMoney }: KPICardProps) {
+export function KPICard({ title, value, subtitle, icon: Icon, trend, showMoneyToggle, showMoney, onToggleMoney, bgColor, valueColor }: KPICardProps) {
   return (
-    <div className="kpi-card">
+    <div className={cn("kpi-card", bgColor)}>
       <div className="flex items-start justify-between">
         <div className="space-y-2 flex-1">
           <p className="text-sm font-medium text-gray-600">{title}</p>
           <div className="flex items-center gap-2">
-            <p className="text-2xl font-normal text-gray-800 leading-tight">{value}</p>
+            <p className={cn("text-2xl font-normal leading-tight", valueColor || "text-gray-800")}>{value}</p>
             {showMoneyToggle && onToggleMoney && (
               <button
                 onClick={onToggleMoney}

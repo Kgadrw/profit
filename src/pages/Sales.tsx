@@ -109,6 +109,28 @@ const ProductCombobox = ({ value, onValueChange, products, placeholder = "Search
     return id.toString() === value;
   });
 
+  // Immediately clear selection if selected product becomes out of stock
+  // Watch products array directly for faster reactivity
+  useEffect(() => {
+    if (value && products.length > 0) {
+      const currentProduct = products.find((p) => {
+        const id = (p as any)._id || p.id;
+        return id.toString() === value;
+      });
+      
+      if (currentProduct && currentProduct.stock <= 0) {
+        onValueChange("");
+        setSearchQuery("");
+        if (onError) {
+          onError(`${currentProduct.name} is now out of stock and has been removed from selection.`);
+        }
+      }
+    }
+  }, [value, products, onValueChange, onError]);
+
+  // Only show selected product if it has stock > 0
+  const displayProduct = selectedProduct && selectedProduct.stock > 0 ? selectedProduct : null;
+
   return (
     <div className="relative w-full">
       <Popover open={open} onOpenChange={setOpen} modal={false}>
@@ -119,7 +141,7 @@ const ProductCombobox = ({ value, onValueChange, products, placeholder = "Search
             </div>
             <Input
               type="text"
-              value={selectedProduct ? selectedProduct.name : searchQuery}
+              value={displayProduct ? displayProduct.name : searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
                 if (!open) setOpen(true);
@@ -138,7 +160,7 @@ const ProductCombobox = ({ value, onValueChange, products, placeholder = "Search
               placeholder={placeholder}
               className={cn("pl-10 pr-10 cursor-text", className)}
             />
-            {selectedProduct && (
+            {displayProduct && (
               <button
                 type="button"
                 onClick={(e) => {
@@ -153,7 +175,7 @@ const ProductCombobox = ({ value, onValueChange, products, placeholder = "Search
                 <X className="h-4 w-4" />
               </button>
             )}
-            {!selectedProduct && (
+            {!displayProduct && (
               <ChevronsUpDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
             )}
           </div>
@@ -249,6 +271,7 @@ const Sales = () => {
   const {
     items: products,
     isLoading: productsLoading,
+    refresh: refreshProducts,
   } = useApi<Product>({
     endpoint: "products",
     defaultValue: [],
@@ -438,7 +461,7 @@ const Sales = () => {
             revenue,
             cost,
             profit,
-            date: sale.saleDate || getTodayDate(),
+            date: new Date().toISOString(),
             paymentMethod: sale.paymentMethod || "cash",
           };
         })
@@ -459,6 +482,8 @@ const Sales = () => {
       if (salesToCreate.length > 0) {
           await bulkAddSales(salesToCreate as any);
           await refreshSales();
+          // Immediately refresh products to update stock levels
+          await refreshProducts();
 
           playSaleBeep();
 
@@ -539,12 +564,14 @@ const Sales = () => {
         revenue,
         cost,
         profit,
-        date: saleDate,
+        date: new Date().toISOString(),
         paymentMethod: paymentMethod,
       };
 
         await addSale(newSale as any);
         await refreshSales();
+        // Immediately refresh products to update stock levels
+        await refreshProducts();
         
         // Play sale beep after recording (audio context should still be active from button click)
         // The playSaleBeep function will handle resuming if needed
@@ -710,19 +737,6 @@ const Sales = () => {
     setPinInput("");
   };
 
-  // Handle clear all sales
-  const handleClearAllSales = () => {
-    if (!hasPin) {
-      toast({
-        title: "PIN Required",
-        description: "Please set a PIN in Settings before clearing sales.",
-        variant: "destructive",
-      });
-      return;
-    }
-    setShowPinDialog(true);
-    setPinInput("");
-  };
 
   const handlePinVerification = async () => {
     initAudio();
@@ -837,7 +851,7 @@ const Sales = () => {
       <AppLayout title="Sales">
       <div className="flex flex-col h-[calc(100vh-3rem)]">
         {/* Record New Sale Form Skeleton */}
-        <div className="form-card mb-6 border-transparent flex-shrink-0">
+        <div className="form-card mb-6 border-transparent flex-shrink-0 bg-blue-500 border-blue-600">
           <div className="flex items-center justify-between mb-4">
             <Skeleton className="h-6 w-40" />
             <Skeleton className="h-10 w-28" />
@@ -922,10 +936,10 @@ const Sales = () => {
     <AppLayout title="Sales">
       <div className="flex flex-col min-h-0 pb-4">
       {/* Record New Sale Form - Static */}
-      <div className="form-card mb-6 border-transparent flex-shrink-0">
+      <div className="form-card mb-6 border-transparent flex-shrink-0 bg-blue-500 border-blue-600">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
-          <h3 className="section-title flex items-center gap-2 text-gray-800">
-            <Plus size={20} className="text-gray-700" />
+          <h3 className="section-title flex items-center gap-2 text-white">
+            <Plus size={20} className="text-white" />
             {t("recordNewSale")}
           </h3>
           <div className="flex gap-2 w-full sm:w-auto">
@@ -945,7 +959,7 @@ const Sales = () => {
                   setBulkSales([{ product: "", quantity: "1", sellingPrice: "", paymentMethod: "cash", saleDate: getTodayDate() }]);
                 }}
                 variant="ghost"
-                className="text-gray-700 w-full sm:w-auto"
+                className="text-white hover:text-white/80 hover:bg-white/10 w-full sm:w-auto"
               >
                 {t("singleSale")}
               </Button>
@@ -957,7 +971,7 @@ const Sales = () => {
           /* Bulk Add Form */
           <div className="space-y-4">
             <div className="flex justify-between items-center mb-4">
-              <p className="text-sm text-muted-foreground">{t("addMultipleSales")}</p>
+              <p className="text-sm text-white/90">{t("addMultipleSales")}</p>
               <Button
                 onClick={addBulkRow}
                 className="bg-gray-500 text-white hover:bg-gray-600 border border-transparent shadow-sm hover:shadow transition-all font-medium px-3 py-2 gap-2"
@@ -969,14 +983,13 @@ const Sales = () => {
 
             <div className="overflow-x-auto -mx-4 px-4">
               <table className="w-full min-w-[600px]">
-                <thead className="bg-white border-b border-transparent">
+                <thead className="bg-blue-600 border-b border-blue-700">
                   <tr>
-                    <th className="text-left p-2 text-xs font-medium text-foreground">{t("product")}</th>
-                    <th className="text-left p-2 text-xs font-medium text-foreground">{t("quantity")}</th>
-                    <th className="text-left p-2 text-xs font-medium text-foreground">{t("sellingPrice")} (rwf)</th>
-                    <th className="text-left p-2 text-xs font-medium text-foreground">{t("paymentMethod")}</th>
-                    <th className="text-left p-2 text-xs font-medium text-foreground">{t("saleDate")}</th>
-                    <th className="text-left p-2 text-xs font-medium text-foreground w-12"></th>
+                    <th className="text-left p-2 text-xs font-medium text-white">{t("product")}</th>
+                    <th className="text-left p-2 text-xs font-medium text-white">{t("quantity")}</th>
+                    <th className="text-left p-2 text-xs font-medium text-white">{t("sellingPrice")} (rwf)</th>
+                    <th className="text-left p-2 text-xs font-medium text-white">{t("paymentMethod")}</th>
+                    <th className="text-left p-2 text-xs font-medium text-white w-12"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1038,10 +1051,10 @@ const Sales = () => {
                             updateBulkSale(index, "quantity", value);
                           }}
                           className="input-field h-9"
-                          placeholder="1"
+                          placeholder={t("enterQuantity") || "Enter quantity"}
                         />
                         {sale.product && (
-                          <p className="text-xs text-muted-foreground mt-1">
+                          <p className="text-xs text-white/80 mt-1">
                             Stock: {products.find(p => {
                               const id = (p as any)._id || p.id;
                               return id.toString() === sale.product;
@@ -1076,14 +1089,6 @@ const Sales = () => {
                         </Select>
                       </td>
                       <td className="p-2">
-                        <Input
-                          type="date"
-                          value={sale.saleDate}
-                          onChange={(e) => updateBulkSale(index, "saleDate", e.target.value)}
-                          className="input-field h-9"
-                        />
-                      </td>
-                      <td className="p-2">
                         {bulkSales.length > 1 && (
                           <Button
                             size="sm"
@@ -1116,7 +1121,7 @@ const Sales = () => {
           /* Single Sale Form */
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="space-y-2">
-            <Label>{t("selectProduct")}</Label>
+            <Label className="text-white">{t("selectProduct")}</Label>
               <ProductCombobox
                 value={selectedProduct}
                 onValueChange={handleProductChange}
@@ -1133,7 +1138,7 @@ const Sales = () => {
               />
           </div>
           <div className="space-y-2">
-            <Label>{t("quantity")}</Label>
+            <Label className="text-white">{t("quantity")}</Label>
             <Input
               type="number"
               min="1"
@@ -1169,10 +1174,10 @@ const Sales = () => {
                 setQuantity(value);
               }}
               className="input-field"
-              placeholder="1"
+              placeholder={t("enterQuantity") || "Enter quantity"}
             />
             {selectedProduct && (
-              <p className="text-xs text-muted-foreground/70">
+              <p className="text-xs text-white/80">
                 {t("availableStock")}: {products.find(p => {
                   const id = (p as any)._id || p.id;
                   return id.toString() === selectedProduct;
@@ -1184,7 +1189,7 @@ const Sales = () => {
             )}
           </div>
           <div className="space-y-2">
-            <Label>{t("sellingPrice")} (rwf)</Label>
+            <Label className="text-white">{t("sellingPrice")} (rwf)</Label>
             <Input
               type="number"
               value={sellingPrice}
@@ -1193,7 +1198,7 @@ const Sales = () => {
               placeholder={selectedProduct ? "Enter price" : "Select product first"}
             />
             {selectedProduct && (
-              <p className="text-xs text-muted-foreground/70">
+              <p className="text-xs text-white/80">
                 {t("suggestedPrice")}: rwf {products.find(p => {
                 const id = (p as any)._id || p.id;
                 return id.toString() === selectedProduct;
@@ -1201,8 +1206,44 @@ const Sales = () => {
               </p>
             )}
           </div>
+          {/* Revenue, Cost, and Profit Preview */}
+          {selectedProduct && quantity && sellingPrice && parseInt(quantity) > 0 && parseFloat(sellingPrice) > 0 && (
+            <div className="col-span-full grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-blue-600/30 rounded-lg border border-blue-400/30">
+              {(() => {
+                const product = products.find(p => {
+                  const id = (p as any)._id || p.id;
+                  return id.toString() === selectedProduct;
+                });
+                if (!product) return null;
+                const qty = parseInt(quantity) || 0;
+                const price = parseFloat(sellingPrice) || 0;
+                const revenue = qty * price;
+                const cost = qty * product.costPrice;
+                const profit = revenue - cost;
+                
+                return (
+                  <>
+                    <div className="text-center">
+                      <p className="text-xs text-white/80 mb-1">Revenue</p>
+                      <p className="text-lg font-semibold text-blue-200">rwf {revenue.toLocaleString()}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs text-white/80 mb-1">Cost</p>
+                      <p className="text-lg font-semibold text-orange-200">rwf {cost.toLocaleString()}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs text-white/80 mb-1">Profit</p>
+                      <p className={`text-lg font-semibold ${profit >= 0 ? 'text-green-200' : 'text-red-200'}`}>
+                        rwf {profit.toLocaleString()}
+                      </p>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+          )}
           <div className="space-y-2">
-            <Label>{t("paymentMethod")}</Label>
+            <Label className="text-white">{t("paymentMethod")}</Label>
             <Select value={paymentMethod} onValueChange={setPaymentMethod}>
               <SelectTrigger className="input-field">
                 <SelectValue />
@@ -1215,15 +1256,6 @@ const Sales = () => {
                 <SelectItem value="transfer">{t("bankTransfer")}</SelectItem>
               </SelectContent>
             </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>{t("saleDate")}</Label>
-            <Input
-              type="date"
-              value={saleDate}
-              onChange={(e) => setSaleDate(e.target.value)}
-              className="input-field"
-            />
           </div>
           <div className="flex items-end">
             <Button 
@@ -1242,11 +1274,20 @@ const Sales = () => {
       {/* Sales History Table - Static Header with Scrollable Body */}
       <div className="bg-white shadow-sm flex-1 flex flex-col min-h-0 overflow-hidden rounded-lg">
         {/* Filter Section */}
-        <div className="bg-white border-b border-gray-200 px-4 py-3 flex-shrink-0">
+        <div className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 px-4 py-4 flex-shrink-0 shadow-sm">
           <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-2">
-              <Filter size={18} className="text-gray-700" />
-              <h3 className="text-sm font-semibold text-gray-800">{t("filterSales")}</h3>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Filter size={18} className="text-gray-700" />
+                <h3 className="text-sm font-bold text-gray-800">{t("filterSales")}</h3>
+              </div>
+              {selectedSales.size > 0 && (
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-100 border border-blue-300 rounded-lg">
+                  <span className="text-xs font-semibold text-blue-800">
+                    {selectedSales.size} {selectedSales.size === 1 ? 'sale' : 'sales'} selected
+                  </span>
+                </div>
+              )}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
               {/* Search Input */}
@@ -1318,25 +1359,18 @@ const Sales = () => {
               {selectedSales.size > 0 && (
                 <Button
                   onClick={handleDeleteSelected}
-                  variant="outline"
-                  className="bg-white border border-red-300 text-red-700 hover:bg-red-500 hover:text-white rounded-lg"
+                  className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200 rounded-lg px-4 py-2 font-semibold flex items-center gap-2"
                 >
-                  <Trash2 size={14} className="mr-2" />
-                  {t("delete")} ({selectedSales.size})
+                  <div className="relative">
+                    <Trash2 size={16} />
+                    <span className="absolute -top-1 -right-1 bg-white text-red-600 text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center shadow-sm">
+                      {selectedSales.size}
+                    </span>
+                  </div>
+                  <span>{t("delete")} Selected</span>
                 </Button>
               )}
               
-              {/* Clear All Sales */}
-              {sales.length > 0 && (
-                <Button
-                  onClick={handleClearAllSales}
-                  variant="outline"
-                  className="bg-white border border-red-300 text-red-700 hover:bg-red-500 hover:text-white rounded-lg"
-                >
-                  <Trash2 size={14} className="mr-2" />
-                  {t("language") === "rw" ? "Siba ubucuruzi bwose" : "Clear All Sales"}
-                </Button>
-              )}
             </div>
             <div className="text-xs text-gray-500">
               {t("language") === "rw" ? "Byerekana" : "Showing"} {filteredSales.length} {t("language") === "rw" ? "bya" : "of"} {sales.length} {t("sales").toLowerCase()}
@@ -1347,27 +1381,29 @@ const Sales = () => {
         <div className="overflow-auto flex-1 pb-4">
           {/* Desktop Table View */}
           <div className="hidden md:block">
-          <table className="w-full">
-            <thead className="sticky top-0 z-10 bg-white">
-              <tr className="border-b border-gray-200">
-                <th className="text-left text-xs font-semibold text-gray-700 uppercase tracking-wider py-3 px-4 w-12">
-                  <Checkbox
-                    checked={allSelected}
-                    onCheckedChange={handleSelectAll}
-                    className="border-2 border-gray-400 data-[state=checked]:bg-gray-600 data-[state=checked]:border-gray-600"
-                  />
+          <table className="w-full border-collapse">
+            <thead className="sticky top-0 z-10 bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-300 shadow-sm">
+              <tr>
+                <th className="text-left text-xs font-bold text-gray-800 uppercase tracking-wider py-4 px-6 w-12 border-r border-gray-200">
+                  {selectedSales.size > 0 && (
+                    <Checkbox
+                      checked={allSelected}
+                      onCheckedChange={handleSelectAll}
+                      className="h-5 w-5 rounded-md border-2 border-gray-400 bg-white transition-all duration-200 hover:border-blue-500 hover:bg-blue-50 data-[state=checked]:bg-gradient-to-br data-[state=checked]:from-blue-500 data-[state=checked]:to-blue-600 data-[state=checked]:border-blue-600 data-[state=checked]:shadow-md data-[state=checked]:shadow-blue-200"
+                    />
+                  )}
                 </th>
-                <th className="text-left text-xs font-semibold text-gray-700 uppercase tracking-wider py-3 px-4">{t("product")}</th>
-                <th className="text-left text-xs font-semibold text-gray-700 uppercase tracking-wider py-3 px-4">{t("quantity")}</th>
-                <th className="text-left text-xs font-semibold text-gray-700 uppercase tracking-wider py-3 px-4">{t("revenue")}</th>
-                <th className="text-left text-xs font-semibold text-gray-700 uppercase tracking-wider py-3 px-4">{t("language") === "rw" ? "Agaciro" : "Cost"}</th>
-                <th className="text-left text-xs font-semibold text-gray-700 uppercase tracking-wider py-3 px-4">{t("profit")}</th>
-                <th className="text-left text-xs font-semibold text-gray-700 uppercase tracking-wider py-3 px-4">{t("paymentMethod")}</th>
-                <th className="text-left text-xs font-semibold text-gray-700 uppercase tracking-wider py-3 px-4">{t("date")}</th>
-                <th className="text-left text-xs font-semibold text-gray-700 uppercase tracking-wider py-3 px-4">{t("actions")}</th>
+                <th className="text-left text-xs font-bold text-gray-800 uppercase tracking-wider py-4 px-6 border-r border-gray-200">{t("product")}</th>
+                <th className="text-left text-xs font-bold text-gray-800 uppercase tracking-wider py-4 px-6 border-r border-gray-200">{t("quantity")}</th>
+                <th className="text-left text-xs font-bold text-blue-700 uppercase tracking-wider py-4 px-6 border-r border-gray-200">{t("revenue")}</th>
+                <th className="text-left text-xs font-bold text-orange-700 uppercase tracking-wider py-4 px-6 border-r border-gray-200">{t("language") === "rw" ? "Agaciro" : "Cost"}</th>
+                <th className="text-left text-xs font-bold text-green-700 uppercase tracking-wider py-4 px-6 border-r border-gray-200">{t("profit")}</th>
+                <th className="text-left text-xs font-bold text-gray-800 uppercase tracking-wider py-4 px-6 border-r border-gray-200">{t("paymentMethod")}</th>
+                <th className="text-left text-xs font-bold text-gray-800 uppercase tracking-wider py-4 px-6 border-r border-gray-200">{t("date")}</th>
+                <th className="text-left text-xs font-bold text-gray-800 uppercase tracking-wider py-4 px-6">{t("actions")}</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-100">
+            <tbody className="bg-white divide-y divide-gray-200">
               {filteredSales.length > 0 ? (
                 filteredSales.map((sale, index) => {
                   const saleId = (sale as any)._id || sale.id;
@@ -1375,58 +1411,72 @@ const Sales = () => {
                   const isSelected = selectedSales.has(idString);
                   
                   return (
-                    <tr key={saleId || index} className={cn("transition-colors", index % 2 === 0 ? "bg-white" : "bg-gray-50/50", "hover:bg-gray-100", isSelected && "bg-gray-50")}>
-                      <td className="py-3 px-4 whitespace-nowrap">
+                    <tr key={saleId || index} className={cn(
+                      "transition-all duration-150 border-b border-gray-100",
+                      index % 2 === 0 ? "bg-white" : "bg-gray-50/30",
+                      "hover:bg-blue-50/50 hover:shadow-sm",
+                      isSelected && "bg-blue-100/50 border-blue-200"
+                    )}>
+                      <td className="py-4 px-6 whitespace-nowrap border-r border-gray-100">
                         <Checkbox
                           checked={isSelected}
                           onCheckedChange={() => handleSelectSale(idString)}
-                          className="border-2 border-gray-400 data-[state=checked]:bg-gray-600 data-[state=checked]:border-gray-600"
+                          className="h-5 w-5 rounded-md border-2 border-gray-400 bg-white transition-all duration-200 hover:border-blue-500 hover:bg-blue-50 data-[state=checked]:bg-gradient-to-br data-[state=checked]:from-blue-500 data-[state=checked]:to-blue-600 data-[state=checked]:border-blue-600 data-[state=checked]:shadow-md data-[state=checked]:shadow-blue-200"
                         />
                       </td>
-                  <td className="py-3 px-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{sale.product}</div>
-                  </td>
-                  <td className="py-3 px-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{sale.quantity}</div>
-                  </td>
-                  <td className="py-3 px-4 whitespace-nowrap">
-                    <div className="text-sm font-semibold text-gray-900">{sale.revenue.toLocaleString()} rwf</div>
-                  </td>
-                  <td className="py-3 px-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-600">{sale.cost.toLocaleString()} rwf</div>
-                  </td>
-                  <td className="py-3 px-4 whitespace-nowrap">
-                    <div className="text-sm font-semibold text-gray-900">{sale.profit.toLocaleString()} rwf</div>
-                  </td>
-                  <td className="py-3 px-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-600">
-                      {sale.paymentMethod === 'cash' && t("cash")}
-                      {sale.paymentMethod === 'card' && t("card")}
-                      {sale.paymentMethod === 'momo' && t("momoPay")}
-                      {sale.paymentMethod === 'airtel' && t("airtelPay")}
-                      {sale.paymentMethod === 'transfer' && t("bankTransfer")}
-                      {!sale.paymentMethod && t("cash")}
-                    </div>
-                  </td>
-                  <td className="py-3 px-4 whitespace-nowrap">
+                      <td className="py-4 px-6 whitespace-nowrap border-r border-gray-100">
+                        <div className="text-sm font-semibold text-gray-900">{sale.product}</div>
+                      </td>
+                      <td className="py-4 px-6 whitespace-nowrap border-r border-gray-100">
+                        <div className="text-sm font-medium text-gray-800">{sale.quantity}</div>
+                      </td>
+                      <td className="py-4 px-6 whitespace-nowrap border-r border-gray-100">
+                        <div className="text-sm font-bold text-blue-700">{sale.revenue.toLocaleString()} rwf</div>
+                      </td>
+                      <td className="py-4 px-6 whitespace-nowrap border-r border-gray-100">
+                        <div className="text-sm font-medium text-orange-700">{sale.cost.toLocaleString()} rwf</div>
+                      </td>
+                      <td className="py-4 px-6 whitespace-nowrap border-r border-gray-100">
+                        <div className={cn(
+                          "text-sm font-bold",
+                          sale.profit >= 0 ? "text-green-700" : "text-red-700"
+                        )}>
+                          {sale.profit >= 0 ? "+" : ""}{sale.profit.toLocaleString()} rwf
+                        </div>
+                      </td>
+                      <td className="py-4 px-6 whitespace-nowrap border-r border-gray-100">
+                        <div className="text-sm font-medium text-gray-700">
+                          {sale.paymentMethod === 'cash' && t("cash")}
+                          {sale.paymentMethod === 'card' && t("card")}
+                          {sale.paymentMethod === 'momo' && t("momoPay")}
+                          {sale.paymentMethod === 'airtel' && t("airtelPay")}
+                          {sale.paymentMethod === 'transfer' && t("bankTransfer")}
+                          {!sale.paymentMethod && t("cash")}
+                        </div>
+                      </td>
+                      <td className="py-4 px-6 whitespace-nowrap border-r border-gray-100">
                         <div className="text-sm text-gray-600">{formatDateWithTime(sale.date)}</div>
                       </td>
-                      <td className="py-3 px-4 whitespace-nowrap">
+                      <td className="py-4 px-6 whitespace-nowrap">
                         <button
                           onClick={() => handleDeleteSingle(sale)}
-                          className="p-2 text-red-600 hover:bg-red-50 transition-colors rounded"
+                          className="p-2 text-red-600 hover:bg-red-50 hover:text-red-700 transition-all rounded-lg border border-transparent hover:border-red-200"
                           title="Delete sale"
                         >
                           <Trash2 size={16} />
                         </button>
-                  </td>
-                </tr>
+                      </td>
+                    </tr>
                   );
                 })
               ) : (
                 <tr>
-                  <td colSpan={9} className="py-8 text-center text-gray-500">
-                    No sales found matching your filters
+                  <td colSpan={9} className="py-12 text-center">
+                    <div className="flex flex-col items-center justify-center text-gray-400">
+                      <ShoppingCart size={48} className="mb-4 opacity-50" />
+                      <p className="text-base font-medium">No sales found matching your filters</p>
+                      <p className="text-sm mt-1">Try adjusting your search or date range</p>
+                    </div>
                   </td>
                 </tr>
               )}
@@ -1449,7 +1499,7 @@ const Sales = () => {
                           <Checkbox
                             checked={isSelected}
                             onCheckedChange={() => handleSelectSale(idString)}
-                            className="border-2 border-gray-400 data-[state=checked]:bg-gray-600 data-[state=checked]:border-gray-600 shrink-0"
+                            className="h-5 w-5 rounded-md border-2 border-gray-400 bg-white transition-all duration-200 hover:border-blue-500 hover:bg-blue-50 data-[state=checked]:bg-gradient-to-br data-[state=checked]:from-blue-500 data-[state=checked]:to-blue-600 data-[state=checked]:border-blue-600 data-[state=checked]:shadow-md data-[state=checked]:shadow-blue-200 shrink-0"
                           />
                           <h4 className="text-base font-semibold text-gray-900 truncate">{sale.product}</h4>
                         </div>

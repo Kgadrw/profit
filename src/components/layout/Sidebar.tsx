@@ -9,7 +9,6 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
-  Menu,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePinAuth } from "@/hooks/usePinAuth";
@@ -51,6 +50,11 @@ export function Sidebar({ collapsed, onToggle, onMobileClose, onMobileToggle, on
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const [menuItems, setMenuItems] = useState(getMenuItems(t));
   const [isHovered, setIsHovered] = useState(false);
+  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
+  const [touchEnd, setTouchEnd] = useState<{ x: number; y: number } | null>(null);
+
+  // Minimum swipe distance
+  const minSwipeDistance = 50;
 
   // Update menu items when language changes
   useEffect(() => {
@@ -116,12 +120,57 @@ export function Sidebar({ collapsed, onToggle, onMobileClose, onMobileToggle, on
   // Determine if sidebar should appear expanded (hover overrides collapsed state on desktop)
   const isExpanded = isHovered || !collapsed;
 
+  // Handle touch start for swipe detection
+  const onTouchStart = (e: React.TouchEvent) => {
+    // Only handle on mobile
+    if (window.innerWidth >= 1024) return;
+    
+    setTouchEnd(null);
+    setTouchStart({
+      x: e.targetTouches[0].clientX,
+      y: e.targetTouches[0].clientY,
+    });
+  };
+
+  // Handle touch move for swipe detection
+  const onTouchMove = (e: React.TouchEvent) => {
+    // Only handle on mobile
+    if (window.innerWidth >= 1024) return;
+    
+    setTouchEnd({
+      x: e.targetTouches[0].clientX,
+      y: e.targetTouches[0].clientY,
+    });
+  };
+
+  // Handle touch end and detect swipe to close
+  const onTouchEnd = () => {
+    // Only handle on mobile
+    if (window.innerWidth >= 1024) return;
+    
+    if (!touchStart || !touchEnd) return;
+
+    const distanceX = touchStart.x - touchEnd.x;
+    const distanceY = touchStart.y - touchEnd.y;
+    const isLeftSwipe = distanceX > minSwipeDistance;
+    const isVerticalSwipe = Math.abs(distanceY) > Math.abs(distanceX);
+
+    // Only handle horizontal swipes
+    if (isVerticalSwipe) return;
+
+    // Swipe from right edge of sidebar (within 30px from right) to left to close
+    const sidebarWidth = 224; // 56 * 4 = 224px (w-56)
+    if (isLeftSwipe && touchStart.x > sidebarWidth - 30 && onMobileClose) {
+      onMobileClose();
+    }
+  };
+
   return (
     <aside
       className={cn(
-        "fixed z-50 bg-white transition-all duration-300 flex flex-col overflow-hidden",
+        "fixed z-50 bg-white transition-all duration-300 flex flex-col overflow-hidden shadow-lg",
         "left-0 top-0 h-screen w-56",
-        "lg:left-0 lg:top-0 lg:h-screen lg:border-r lg:border-gray-200",
+        "lg:left-0 lg:top-0 lg:h-screen lg:border-r lg:border-gray-200 lg:shadow-none",
         isExpanded && "lg:w-56",
         !isExpanded && collapsed && "lg:w-16"
       )}
@@ -139,6 +188,10 @@ export function Sidebar({ collapsed, onToggle, onMobileClose, onMobileToggle, on
           onHoverChange?.(false);
         }
       }}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      style={{ touchAction: 'pan-y' }}
     >
       {/* Logo */}
         <div className="flex items-center justify-between h-16 px-4 bg-white">
@@ -162,14 +215,6 @@ export function Sidebar({ collapsed, onToggle, onMobileClose, onMobileToggle, on
           </div>
         )}
         <div className="flex items-center gap-2">
-          {onMobileToggle && (
-            <button
-              onClick={onMobileToggle}
-              className="p-2 hover:bg-gray-100 text-gray-700 transition-colors rounded lg:hidden"
-            >
-              <Menu size={20} />
-            </button>
-          )}
           <button
             onClick={onToggle}
             className="p-2 hover:bg-gray-100 text-gray-700 transition-colors rounded hidden lg:block"
@@ -195,7 +240,7 @@ export function Sidebar({ collapsed, onToggle, onMobileClose, onMobileToggle, on
               )}
               title={!isExpanded ? item.label : undefined}
             >
-              <item.icon size={20} />
+              <item.icon size={20} className={isActive ? "text-white" : ""} />
               {isExpanded && <span>{item.label}</span>}
             </Link>
           );

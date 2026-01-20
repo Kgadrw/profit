@@ -151,7 +151,11 @@
   }
 
   .sidebar-item-active {
-    @apply bg-gray-200 text-gray-900 font-semibold shadow-sm;
+    @apply bg-blue-500 text-white font-semibold shadow-sm;
+  }
+
+  .sidebar-item-active:hover {
+    @apply bg-blue-500 text-white;
   }
 }
 

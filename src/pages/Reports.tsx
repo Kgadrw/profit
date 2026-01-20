@@ -685,11 +685,11 @@ const Reports = () => {
           </div>
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
-          <Button onClick={() => handleExport("pdf")} className="bg-gray-500 text-white hover:bg-gray-600 border border-transparent shadow-sm hover:shadow transition-all font-medium px-4 py-2 gap-2 w-full sm:w-auto">
+          <Button onClick={() => handleExport("pdf")} className="bg-red-500 text-white hover:bg-red-600 border border-transparent shadow-sm hover:shadow transition-all font-medium px-4 py-2 gap-2 w-full sm:w-auto">
             <Download size={16} />
             {t("exportPdf")}
           </Button>
-          <Button onClick={() => handleExport("excel")} className="bg-gray-500 text-white hover:bg-gray-600 border border-transparent shadow-sm hover:shadow transition-all font-medium px-4 py-2 gap-2 w-full sm:w-auto">
+          <Button onClick={() => handleExport("excel")} className="bg-green-500 text-white hover:bg-green-600 border border-transparent shadow-sm hover:shadow transition-all font-medium px-4 py-2 gap-2 w-full sm:w-auto">
             <Download size={16} />
             {t("exportExcel")}
           </Button>
@@ -771,7 +771,6 @@ const Reports = () => {
                         boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
                       }}
                       labelStyle={{ color: '#374151', fontWeight: 600, marginBottom: '4px' }}
-                      itemStyle={{ color: '#6b7280' }}
                       labelFormatter={(value) => {
                         const item = salesOverTimeData.find(d => d.monthDay === value);
                         if (!item) return value;
@@ -800,8 +799,8 @@ const Reports = () => {
                       wrapperStyle={{ paddingTop: '20px' }}
                       iconType="rect"
                     />
-                    <Bar dataKey="revenue" fill="#6b7280" name={t("revenue")} radius={[2, 2, 0, 0]} />
-                    <Bar dataKey="profit" fill="#9ca3af" name={t("profit")} radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="revenue" fill="#3b82f6" name={t("revenue")} radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="profit" fill="#10b981" name={t("profit")} radius={[2, 2, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
                 </div>
