@@ -83,16 +83,20 @@ interface ProductComboboxProps {
   products: Product[];
   placeholder?: string;
   className?: string;
+  onError?: (message: string) => void;
 }
 
-const ProductCombobox = ({ value, onValueChange, products, placeholder = "Search products by name, category, or type...", className }: ProductComboboxProps) => {
+const ProductCombobox = ({ value, onValueChange, products, placeholder = "Search products by name, category, or type...", className, onError }: ProductComboboxProps) => {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredProducts = useMemo(() => {
-    if (!searchQuery) return products;
+    // Filter out products with stock <= 0 (sold out)
+    const availableProducts = products.filter((product) => product.stock > 0);
+    
+    if (!searchQuery) return availableProducts;
     const query = searchQuery.toLowerCase();
-    return products.filter(
+    return availableProducts.filter(
       (product) =>
         product.name.toLowerCase().includes(query) ||
         product.category.toLowerCase().includes(query) ||
@@ -176,11 +180,22 @@ const ProductCombobox = ({ value, onValueChange, products, placeholder = "Search
                       key={product.id}
                       value={`${product.name} ${product.category} ${product.productType || ""}`}
                       onSelect={() => {
-                        onValueChange(product.id.toString());
-                        setOpen(false);
-                        setSearchQuery("");
+                        // Double-check stock before allowing selection
+                        if (product.stock > 0) {
+                          onValueChange(product.id.toString());
+                          setOpen(false);
+                          setSearchQuery("");
+                        } else {
+                          if (onError) {
+                            onError(`${product.name} is currently out of stock and cannot be sold.`);
+                          }
+                        }
                       }}
-                      className="flex items-center justify-between"
+                      disabled={product.stock <= 0}
+                      className={cn(
+                        "flex items-center justify-between",
+                        product.stock <= 0 && "opacity-50 cursor-not-allowed"
+                      )}
                     >
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         <Check
@@ -298,12 +313,46 @@ const Sales = () => {
     setSaleDate(getTodayDate());
   }, []);
 
+  // Clear selected product if it becomes out of stock
+  useEffect(() => {
+    if (selectedProduct) {
+      const product = products.find((p) => {
+        const id = (p as any)._id || p.id;
+        return id.toString() === selectedProduct;
+      });
+      if (product && product.stock <= 0) {
+        setSelectedProduct("");
+        setSellingPrice("");
+        playWarningBeep();
+        toast({
+          title: "Product Out of Stock",
+          description: `${product.name} is now out of stock and has been removed from selection.`,
+          variant: "destructive",
+        });
+      }
+    }
+  }, [products, selectedProduct]);
+
   const handleProductChange = (productId: string) => {
-    setSelectedProduct(productId);
     const product = products.find((p) => {
       const id = (p as any)._id || p.id;
       return id.toString() === productId;
     });
+    
+    // Prevent selecting products with stock <= 0
+    if (product && product.stock <= 0) {
+      playErrorBeep();
+      toast({
+        title: "Product Out of Stock",
+        description: `${product.name} is currently out of stock and cannot be sold.`,
+        variant: "destructive",
+      });
+      setSelectedProduct("");
+      setSellingPrice("");
+      return;
+    }
+    
+    setSelectedProduct(productId);
     if (product) {
       setSellingPrice(product.sellingPrice.toString());
     }
@@ -940,6 +989,14 @@ const Sales = () => {
                           products={products}
                           placeholder="Search products by name, category, or type..."
                           className="h-9"
+                          onError={(message) => {
+                            playErrorBeep();
+                            toast({
+                              title: "Product Out of Stock",
+                              description: message,
+                              variant: "destructive",
+                            });
+                          }}
                         />
                       </td>
                       <td className="p-2">
@@ -1065,6 +1122,14 @@ const Sales = () => {
                 onValueChange={handleProductChange}
                 products={products}
                 placeholder="Search products by name, category, or type..."
+                onError={(message) => {
+                  playErrorBeep();
+                  toast({
+                    title: "Product Out of Stock",
+                    description: message,
+                    variant: "destructive",
+                  });
+                }}
               />
           </div>
           <div className="space-y-2">
