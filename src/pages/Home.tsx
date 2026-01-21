@@ -2,7 +2,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { LoginModal } from "@/components/LoginModal";
-import { User, Globe } from "lucide-react";
+import { User, Globe, Instagram, Phone } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useLanguage } from "@/hooks/useLanguage";
 import {
@@ -282,91 +282,16 @@ const Home = () => {
                 </Button>
               </div>
 
-              {/* Pro Plan */}
-              <div className="border border-gray-200 bg-gray-100 p-4 flex flex-col">
-                <div className="flex items-start gap-3 mb-3">
-                  <span className="px-2.5 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
-                    {t("proPlan")}
-                  </span>
-                </div>
-                <p className="text-sm text-gray-700 mb-3">
-                  <span className="font-semibold text-lg">$19</span>
-                  <span className="text-xs text-gray-500 ml-1">{t("perMonth")}</span>
-                </p>
-                <ul className="text-sm text-gray-700 space-y-2 leading-relaxed mb-4 flex-grow">
-                  <li>• {t("everythingInBasic")}</li>
-                  <li>• {t("unlimitedProducts")}</li>
-                  <li>• {t("advancedAnalyticsInsights")}</li>
-                  <li>• {t("exportReports")}</li>
-                  <li>• {t("prioritySupport")}</li>
-                </ul>
-                <Button
-                  className="bg-gray-500 text-white hover:bg-gray-600 rounded-full px-4 py-2 text-sm w-full"
-                  onClick={() => {
-                    setLoginModalTab("create");
-                    setLoginModalOpen(true);
-                  }}
-                >
-                  {t("subscribe")}
-                </Button>
+              {/* Pro Plan - Empty */}
+              <div className="border border-gray-200 bg-gray-100 p-4 flex flex-col opacity-30">
               </div>
 
-              {/* Enterprise Plan */}
-              <div className="border border-gray-200 bg-gray-100 p-4 flex flex-col">
-                <div className="flex items-start gap-3 mb-3">
-                  <span className="px-2.5 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">
-                    {t("enterprisePlan")}
-                  </span>
-                </div>
-                <p className="text-sm text-gray-700 mb-3">
-                  <span className="font-semibold text-lg">$49</span>
-                  <span className="text-xs text-gray-500 ml-1">{t("perMonth")}</span>
-                </p>
-                <ul className="text-sm text-gray-700 space-y-2 leading-relaxed mb-4 flex-grow">
-                  <li>• {t("everythingInPro")}</li>
-                  <li>• {t("multiUserAccess")}</li>
-                  <li>• {t("advancedSecurityFeatures")}</li>
-                  <li>• {t("apiAccessIntegrations")}</li>
-                  <li>• {t("dedicatedAccountManager")}</li>
-                </ul>
-                <Button
-                  className="bg-gray-500 text-white hover:bg-gray-600 rounded-full px-4 py-2 text-sm w-full"
-                  onClick={() => {
-                    setLoginModalTab("create");
-                    setLoginModalOpen(true);
-                  }}
-                >
-                  {t("subscribe")}
-                </Button>
+              {/* Enterprise Plan - Empty */}
+              <div className="border border-gray-200 bg-gray-100 p-4 flex flex-col opacity-30">
               </div>
 
-              {/* Custom Plan */}
-              <div className="border border-gray-200 bg-gray-100 p-4 flex flex-col">
-                <div className="flex items-start gap-3 mb-3">
-                  <span className="px-2.5 py-1 bg-orange-100 text-orange-700 text-xs font-medium rounded-full">
-                    {t("customPlan")}
-                  </span>
-                </div>
-                <p className="text-sm text-gray-700 mb-3">
-                  <span className="font-semibold text-lg">$99</span>
-                  <span className="text-xs text-gray-500 ml-1">{t("perMonth")}</span>
-                </p>
-                <ul className="text-sm text-gray-700 space-y-2 leading-relaxed mb-4 flex-grow">
-                  <li>• {t("everythingInEnterprise")}</li>
-                  <li>• {t("customFeatureDevelopment")}</li>
-                  <li>• {t("whiteLabelSolution")}</li>
-                  <li>• {t("onPremiseDeployment")}</li>
-                  <li>• {t("prioritySupport247")}</li>
-                </ul>
-                <Button
-                  className="bg-gray-500 text-white hover:bg-gray-600 rounded-full px-4 py-2 text-sm w-full"
-                  onClick={() => {
-                    setLoginModalTab("create");
-                    setLoginModalOpen(true);
-                  }}
-                >
-                  {t("subscribe")}
-                </Button>
+              {/* Custom Plan - Empty */}
+              <div className="border border-gray-200 bg-gray-100 p-4 flex flex-col opacity-30">
               </div>
             </div>
           </section>
@@ -383,82 +308,44 @@ const Home = () => {
       {/* Footer */}
       <footer className="bg-stone-50 border-t border-gray-200" role="contentinfo">
         <div className="container mx-auto px-6 lg:px-12 xl:px-20 py-12">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-8">
-            {/* Product Column */}
-            <div>
-              <h3 className="text-sm font-medium text-gray-500 mb-4">{t("productColumn")}</h3>
-              <ul className="space-y-3">
-                <li><a href="#features" className="text-sm text-gray-900 hover:text-gray-600">{t("featuresLink")}</a></li>
-                <li><a href="#pricing" className="text-sm text-gray-900 hover:text-gray-600">{t("pricingLink")}</a></li>
-                <li><a href="#" className="text-sm text-gray-900 hover:text-gray-600">{t("enterpriseLink")}</a></li>
-                <li><a href="#" className="text-sm text-gray-900 hover:text-gray-600">{t("reportsLink")}</a></li>
-                <li><a href="#" className="text-sm text-gray-900 hover:text-gray-600">{t("analyticsLink")}</a></li>
-              </ul>
-            </div>
-
-            {/* Resources Column */}
-            <div>
-              <h3 className="text-sm font-medium text-gray-500 mb-4">{t("resourcesColumn")}</h3>
-              <ul className="space-y-3">
-                <li><a href="#" className="text-sm text-gray-900 hover:text-gray-600">{t("documentationLink")}</a></li>
-                <li><a href="#" className="text-sm text-gray-900 hover:text-gray-600">{t("supportLink")}</a></li>
-                <li><a href="#" className="text-sm text-gray-900 hover:text-gray-600">{t("blogLink")}</a></li>
-                <li><a href="#" className="text-sm text-gray-900 hover:text-gray-600">{t("guidesLink")}</a></li>
-                <li><a href="#" className="text-sm text-gray-900 hover:text-gray-600">{t("apiLink")}</a></li>
-              </ul>
-            </div>
-
-            {/* Company Column */}
-            <div>
-              <h3 className="text-sm font-medium text-gray-500 mb-4">{t("companyColumn")}</h3>
-              <ul className="space-y-3">
-                <li><a href="#" className="text-sm text-gray-900 hover:text-gray-600">{t("aboutLink")}</a></li>
-                <li><a href="#" className="text-sm text-gray-900 hover:text-gray-600">{t("careersLink")}</a></li>
-                <li><a href="#" className="text-sm text-gray-900 hover:text-gray-600">{t("contactLink")}</a></li>
-                <li><a href="#" className="text-sm text-gray-900 hover:text-gray-600">{t("pressLink")}</a></li>
-              </ul>
-            </div>
-
-            {/* Legal Column */}
-            <div>
-              <h3 className="text-sm font-medium text-gray-500 mb-4">{t("legalColumn")}</h3>
-              <ul className="space-y-3">
-                <li><a href="#" className="text-sm text-gray-900 hover:text-gray-600">{t("termsOfServiceLink")}</a></li>
-                <li><a href="#" className="text-sm text-gray-900 hover:text-gray-600">{t("privacyPolicyLink")}</a></li>
-                <li><a href="#" className="text-sm text-gray-900 hover:text-gray-600">{t("dataUseLink")}</a></li>
-                <li><a href="#" className="text-sm text-gray-900 hover:text-gray-600">{t("securityLink")}</a></li>
-              </ul>
-            </div>
-
-            {/* Connect Column */}
-            <div>
-              <h3 className="text-sm font-medium text-gray-500 mb-4">{t("connectColumn")}</h3>
-              <ul className="space-y-3">
-                <li><a href="#" className="text-sm text-gray-900 hover:text-gray-600">{t("twitterLink")}</a></li>
-                <li><a href="#" className="text-sm text-gray-900 hover:text-gray-600">{t("linkedinLink")}</a></li>
-                <li><a href="#" className="text-sm text-gray-900 hover:text-gray-600">{t("youtubeLink")}</a></li>
-              </ul>
-            </div>
-          </div>
-
           {/* Bottom Section */}
-          <div className="pt-8 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="flex flex-col items-center gap-4">
             <p className="text-sm text-gray-600">{t("copyright")} {t("allRightsReserved")}</p>
             
-            <div className="flex items-center gap-4">
-              {/* Language Selector */}
-              <div className="flex items-center gap-2 border border-gray-200 rounded-lg bg-white px-3 py-1.5">
-                <Globe className="w-4 h-4 text-gray-600" />
-                <Select value={language} onValueChange={(value: "en" | "rw") => setLanguage(value)}>
-                  <SelectTrigger className="border-0 h-auto p-0 w-auto min-w-[100px] focus:ring-0 focus:ring-offset-0">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="en">English</SelectItem>
-                    <SelectItem value="rw">Kinyarwanda</SelectItem>
-                  </SelectContent>
-                </Select>
+            {/* Contact & Social */}
+            <div className="flex items-center gap-6">
+              {/* Contact Info */}
+              <div className="flex items-center gap-2">
+                <Phone className="w-4 h-4 text-gray-600" />
+                <a href="tel:+250791998365" className="text-sm text-gray-900 hover:text-gray-600 transition-colors">
+                  0791998365
+                </a>
               </div>
+
+              {/* Instagram Icon */}
+              <a
+                href="https://instagram.com/trippoltd"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-900 hover:text-pink-600 transition-colors"
+                aria-label="Follow us on Instagram @trippoltd"
+              >
+                <Instagram className="w-5 h-5" />
+              </a>
+            </div>
+            
+            {/* Language Selector */}
+            <div className="flex items-center gap-2 border border-gray-200 rounded-lg bg-white px-3 py-1.5">
+              <Globe className="w-4 h-4 text-gray-600" />
+              <Select value={language} onValueChange={(value: "en" | "rw") => setLanguage(value)}>
+                <SelectTrigger className="border-0 h-auto p-0 w-auto min-w-[100px] focus:ring-0 focus:ring-offset-0">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en">English</SelectItem>
+                  <SelectItem value="rw">Kinyarwanda</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>
