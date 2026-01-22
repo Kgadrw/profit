@@ -317,8 +317,8 @@ const Sales = () => {
 
   // Filter states
   const [searchQuery, setSearchQuery] = useState("");
-  const [startDate, setStartDate] = useState(getYearStartDate());
-  const [endDate, setEndDate] = useState(getTodayDate());
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [sortBy, setSortBy] = useState<"date-desc" | "date-asc" | "product-asc" | "product-desc" | "revenue-desc" | "revenue-asc" | "profit-desc" | "profit-asc">("date-desc");
   
   // Selection and deletion states
@@ -618,8 +618,17 @@ const Sales = () => {
     if (startDate || endDate) {
       filtered = filtered.filter(sale => {
         const saleDate = new Date(sale.date);
+        saleDate.setHours(0, 0, 0, 0); // Normalize to start of day
+        
         const start = startDate ? new Date(startDate) : null;
+        if (start) {
+          start.setHours(0, 0, 0, 0);
+        }
+        
         const end = endDate ? new Date(endDate) : null;
+        if (end) {
+          end.setHours(23, 59, 59, 999); // Set to end of day
+        }
         
         if (start && end) {
           return saleDate >= start && saleDate <= end;
@@ -661,8 +670,8 @@ const Sales = () => {
 
   const handleClearFilters = () => {
     setSearchQuery("");
-    setStartDate(getYearStartDate());
-    setEndDate(getTodayDate());
+    setStartDate("");
+    setEndDate("");
     setSortBy("date-desc");
   };
 
