@@ -5,6 +5,7 @@ import {
   Users,
   Activity,
   Server,
+  Calendar,
   LogOut,
   ChevronLeft,
   ChevronRight,
@@ -28,6 +29,7 @@ const adminMenuItems = [
   { icon: LayoutDashboard, label: "Overview", section: "overview" },
   { icon: Users, label: "Users", section: "users" },
   { icon: Activity, label: "Activity", section: "activity" },
+  { icon: Calendar, label: "Schedules", section: "schedules" },
   { icon: Server, label: "System Health", section: "health" },
 ];
 

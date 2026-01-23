@@ -727,7 +727,7 @@ const Schedules = () => {
         // Ensure full datetime is preserved with time component
         dueDate: new Date(formData.dueDate).toISOString(),
         frequency: formData.frequency,
-        amount: formData.amount ? parseFloat(formData.amount) : undefined,
+        amount: formData.amount && formData.amount.trim() !== '' ? Number(formData.amount) : undefined,
         notifyUser: formData.notifyUser,
         notifyClient: formData.notifyClient,
         userNotificationMessage: formData.userNotificationMessage.trim() || undefined,
@@ -1623,10 +1623,10 @@ const Schedules = () => {
                   <Input
                     type="number"
                     min="0"
-                    step="0.01"
+                    step="any"
                     value={formData.amount}
                     onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                    placeholder="0.00"
+                    placeholder="0"
                     className="bg-white border border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded h-10"
                   />
                   <p className="text-xs text-gray-500">Payment amount or reminder value (optional)</p>

@@ -1,11 +1,17 @@
 import { useEffect, useState } from "react";
 
+interface StatusHistoryItem {
+  status: 'up' | 'down';
+  timestamp: string;
+}
+
 interface UptimeTimelineProps {
   uptime: number; // in seconds
   serverStartTime?: string;
+  statusHistory?: StatusHistoryItem[];
 }
 
-export function UptimeTimeline({ uptime, serverStartTime }: UptimeTimelineProps) {
+export function UptimeTimeline({ uptime, serverStartTime, statusHistory = [] }: UptimeTimelineProps) {
   const [currentTime, setCurrentTime] = useState(Date.now());
   const [hoveredDay, setHoveredDay] = useState<number | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
@@ -48,11 +54,82 @@ export function UptimeTimeline({ uptime, serverStartTime }: UptimeTimelineProps)
   const systemUpSince = startTime;
   const daysSinceSystemStart = Math.floor((now - systemUpSince) / (24 * 60 * 60 * 1000));
   
-  // Determine status for each day
+  // Determine status for each day based on status history
   const getDayStatus = (dayIndex: number): 'up' | 'down' | 'future' => {
     if (dayIndex > daysSinceStart) return 'future';
-    // If system started before this day, it was up
+    
     const dayStart = firstMonthStart + (dayIndex * 24 * 60 * 60 * 1000);
+    const dayEnd = dayStart + (24 * 60 * 60 * 1000);
+    
+    // If we have status history, use it to determine actual server status
+    if (statusHistory && statusHistory.length > 0) {
+      // Find status entries within this day
+      const dayStatuses = statusHistory.filter(item => {
+        const itemTime = new Date(item.timestamp).getTime();
+        return itemTime >= dayStart && itemTime < dayEnd;
+      });
+      
+      // If we have status entries for this day, use the most recent one
+      if (dayStatuses.length > 0) {
+        const lastStatus = dayStatuses[dayStatuses.length - 1];
+        return lastStatus.status;
+      }
+      
+      // If no status entries for this day, check if there's a gap (downtime)
+      // Find the last status before this day and next status after this day
+      const lastStatusBefore = statusHistory
+        .filter(item => new Date(item.timestamp).getTime() < dayStart)
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
+      
+      const nextStatusAfter = statusHistory
+        .filter(item => new Date(item.timestamp).getTime() >= dayEnd)
+        .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())[0];
+      
+      // If last status was 'down', this day was likely down too
+      if (lastStatusBefore && lastStatusBefore.status === 'down') {
+        // If there's a next status after that's 'up', check if this day falls in the downtime period
+        if (nextStatusAfter && nextStatusAfter.status === 'up') {
+          const downTime = new Date(lastStatusBefore.timestamp).getTime();
+          const upTime = new Date(nextStatusAfter.timestamp).getTime();
+          // If this day falls between down and up, it was down
+          if (dayStart >= downTime && dayEnd <= upTime) {
+            return 'down';
+          }
+        } else {
+          // No "up" status after - server might still be down
+          return 'down';
+        }
+      }
+      
+      // If last status before was 'up', check for gaps that indicate downtime
+      if (lastStatusBefore && lastStatusBefore.status === 'up') {
+        // If there's a next status after that's 'up', check the gap
+        if (nextStatusAfter && nextStatusAfter.status === 'up') {
+          const lastUpTime = new Date(lastStatusBefore.timestamp).getTime();
+          const nextUpTime = new Date(nextStatusAfter.timestamp).getTime();
+          const gap = nextUpTime - lastUpTime;
+          
+          // If gap is more than 1 day, there was downtime in between
+          if (gap > 24 * 60 * 60 * 1000) {
+            // Check if this day falls in the gap period
+            if (dayStart > lastUpTime && dayEnd < nextUpTime) {
+              return 'down';
+            }
+          }
+        } else {
+          // No status after - check if it's been too long since last "up"
+          const timeSinceLastStatus = now - new Date(lastStatusBefore.timestamp).getTime();
+          // If more than 12 hours and this day is in the past, likely down
+          if (timeSinceLastStatus > 12 * 60 * 60 * 1000 && dayIndex < daysSinceStart) {
+            return 'down';
+          }
+        }
+        // Otherwise assume up (server was running, just no log for this day)
+        return 'up';
+      }
+    }
+    
+    // Fallback: If system started before this day, it was up
     if (systemUpSince <= dayStart) return 'up';
     return 'down';
   };

@@ -26,7 +26,11 @@ import {
   AlertCircle,
   Radio,
   BarChart3,
-  Trash2
+  Trash2,
+  Calendar,
+  Mail,
+  CheckCircle,
+  XCircle
 } from "lucide-react";
 import {
   BarChart,
@@ -118,6 +122,10 @@ interface SystemHealth {
     used: number;
     total: number;
   };
+  statusHistory?: Array<{
+    status: 'up' | 'down';
+    timestamp: string;
+  }>;
 }
 
 interface ApiStats {
@@ -148,6 +156,39 @@ interface ApiStats {
   }>;
 }
 
+interface ScheduleStats {
+  totalSchedules: number;
+  schedulesByStatus: Record<string, number>;
+  schedulesByFrequency: Record<string, number>;
+  emailStats: {
+    totalWithNotifications: number;
+    totalEmailsSent: number;
+    schedulesWithUserNotification: number;
+    schedulesWithClientNotification: number;
+  };
+  recentSchedules: number;
+  schedulesByUser: Array<{
+    userId: string;
+    userName: string;
+    userEmail: string;
+    count: number;
+    totalAmount: number;
+    completed: number;
+    emailsSent: number;
+  }>;
+  scheduleActivity: Array<{
+    _id: string;
+    count: number;
+  }>;
+  emailActivity: Array<{
+    _id: string;
+    count: number;
+  }>;
+  upcomingSchedules: number;
+  overdueSchedules: number;
+  totalAmount: number;
+}
+
 const AdminDashboard = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
@@ -158,7 +199,8 @@ const AdminDashboard = () => {
   const [usageSummary, setUsageSummary] = useState<UsageSummary | null>(null);
   const [health, setHealth] = useState<SystemHealth | null>(null);
   const [apiStats, setApiStats] = useState<ApiStats | null>(null);
-  const [activeTab, setActiveTab] = useState<"overview" | "users" | "activity" | "health">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "users" | "activity" | "health" | "schedules">("overview");
+  const [scheduleStats, setScheduleStats] = useState<ScheduleStats | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -174,12 +216,12 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     loadDashboardData();
-    // Refresh every 30 seconds
-    const interval = setInterval(loadDashboardData, 30000);
-    // Refresh API stats more frequently (every 5 seconds) for live updates
+    // Refresh every 60 seconds (reduced frequency to avoid rate limits)
+    const interval = setInterval(loadDashboardData, 60000);
+    // Refresh API stats less frequently (every 15 seconds) to avoid rate limits
     const apiInterval = setInterval(() => {
       loadApiStats();
-    }, 5000);
+    }, 15000);
     return () => {
       clearInterval(interval);
       clearInterval(apiInterval);
@@ -189,13 +231,14 @@ const AdminDashboard = () => {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      const [statsRes, usersRes, activityRes, usageRes, healthRes, apiStatsRes] = await Promise.all([
+      // Load data in batches to avoid rate limiting
+      const [statsRes, usersRes, activityRes, usageRes, healthRes, scheduleStatsRes] = await Promise.all([
         adminApi.getSystemStats(),
         adminApi.getAllUsers(),
         adminApi.getUserActivity(7),
         adminApi.getUserUsage(30),
         adminApi.getSystemHealth(),
-        adminApi.getApiStats(),
+        adminApi.getScheduleStats(30),
       ]);
 
       if (statsRes.data) setStats(statsRes.data);
@@ -206,14 +249,26 @@ const AdminDashboard = () => {
         setUsageSummary(usageRes.data.summary || null);
       }
       if (healthRes.data) setHealth(healthRes.data);
-      if (apiStatsRes.data) setApiStats(apiStatsRes.data);
+      if (scheduleStatsRes.data) setScheduleStats(scheduleStatsRes.data);
+      
+      // Load API stats separately to avoid rate limits
+      try {
+        const apiStatsRes = await adminApi.getApiStats();
+        if (apiStatsRes.data) setApiStats(apiStatsRes.data);
+      } catch (apiError) {
+        // Silently fail for API stats - it's refreshed separately anyway
+        console.error("Error loading API stats (non-critical):", apiError);
+      }
     } catch (error: any) {
       console.error("Error loading admin dashboard:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load dashboard data. Please try again.",
-        variant: "destructive",
-      });
+      // Only show toast for critical errors, not rate limit errors
+      if (!error.message?.includes('Too many') && !error.message?.includes('429')) {
+        toast({
+          title: "Error",
+          description: "Failed to load dashboard data. Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -707,6 +762,313 @@ const AdminDashboard = () => {
           </div>
         )}
 
+        {/* Schedules Tab */}
+        {activeTab === "schedules" && (
+          <div className="space-y-4">
+            {/* Schedule Statistics Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card className="bg-white">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-normal flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Total Schedules
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{scheduleStats?.totalSchedules || 0}</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {scheduleStats?.recentSchedules || 0} created in last 30 days
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-normal flex items-center gap-2">
+                    <Mail className="h-4 w-4" />
+                    Emails Sent
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{scheduleStats?.emailStats?.totalEmailsSent || 0}</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {scheduleStats?.emailStats?.totalWithNotifications || 0} with notifications enabled
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-normal flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4" />
+                    Upcoming
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-blue-600">{scheduleStats?.upcomingSchedules || 0}</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {scheduleStats?.overdueSchedules || 0} overdue
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-normal flex items-center gap-2">
+                    <DollarSign className="h-4 w-4" />
+                    Total Amount
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{formatCurrency(scheduleStats?.totalAmount || 0)}</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Across all schedules
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Charts Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Schedules by Status */}
+              <Card className="bg-white">
+                <CardHeader>
+                  <CardTitle className="font-normal flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5" />
+                    Schedules by Status
+                  </CardTitle>
+                  <CardDescription>Distribution of schedule statuses</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {scheduleStats?.schedulesByStatus ? (
+                    <div className="h-64">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={Object.entries(scheduleStats.schedulesByStatus).map(([status, count]) => ({
+                              name: status.charAt(0).toUpperCase() + status.slice(1),
+                              value: count,
+                            }))}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                          >
+                            {Object.entries(scheduleStats.schedulesByStatus).map((_, index) => (
+                              <Cell key={`cell-${index}`} fill={['#3b82f6', '#10b981', '#ef4444'][index % 3]} />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : (
+                    <div className="h-64 flex items-center justify-center text-muted-foreground">
+                      No schedule data available
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Schedules by Frequency */}
+              <Card className="bg-white">
+                <CardHeader>
+                  <CardTitle className="font-normal flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5" />
+                    Schedules by Frequency
+                  </CardTitle>
+                  <CardDescription>Distribution of schedule frequencies</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {scheduleStats?.schedulesByFrequency ? (
+                    <div className="h-64">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={Object.entries(scheduleStats.schedulesByFrequency).map(([frequency, count]) => ({
+                          name: frequency.charAt(0).toUpperCase() + frequency.slice(1),
+                          count,
+                        }))}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                          <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                          <YAxis tick={{ fontSize: 12 }} />
+                          <Tooltip />
+                          <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : (
+                    <div className="h-64 flex items-center justify-center text-muted-foreground">
+                      No frequency data available
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Schedule Activity and Email Activity */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Schedule Activity Over Time */}
+              <Card className="bg-white">
+                <CardHeader>
+                  <CardTitle className="font-normal flex items-center gap-2">
+                    <Activity className="h-5 w-5" />
+                    Schedule Activity (Last 30 Days)
+                  </CardTitle>
+                  <CardDescription>New schedules created over time</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {scheduleStats?.scheduleActivity && scheduleStats.scheduleActivity.length > 0 ? (
+                    <div className="h-64">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={scheduleStats.scheduleActivity.map(item => ({
+                          date: item._id,
+                          count: item.count,
+                        }))}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                          <XAxis dataKey="date" tick={{ fontSize: 11 }} angle={-45} textAnchor="end" height={60} />
+                          <YAxis tick={{ fontSize: 12 }} />
+                          <Tooltip />
+                          <Area type="monotone" dataKey="count" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.3} />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : (
+                    <div className="h-64 flex items-center justify-center text-muted-foreground">
+                      No activity data available
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Email Activity Over Time */}
+              <Card className="bg-white">
+                <CardHeader>
+                  <CardTitle className="font-normal flex items-center gap-2">
+                    <Mail className="h-5 w-5" />
+                    Email Activity (Last 30 Days)
+                  </CardTitle>
+                  <CardDescription>Emails sent over time</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {scheduleStats?.emailActivity && scheduleStats.emailActivity.length > 0 ? (
+                    <div className="h-64">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={scheduleStats.emailActivity.map(item => ({
+                          date: item._id,
+                          count: item.count,
+                        }))}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                          <XAxis dataKey="date" tick={{ fontSize: 11 }} angle={-45} textAnchor="end" height={60} />
+                          <YAxis tick={{ fontSize: 12 }} />
+                          <Tooltip />
+                          <Area type="monotone" dataKey="count" stroke="#10b981" fill="#10b981" fillOpacity={0.3} />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : (
+                    <div className="h-64 flex items-center justify-center text-muted-foreground">
+                      No email activity data available
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Email Statistics and Top Users */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Email Statistics */}
+              <Card className="bg-white">
+                <CardHeader>
+                  <CardTitle className="font-normal flex items-center gap-2">
+                    <Mail className="h-5 w-5" />
+                    Email Notification Statistics
+                  </CardTitle>
+                  <CardDescription>Email notification breakdown</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div>
+                        <p className="text-sm font-medium">Total with Notifications</p>
+                        <p className="text-xs text-muted-foreground">Schedules with notifications enabled</p>
+                      </div>
+                      <div className="text-2xl font-bold">{scheduleStats?.emailStats?.totalWithNotifications || 0}</div>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                      <div>
+                        <p className="text-sm font-medium">User Notifications</p>
+                        <p className="text-xs text-muted-foreground">Schedules with user notifications</p>
+                      </div>
+                      <div className="text-2xl font-bold text-blue-600">{scheduleStats?.emailStats?.schedulesWithUserNotification || 0}</div>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                      <div>
+                        <p className="text-sm font-medium">Client Notifications</p>
+                        <p className="text-xs text-muted-foreground">Schedules with client notifications</p>
+                      </div>
+                      <div className="text-2xl font-bold text-green-600">{scheduleStats?.emailStats?.schedulesWithClientNotification || 0}</div>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                      <div>
+                        <p className="text-sm font-medium">Total Emails Sent</p>
+                        <p className="text-xs text-muted-foreground">Emails successfully sent</p>
+                      </div>
+                      <div className="text-2xl font-bold text-purple-600">{scheduleStats?.emailStats?.totalEmailsSent || 0}</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Top Users by Schedule Usage */}
+              <Card className="bg-white">
+                <CardHeader>
+                  <CardTitle className="font-normal flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    Top Users by Schedule Usage
+                  </CardTitle>
+                  <CardDescription>Users with most schedules</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {scheduleStats?.schedulesByUser && scheduleStats.schedulesByUser.length > 0 ? (
+                      scheduleStats.schedulesByUser.map((user, index) => (
+                        <div key={user.userId} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-medium text-gray-500">#{index + 1}</span>
+                              <p className="text-sm font-medium truncate">{user.userName}</p>
+                            </div>
+                            <p className="text-xs text-muted-foreground truncate">{user.userEmail}</p>
+                            <div className="flex items-center gap-3 mt-1">
+                              <span className="text-xs text-muted-foreground">
+                                {user.completed} completed
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {user.emailsSent} emails sent
+                              </span>
+                            </div>
+                          </div>
+                          <div className="text-right ml-4">
+                            <p className="text-sm font-bold">{user.count}</p>
+                            <p className="text-xs text-muted-foreground">schedules</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {formatCurrency(user.totalAmount || 0)}
+                            </p>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No user schedule data available</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        )}
+
         {/* System Health Tab */}
         {activeTab === "health" && (
           <div className="space-y-4">
@@ -795,6 +1157,7 @@ const AdminDashboard = () => {
                   <UptimeTimeline 
                     uptime={health.uptime} 
                     serverStartTime={health.serverStartTime}
+                    statusHistory={health.statusHistory}
                   />
                 )}
               </CardContent>

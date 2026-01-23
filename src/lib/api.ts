@@ -349,6 +349,13 @@ export const adminApi = {
     });
   },
 
+  // Get schedule statistics
+  async getScheduleStats(days: number = 30): Promise<ApiResponse> {
+    return request(`/admin/schedule-stats?days=${days}`, {
+      method: 'GET',
+    });
+  },
+
   // Delete user and all their data
   async deleteUser(userId: string): Promise<ApiResponse> {
     return request(`/admin/users/${userId}`, {
