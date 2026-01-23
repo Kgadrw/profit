@@ -461,7 +461,7 @@ const Sales = () => {
             revenue,
             cost,
             profit,
-            date: new Date().toISOString(),
+            date: sale.saleDate ? new Date(sale.saleDate).toISOString() : new Date().toISOString(),
             paymentMethod: sale.paymentMethod || "cash",
           };
         })
@@ -564,7 +564,7 @@ const Sales = () => {
         revenue,
         cost,
         profit,
-        date: new Date().toISOString(),
+        date: saleDate ? new Date(saleDate).toISOString() : new Date().toISOString(),
         paymentMethod: paymentMethod,
       };
 
@@ -998,6 +998,7 @@ const Sales = () => {
                     <th className="text-left p-2 text-xs font-medium text-white">{t("quantity")}</th>
                     <th className="text-left p-2 text-xs font-medium text-white">{t("sellingPrice")} (rwf)</th>
                     <th className="text-left p-2 text-xs font-medium text-white">{t("paymentMethod")}</th>
+                    <th className="text-left p-2 text-xs font-medium text-white">{t("saleDate")}</th>
                     <th className="text-left p-2 text-xs font-medium text-white w-12"></th>
                   </tr>
                 </thead>
@@ -1096,6 +1097,14 @@ const Sales = () => {
                             <SelectItem value="transfer">{t("bankTransfer")}</SelectItem>
                           </SelectContent>
                         </Select>
+                      </td>
+                      <td className="p-2">
+                        <Input
+                          type="date"
+                          value={sale.saleDate}
+                          onChange={(e) => updateBulkSale(index, "saleDate", e.target.value)}
+                          className="input-field h-9"
+                        />
                       </td>
                       <td className="p-2">
                         {bulkSales.length > 1 && (
@@ -1265,6 +1274,15 @@ const Sales = () => {
                 <SelectItem value="transfer">{t("bankTransfer")}</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-white">{t("saleDate")}</Label>
+            <Input
+              type="date"
+              value={saleDate}
+              onChange={(e) => setSaleDate(e.target.value)}
+              className="input-field"
+            />
           </div>
           <div className="flex items-end">
             <Button 

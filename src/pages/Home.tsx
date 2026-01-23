@@ -19,6 +19,13 @@ const Home = () => {
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [loginModalTab, setLoginModalTab] = useState<"login" | "create">("create");
 
+  // Force English language on homepage
+  useEffect(() => {
+    if (language === "rw") {
+      setLanguage("en");
+    }
+  }, [language, setLanguage]);
+
   // Reset login modal state when user logs out (listen for auth changes)
   useEffect(() => {
     const handleAuthChange = () => {
@@ -334,16 +341,15 @@ const Home = () => {
               </a>
             </div>
             
-            {/* Language Selector */}
+            {/* Language Selector - English only on homepage */}
             <div className="flex items-center gap-2 border border-gray-200 rounded-lg bg-white px-3 py-1.5">
               <Globe className="w-4 h-4 text-gray-600" />
-              <Select value={language} onValueChange={(value: "en" | "rw") => setLanguage(value)}>
+              <Select value="en" disabled>
                 <SelectTrigger className="border-0 h-auto p-0 w-auto min-w-[100px] focus:ring-0 focus:ring-offset-0">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="en">English</SelectItem>
-                  <SelectItem value="rw">Kinyarwanda</SelectItem>
                 </SelectContent>
               </Select>
             </div>
