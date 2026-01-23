@@ -25,7 +25,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useTranslation } from "@/hooks/useTranslation";
-import { redirectToHomepage } from "@/utils/subdomain";
 
 const getMenuItems = (t: (key: string) => string) => {
   // Calculate if NEW banner should show (for one month from today)
@@ -36,7 +35,7 @@ const getMenuItems = (t: (key: string) => string) => {
   const showNewBanner = new Date() <= oneMonthLater;
   
   return [
-    { icon: LayoutDashboard, label: t("dashboard"), path: "/" }, // Dashboard is at root on subdomain
+    { icon: LayoutDashboard, label: t("dashboard"), path: "/dashboard" },
     { icon: Package, label: t("products"), path: "/products" },
     { icon: ShoppingCart, label: t("sales"), path: "/sales" },
     { icon: Calendar, label: "Schedules", path: "/schedules", showNew: showNewBanner },
@@ -127,10 +126,14 @@ export function Sidebar({ collapsed, onToggle, onMobileClose, onMobileToggle, on
       description: "You have been successfully logged out. All your data has been cleared.",
     });
     
+    // Clear browser history and redirect to homepage
+    // This prevents back button from accessing protected pages
+    window.history.replaceState(null, "", "/");
+    
     setLogoutDialogOpen(false);
     
-    // Redirect to main domain homepage (not subdomain)
-    redirectToHomepage();
+    // Navigate to home page (don't force reload immediately to allow login)
+    navigate("/", { replace: true });
   };
 
   // Trigger banner animation when sidebar expands or when schedule page becomes active

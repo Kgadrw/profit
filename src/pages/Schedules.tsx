@@ -211,7 +211,7 @@ const Schedules = () => {
         variant: "destructive",
       });
       setClients([]);
-    }
+      }
   }, [toast]);
 
   // Load clients on mount
@@ -1013,71 +1013,71 @@ const Schedules = () => {
               <CalendarIcon size={20} className="text-white" />
               Schedules & Reminders
             </h3>
-            <Button
-              onClick={openAddModal}
+                  <Button
+                    onClick={openAddModal}
               className="bg-white text-blue-600 hover:bg-blue-50 font-semibold px-4 py-2 gap-2 w-full sm:w-auto"
-            >
-              <Plus size={18} />
+                  >
+                    <Plus size={18} />
               <span className="hidden xs:inline">New Schedule</span>
               <span className="xs:hidden">New</span>
-            </Button>
-          </div>
-          
-          {/* Quick Stats */}
+                  </Button>
+              </div>
+
+              {/* Quick Stats */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="bg-white border border-gray-200 rounded-lg p-4">
               <div className="text-xs text-blue-600 font-medium mb-1">Total</div>
               <div className="text-2xl font-semibold text-blue-700">{schedules.length}</div>
-            </div>
+                </div>
             <div className="bg-white border border-gray-200 rounded-lg p-4">
               <div className="text-xs text-blue-600 font-medium mb-1">Upcoming</div>
               <div className="text-2xl font-semibold text-blue-700">{upcomingSchedules.length}</div>
-            </div>
+                </div>
             <div className="bg-white border border-gray-200 rounded-lg p-4">
               <div className="text-xs text-red-600 font-medium mb-1">Overdue</div>
               <div className="text-2xl font-semibold text-red-700">{overdueSchedules.length}</div>
-            </div>
+                </div>
             <div className="bg-white border border-gray-200 rounded-lg p-4">
               <div className="text-xs text-green-600 font-medium mb-1">Completed</div>
               <div className="text-2xl font-semibold text-green-700">
-                {schedules.filter(s => s.status === "completed").length}
+                    {schedules.filter(s => s.status === "completed").length}
               </div>
-            </div>
-          </div>
-        </div>
+                  </div>
+                </div>
+              </div>
 
         {/* Filters Section */}
         <div className="form-card border-transparent flex-shrink-0">
           <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
+                <div className="relative flex-1">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10" />
-              <Input
+                  <Input
                 placeholder="Search clients or schedules..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 input-field"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery("")}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
-                >
-                  <X size={16} />
-                </button>
-              )}
-            </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
+                </div>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="input-field w-full sm:w-48">
-                <Filter size={16} className="mr-2" />
+                    <Filter size={16} className="mr-2" />
                 <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
             <Select value={dateFilter} onValueChange={setDateFilter}>
               <SelectTrigger className="input-field w-full sm:w-48">
                 <CalendarIcon size={16} className="mr-2" />
@@ -1110,23 +1110,23 @@ const Schedules = () => {
               <SelectTrigger className="input-field w-full sm:w-48">
                 <User size={16} className="mr-2" />
                 <SelectValue placeholder="Client" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Clients</SelectItem>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Clients</SelectItem>
                 {clients.map((client) => {
                   const clientId = ((client as any)._id || client.id)?.toString();
-                  return (
+                      return (
                     <SelectItem key={clientId} value={clientId}>
                       {client.name}
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+            </div>
           </div>
-        </div>
 
-        {/* Content Section */}
+          {/* Content Section */}
         <div className="bg-white shadow-sm rounded-lg">
           <div className="p-2 sm:p-4">
               {filteredClients.length > 0 ? (
@@ -1281,8 +1281,8 @@ const Schedules = () => {
                         className={cn(
                                                   "border-b border-gray-200",
                                                   sIndex % 2 === 0 ? "bg-white" : "bg-gray-50"
-                                                )}
-                                              >
+                        )}
+                      >
                                                 <td className="py-2 sm:py-3 px-2 sm:px-4">
                                                   <div>
                                                     <div className="text-xs sm:text-sm font-medium text-gray-900">{schedule.title}</div>
@@ -1439,7 +1439,7 @@ const Schedules = () => {
                   )}
                 </div>
               )}
-            </div>
+          </div>
         </div>
       </div>
 

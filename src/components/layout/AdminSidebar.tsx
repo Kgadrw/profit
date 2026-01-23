@@ -94,10 +94,9 @@ export function AdminSidebar({
       description: "You have been successfully logged out.",
     });
     
+    // Redirect to homepage
+    navigate("/");
     setLogoutDialogOpen(false);
-    
-    // Redirect to main domain homepage (not subdomain)
-    redirectToHomepage();
   };
 
   // Determine if sidebar should appear expanded (hover overrides collapsed state on desktop)

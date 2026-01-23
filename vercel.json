@@ -4,29 +4,5 @@
       "source": "/(.*)",
       "destination": "/index.html"
     }
-  ],
-  "redirects": [
-    {
-      "source": "/dashboard",
-      "destination": "https://dashboard.trippo.rw/",
-      "permanent": false,
-      "has": [
-        {
-          "type": "host",
-          "value": "trippo.rw"
-        }
-      ]
-    },
-    {
-      "source": "/dashboard",
-      "destination": "https://dashboard.trippo.rw/",
-      "permanent": false,
-      "has": [
-        {
-          "type": "host",
-          "value": "www.trippo.rw"
-        }
-      ]
-    }
   ]
 }
