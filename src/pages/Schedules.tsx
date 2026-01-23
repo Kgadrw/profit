@@ -1005,7 +1005,7 @@ const Schedules = () => {
 
   return (
     <AppLayout title="Schedules & Reminders">
-      <div className="flex flex-col h-[calc(100vh-3rem)] gap-4">
+      <div className="flex flex-col gap-4 pb-4">
         {/* Stats Section */}
         <div className="form-card border-transparent flex-shrink-0 bg-blue-500 border-blue-600">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
@@ -1127,9 +1127,8 @@ const Schedules = () => {
         </div>
 
         {/* Content Section */}
-        <div className="bg-white shadow-sm flex-1 flex flex-col min-h-0 overflow-hidden rounded-lg">
-          <div className="overflow-auto flex-1 bg-white">
-            <div className="p-2 sm:p-4">
+        <div className="bg-white shadow-sm rounded-lg">
+          <div className="p-2 sm:p-4">
               {filteredClients.length > 0 ? (
                 <div className="overflow-x-auto -mx-2 sm:mx-0 rounded-lg border border-gray-200">
                   <table className="w-full border-collapse min-w-[800px] sm:min-w-0">
@@ -1441,7 +1440,6 @@ const Schedules = () => {
                 </div>
               )}
             </div>
-          </div>
         </div>
       </div>
 
