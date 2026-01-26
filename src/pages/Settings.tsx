@@ -20,7 +20,8 @@ import {
   Shield,
   Globe,
   Trash2,
-  AlertTriangle
+  AlertTriangle,
+  LogOut
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -61,6 +62,7 @@ const Settings = () => {
   const [currentPin, setCurrentPin] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
 
   // Load user data when component mounts or user changes
   useEffect(() => {
@@ -313,6 +315,54 @@ const Settings = () => {
     }
   };
 
+  const handleLogoutClick = () => {
+    setLogoutDialogOpen(true);
+  };
+
+  const handleLogoutConfirm = async () => {
+    initAudio();
+    // Clear authentication state
+    clearAuth();
+    
+    // Clear user ID and all user data
+    localStorage.removeItem("profit-pilot-user-id");
+    localStorage.removeItem("profit-pilot-user-name");
+    localStorage.removeItem("profit-pilot-user-email");
+    localStorage.removeItem("profit-pilot-business-name");
+    localStorage.removeItem("profit-pilot-is-admin");
+    localStorage.removeItem("profit-pilot-authenticated");
+    
+    // Clear session storage completely
+    sessionStorage.clear();
+    
+    // Clear IndexedDB data (for complete data isolation)
+    try {
+      const { clearAllStores } = await import("@/lib/indexedDB");
+      await clearAllStores();
+    } catch (error) {
+      console.error("Error clearing IndexedDB on logout:", error);
+    }
+    
+    // Dispatch authentication change event
+    window.dispatchEvent(new Event("pin-auth-changed"));
+    
+    // Show logout confirmation
+    toast({
+      title: language === "rw" ? "Wasohotse" : "Logged Out",
+      description: language === "rw" 
+        ? "Wasohotse neza. Amakuru yose yarakurwaho." 
+        : "You have been successfully logged out. All your data has been cleared.",
+    });
+    
+    setLogoutDialogOpen(false);
+    
+    // Clear browser history and redirect to homepage
+    window.history.replaceState(null, "", "/");
+    
+    // Navigate to home page
+    navigate("/", { replace: true });
+  };
+
   const handleDeleteAccount = async () => {
     initAudio();
     setIsDeleting(true);
@@ -379,14 +429,23 @@ const Settings = () => {
           {/* Left Sidebar - Navigation */}
           <div className="lg:col-span-1">
             <div className="form-card p-0 overflow-hidden border-primary/30">
-              <div className="p-4 bg-blue-50 border-b border-blue-200">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-100 border border-blue-200 rounded-full flex items-center justify-center">
+              <div 
+                className="p-4 border-b border-blue-200 relative"
+                style={{
+                  backgroundImage: 'url(/banner.jpg)',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  backgroundRepeat: 'no-repeat'
+                }}
+              >
+                <div className="absolute inset-0 bg-blue-600/20"></div>
+                <div className="relative z-10 flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white/90 border border-white/50 rounded-lg flex items-center justify-center">
                     <User size={18} className="text-blue-600 font-bold" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h3 className="font-bold text-blue-700 text-sm truncate">{ownerName}</h3>
-                    <p className="text-xs text-blue-600 truncate">{email}</p>
+                    <h3 className="font-bold text-white text-sm truncate drop-shadow-md">{ownerName}</h3>
+                    <p className="text-xs text-white/90 truncate drop-shadow-md">{email}</p>
                   </div>
                 </div>
               </div>
@@ -394,7 +453,7 @@ const Settings = () => {
                 <button 
                   onClick={() => setActiveSection("business")}
                   className={cn(
-                    "w-full text-left px-3 py-2.5 transition-all duration-200 text-sm",
+                    "w-full text-left px-3 py-2.5 transition-all duration-200 text-sm rounded-lg",
                     activeSection === "business"
                       ? "bg-blue-600 text-white border border-transparent font-semibold"
                       : "hover:bg-blue-50 text-gray-700 border border-transparent"
@@ -408,7 +467,7 @@ const Settings = () => {
                 <button 
                   onClick={() => setActiveSection("language")}
                   className={cn(
-                    "w-full text-left px-3 py-2.5 transition-all duration-200 text-sm",
+                    "w-full text-left px-3 py-2.5 transition-all duration-200 text-sm rounded-lg",
                     activeSection === "language"
                       ? "bg-blue-600 text-white border border-transparent font-semibold"
                       : "hover:bg-blue-50 text-gray-700 border border-transparent"
@@ -422,7 +481,7 @@ const Settings = () => {
                 <button 
                   onClick={() => setActiveSection("security")}
                   className={cn(
-                    "w-full text-left px-3 py-2.5 transition-all duration-200 text-sm",
+                    "w-full text-left px-3 py-2.5 transition-all duration-200 text-sm rounded-lg",
                     activeSection === "security"
                       ? "bg-blue-600 text-white border border-transparent font-semibold"
                       : "hover:bg-blue-50 text-gray-700 border border-transparent"
@@ -436,7 +495,7 @@ const Settings = () => {
                 <button 
                   onClick={() => setActiveSection("account")}
                   className={cn(
-                    "w-full text-left px-3 py-2.5 transition-all duration-200 text-sm",
+                    "w-full text-left px-3 py-2.5 transition-all duration-200 text-sm rounded-lg",
                     activeSection === "account"
                       ? "bg-red-600 text-white border border-transparent font-semibold"
                       : "hover:bg-red-50 text-gray-700 border border-transparent"
@@ -770,6 +829,20 @@ const Settings = () => {
         </div>
       </div>
 
+      {/* Mobile Logout Button - Only visible on mobile */}
+      <div className="lg:hidden mt-6">
+        <div className="form-card border border-transparent bg-white">
+          <Button
+            onClick={handleLogoutClick}
+            variant="outline"
+            className="w-full gap-2 h-12 text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400 transition-all font-semibold rounded-lg"
+          >
+            <LogOut size={18} />
+            {t("logout")}
+          </Button>
+        </div>
+      </div>
+
       {/* Delete Account Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
@@ -803,6 +876,56 @@ const Settings = () => {
               {isDeleting 
                 ? (language === "rw" ? "Kuraho..." : "Deleting...") 
                 : (language === "rw" ? "Yego, Kuraho" : "Yes, Delete Account")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Logout Confirmation Dialog */}
+      <AlertDialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("logout")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {language === "rw" 
+                ? "Urasabye gusohoka? Uzakenera kwinjira nanone kugirango wongere wongere ikibaho." 
+                : "Are you sure you want to logout? You will need to login again to access your dashboard."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              {language === "rw" ? "Guhagarika" : "Cancel"}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleLogoutConfirm}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {t("logout")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Logout Confirmation Dialog */}
+      <AlertDialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("logout")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {language === "rw" 
+                ? "Urasabye gusohoka? Uzakenera kwinjira nanone kugirango wongere wongere ikibaho." 
+                : "Are you sure you want to logout? You will need to login again to access your dashboard."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              {language === "rw" ? "Guhagarika" : "Cancel"}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleLogoutConfirm}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {t("logout")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -3,16 +3,9 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { LoginModal } from "@/components/LoginModal";
-import { User, Globe, Instagram, Phone } from "lucide-react";
+import { User, Instagram, Phone } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useLanguage } from "@/hooks/useLanguage";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 const Home = () => {
   const { t } = useTranslation();
@@ -223,53 +216,71 @@ const Home = () => {
                        </h2>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Testimonial 1 */}
+              {/* Testimonial 1 - Ange Uwase */}
               <div className="bg-gray-50 p-6">
                 <p className="text-sm text-gray-700 leading-relaxed mb-4">
-                  "{t("trippoTransformedInventory")}"
+                  "This platform has helped my quincaillerie business to leverage and shift from books and analogue sales and stock recording to digital. It's transformed how I manage my inventory and track sales."
                 </p>
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-gray-300 rounded-full flex-shrink-0 flex items-center justify-center">
                     <User size={20} className="text-gray-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">Sarah Johnson</p>
-                    <p className="text-xs text-gray-500">{t("storeManagerRetailCo")}</p>
+                    <p className="text-sm font-medium text-gray-900">Ange Uwase</p>
+                    <p className="text-xs text-gray-500">Bugesera</p>
                   </div>
                 </div>
               </div>
 
-              {/* Testimonial 2 */}
+              {/* Testimonial 2 - NIYITEGEKA Gracien */}
               <div className="bg-gray-50 p-6">
                 <p className="text-sm text-gray-700 leading-relaxed mb-4">
-                  "{t("mostUsefulInventoryTool")}"
+                  "This platform helps me increase sales for my diapers and baby pamper business. The sales tracking and inventory management features are exactly what I needed to grow my business."
                 </p>
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-gray-300 rounded-full flex-shrink-0 flex items-center justify-center">
                     <User size={20} className="text-gray-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">Michael Chen</p>
-                    <p className="text-xs text-gray-500">{t("businessOwnerChenTrading")}</p>
-                  </div>
-                </div>
-      </div>
-
-              {/* Testimonial 3 */}
-              <div className="bg-gray-50 p-6">
-                <p className="text-sm text-gray-700 leading-relaxed mb-4">
-                  "{t("bestInventoryManagementFlexibility")}"
-                </p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gray-300 rounded-full flex-shrink-0 flex items-center justify-center">
-                    <User size={20} className="text-gray-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">David Williams</p>
-                    <p className="text-xs text-gray-500">{t("operationsDirectorWilliamsSupply")}</p>
+                    <p className="text-sm font-medium text-gray-900">NIYITEGEKA Gracien</p>
+                    <p className="text-xs text-gray-500">Lindocare</p>
                   </div>
                 </div>
               </div>
+
+              {/* Testimonial 3 - Ishimwe Emmanuel */}
+              <div className="bg-gray-50 p-6">
+                <p className="text-sm text-gray-700 leading-relaxed mb-4">
+                  "This business platform helps me increase sales and save time for my construction material business. The digital system has made managing my inventory so much easier and more efficient."
+                </p>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gray-300 rounded-full flex-shrink-0 flex items-center justify-center">
+                    <User size={20} className="text-gray-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Ishimwe Emmanuel</p>
+                    <p className="text-xs text-gray-500">Rukira</p>
+                  </div>
+                </div>
+              </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Partners Section */}
+          <section className="w-full" aria-label="Partners">
+            <div className="text-left mb-6">
+              <h2 className="text-2xl lg:text-3xl font-serif font-normal text-gray-900">
+                Our Partners
+              </h2>
+            </div>
+            <div className="flex items-center justify-start">
+              <div className="p-8">
+                <img 
+                  src="/lindo.png" 
+                  alt="Lindocare Partner Logo" 
+                  className="h-16 w-auto object-contain"
+                />
               </div>
             </div>
           </section>
@@ -335,8 +346,6 @@ const Home = () => {
         <div className="container mx-auto px-6 lg:px-12 xl:px-20 py-12">
           {/* Bottom Section */}
           <div className="flex flex-col items-center gap-4">
-            <p className="text-sm text-gray-600">{t("copyright")} {t("allRightsReserved")}</p>
-            
             {/* Contact & Social */}
             <div className="flex items-center gap-6">
               {/* Contact Info */}
@@ -359,18 +368,8 @@ const Home = () => {
               </a>
             </div>
             
-            {/* Language Selector - English only on homepage */}
-            <div className="flex items-center gap-2 border border-gray-200 rounded-lg bg-white px-3 py-1.5">
-              <Globe className="w-4 h-4 text-gray-600" />
-              <Select value="en" disabled>
-                <SelectTrigger className="border-0 h-auto p-0 w-auto min-w-[100px] focus:ring-0 focus:ring-offset-0">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="en">English</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Copyright */}
+            <p className="text-sm text-gray-600">© 2025 Trippo. All rights reserved.</p>
           </div>
         </div>
       </footer>
