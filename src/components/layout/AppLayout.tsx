@@ -10,7 +10,11 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children, title }: AppLayoutProps) {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  // Load sidebar collapsed state from localStorage
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    const saved = localStorage.getItem("profit-pilot-sidebar-collapsed");
+    return saved === "true";
+  });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarHovered, setSidebarHovered] = useState(false);
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
@@ -19,6 +23,13 @@ export function AppLayout({ children, title }: AppLayoutProps) {
   const [showArrow, setShowArrow] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [mobileSidebarExpanded, setMobileSidebarExpanded] = useState(false);
+
+  // Save sidebar collapsed state to localStorage whenever it changes (only on desktop)
+  useEffect(() => {
+    if (!isMobile) {
+      localStorage.setItem("profit-pilot-sidebar-collapsed", String(sidebarCollapsed));
+    }
+  }, [sidebarCollapsed, isMobile]);
 
   // Minimum swipe distance
   const minSwipeDistance = 50;
@@ -29,8 +40,15 @@ export function AppLayout({ children, title }: AppLayoutProps) {
       const mobile = window.innerWidth < 1024;
       setIsMobile(mobile);
       if (mobile) {
+        // Only force collapse on mobile, don't save to localStorage
         setSidebarCollapsed(true);
         setMobileMenuOpen(false);
+      } else {
+        // On desktop, restore saved state
+        const saved = localStorage.getItem("profit-pilot-sidebar-collapsed");
+        if (saved !== null) {
+          setSidebarCollapsed(saved === "true");
+        }
       }
     };
 

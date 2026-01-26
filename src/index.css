@@ -103,7 +103,7 @@
 
 @layer components {
   .kpi-card {
-    @apply bg-white p-6 border border-transparent shadow-sm rounded-xl;
+    @apply bg-white p-3 sm:p-6 border border-transparent shadow-sm rounded-lg sm:rounded-xl;
   }
 
   .data-table {

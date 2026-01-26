@@ -168,8 +168,12 @@ export function LoginModal({ open, onOpenChange, defaultTab = "login" }: LoginMo
         if (response.user.email) {
           localStorage.setItem("profit-pilot-user-email", response.user.email);
         }
-        if (response.user.businessName) {
-          localStorage.setItem("profit-pilot-business-name", response.user.businessName);
+        // Only store businessName if it exists and is not empty
+        if (response.user.businessName && response.user.businessName.trim()) {
+          localStorage.setItem("profit-pilot-business-name", response.user.businessName.trim());
+        } else {
+          // Clear businessName if it's empty or undefined
+          localStorage.removeItem("profit-pilot-business-name");
         }
         // Store user ID for API requests
         if (response.user._id || response.user.id) {
@@ -281,8 +285,12 @@ export function LoginModal({ open, onOpenChange, defaultTab = "login" }: LoginMo
         if (response.user.email) {
           localStorage.setItem("profit-pilot-user-email", response.user.email);
         }
-        if (response.user.businessName) {
-          localStorage.setItem("profit-pilot-business-name", response.user.businessName);
+        // Only store businessName if it exists and is not empty
+        if (response.user.businessName && response.user.businessName.trim()) {
+          localStorage.setItem("profit-pilot-business-name", response.user.businessName.trim());
+        } else {
+          // Clear businessName if it's empty or undefined
+          localStorage.removeItem("profit-pilot-business-name");
         }
         // Store user ID for API requests
         if (response.user._id || response.user.id) {

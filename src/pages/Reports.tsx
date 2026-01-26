@@ -11,7 +11,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { KPICard } from "@/components/dashboard/KPICard";
-import { DollarSign, TrendingUp, Package, Download, BarChart3 } from "lucide-react";
+import { ProductRankingPyramid } from "@/components/reports/ProductRankingPyramid";
+import { DollarSign, TrendingUp, Package, Download, BarChart3, Trophy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { playInfoBeep, initAudio } from "@/lib/sound";
 import { useApi } from "@/hooks/useApi";
@@ -163,6 +164,43 @@ const Reports = () => {
 
     return Object.values(aggregated).sort((a, b) => b.revenue - a.revenue);
   }, [filteredSales]);
+
+  // Calculate product rankings by purchase frequency (quantity sold) - only for products in stock
+  const productRankings = useMemo(() => {
+    const productSales: Record<string, { productId: string; productName: string; totalQuantity: number; stock: number }> = {};
+    
+    // Aggregate sales by product
+    filteredSales.forEach(sale => {
+      const productIdentifier = sale.product;
+      
+      // Find product by ID or name
+      const product = products.find(p => {
+        const id = (p as any)._id || p.id;
+        return id.toString() === productIdentifier || p.name === productIdentifier;
+      });
+      
+      // Only process if product exists and is in stock
+      if (product && product.stock > 0) {
+        const productId = ((product as any)._id || product.id).toString();
+        
+        if (!productSales[productId]) {
+          productSales[productId] = {
+            productId,
+            productName: product.name,
+            totalQuantity: 0,
+            stock: product.stock,
+          };
+        }
+        
+        productSales[productId].totalQuantity += sale.quantity;
+      }
+    });
+
+    // Convert to array, sort by quantity (descending), and return top products
+    return Object.values(productSales)
+      .sort((a, b) => b.totalQuantity - a.totalQuantity)
+      .slice(0, 10); // Top 10 products for pyramid
+  }, [filteredSales, products]);
 
 
 
@@ -777,7 +815,7 @@ const Reports = () => {
           </div>
 
           {/* Charts Section */}
-          <div className="grid grid-cols-1 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Sales Over Time Histogram - Based on Report Type */}
             <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 overflow-x-auto">
               <div className="flex items-center gap-2 mb-6">
@@ -864,6 +902,17 @@ const Reports = () => {
                   {t("language") === "rw" ? "Nta makuru y'ubucuruzi aboneka" : "No sales data available"}
                       </div>
               )}
+            </div>
+
+            {/* Product Rankings Pyramid */}
+            <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
+              <div className="flex items-center gap-2 mb-6">
+                <Trophy size={20} className="text-gray-600 shrink-0" />
+                <h3 className="text-base sm:text-lg font-semibold text-gray-800">
+                  {t("language") === "rw" ? "Icuruzwa cyagurishwe cyane" : "Product Rankings by Sales"}
+                </h3>
+              </div>
+              <ProductRankingPyramid rankings={productRankings} />
             </div>
           </div>
       </div>

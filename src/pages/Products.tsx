@@ -580,14 +580,38 @@ const Products = () => {
                       <div className="text-sm text-gray-700">{product.sellingPrice.toLocaleString()} rwf</div>
                     </td>
                     <td className="py-4 px-6">
-                          <div className="text-sm text-gray-700">
-                            {product.stock}
-                            {product.minStock && (
-                              <span className="text-xs text-gray-500 ml-1">
-                                (min: {product.minStock})
-                              </span>
-                            )}
+                      <div className="flex flex-col gap-2 min-w-[120px]">
+                        <div className="text-sm font-medium text-gray-900">
+                          {product.stock} {t("language") === "rw" ? "ibicuruzwa" : "units"}
+                        </div>
+                        {/* Stock Level Meter */}
+                        <div className="w-full">
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                              {(() => {
+                                const minStock = product.minStock || 5;
+                                const maxStock = Math.max(product.stock, minStock * 3, 10);
+                                const stockPercentage = maxStock > 0 ? Math.min((product.stock / maxStock) * 100, 100) : 0;
+                                const getColor = () => {
+                                  if (product.stock === 0) return "bg-gray-400";
+                                  if (product.stock <= minStock) return "bg-red-500";
+                                  if (product.stock <= minStock * 2) return "bg-yellow-500";
+                                  return "bg-green-500";
+                                };
+                                return (
+                                  <div
+                                    className={cn("h-full rounded-full transition-all duration-300", getColor())}
+                                    style={{ width: `${stockPercentage}%` }}
+                                  />
+                                );
+                              })()}
+                            </div>
+                            <span className="text-xs text-gray-500 whitespace-nowrap">
+                              {product.minStock ? `min: ${product.minStock}` : ""}
+                            </span>
                           </div>
+                        </div>
+                      </div>
                     </td>
                     <td className="py-4 px-6">
                           <span className={cn("inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded", 
@@ -688,14 +712,38 @@ const Products = () => {
                         <span className="text-gray-500">Price:</span>
                         <span className="ml-2 font-semibold text-gray-900">{product.sellingPrice.toLocaleString()} rwf</span>
                       </div>
-                      <div>
-                        <span className="text-gray-500">Stock:</span>
-                        <span className="ml-2 font-medium text-gray-900">
-                          {product.stock}
-                          {product.minStock && (
-                            <span className="text-xs text-gray-500 ml-1">(min: {product.minStock})</span>
-                          )}
-                        </span>
+                      <div className="col-span-2">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-gray-500">Stock:</span>
+                          <span className="font-medium text-gray-900">
+                            {product.stock} {t("language") === "rw" ? "ibicuruzwa" : "units"}
+                            {product.minStock && (
+                              <span className="text-xs text-gray-500 ml-1">(min: {product.minStock})</span>
+                            )}
+                          </span>
+                        </div>
+                        {/* Stock Level Meter */}
+                        <div className="w-full">
+                          <div className="flex-1 h-2.5 bg-gray-200 rounded-full overflow-hidden">
+                            {(() => {
+                              const minStock = product.minStock || 5;
+                              const maxStock = Math.max(product.stock, minStock * 3, 10);
+                              const stockPercentage = maxStock > 0 ? Math.min((product.stock / maxStock) * 100, 100) : 0;
+                              const getColor = () => {
+                                if (product.stock === 0) return "bg-gray-400";
+                                if (product.stock <= minStock) return "bg-red-500";
+                                if (product.stock <= minStock * 2) return "bg-yellow-500";
+                                return "bg-green-500";
+                              };
+                              return (
+                                <div
+                                  className={cn("h-full rounded-full transition-all duration-300", getColor())}
+                                  style={{ width: `${stockPercentage}%` }}
+                                />
+                              );
+                            })()}
+                          </div>
+                        </div>
                       </div>
                       <div>
                         <span className="text-gray-500">Status:</span>
