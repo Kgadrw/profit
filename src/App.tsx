@@ -8,6 +8,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { AddToHomeScreen } from "@/components/AddToHomeScreen";
 import { SplashScreen } from "@/components/SplashScreen";
+import { NotificationManager } from "@/components/NotificationManager";
 import { initAudio } from "@/lib/sound";
 import { LanguageProvider } from "@/hooks/useLanguage";
 import { ThemeProvider } from "@/hooks/useTheme";
@@ -138,6 +139,7 @@ const App = () => {
               <Route path="*" element={<NotFound />} />
             </Routes>
             <OfflineIndicator />
+            <NotificationManager />
           </LanguageProvider>
         </ThemeProvider>
       </BrowserRouter>

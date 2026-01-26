@@ -21,7 +21,8 @@ import {
   Globe,
   Trash2,
   AlertTriangle,
-  LogOut
+  LogOut,
+  Bell
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -32,6 +33,8 @@ import { authApi } from "@/lib/api";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useNavigate } from "react-router-dom";
+import { notificationService } from "@/lib/notifications";
+import { NotificationPermissionModal } from "@/components/NotificationPermissionModal";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,7 +46,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-type SettingsSection = "business" | "security" | "language" | "account";
+type SettingsSection = "business" | "security" | "language" | "notifications" | "account";
 
 const Settings = () => {
   const { toast } = useToast();
@@ -63,6 +66,8 @@ const Settings = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
 
   // Load user data when component mounts or user changes
   useEffect(() => {
@@ -493,6 +498,20 @@ const Settings = () => {
                   </div>
                 </button>
                 <button 
+                  onClick={() => setActiveSection("notifications")}
+                  className={cn(
+                    "w-full text-left px-3 py-2.5 transition-all duration-200 text-sm rounded-lg",
+                    activeSection === "notifications"
+                      ? "bg-blue-600 text-white border border-transparent font-semibold"
+                      : "hover:bg-blue-50 text-gray-700 border border-transparent"
+                  )}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Bell size={16} className={activeSection === "notifications" ? "text-white" : "text-blue-600"} />
+                    Notifications
+                  </div>
+                </button>
+                <button 
                   onClick={() => setActiveSection("account")}
                   className={cn(
                     "w-full text-left px-3 py-2.5 transition-all duration-200 text-sm rounded-lg",
@@ -766,6 +785,105 @@ const Settings = () => {
               </div>
             )}
 
+            {/* Notifications */}
+            {activeSection === "notifications" && (
+              <div className="form-card border border-transparent bg-white animate-fade-in">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 bg-blue-100 border border-blue-200 flex items-center justify-center">
+                      <Bell size={16} className="text-blue-600" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-bold text-blue-700">Notifications</h2>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Manage browser notifications for important updates
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <Separator className="mb-4 bg-blue-200" />
+
+                <div className="space-y-6">
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-2">
+                        <Bell size={14} className="text-blue-600" />
+                        Browser Notifications
+                      </h3>
+                      <p className="text-xs text-muted-foreground mb-4">
+                        Get notified about low stock, upcoming schedules, and new user registrations (for admins) even when you're not using Trippo.
+                      </p>
+
+                      <div className="p-4 bg-secondary/30 border border-transparent rounded-lg space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-foreground">Notification Status</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {notificationPermission === 'granted' && 'Notifications are enabled'}
+                              {notificationPermission === 'denied' && 'Notifications are blocked by browser'}
+                              {notificationPermission === 'default' && 'Notification permission not yet requested'}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {notificationPermission === 'granted' && (
+                              <div className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                                Enabled
+                              </div>
+                            )}
+                            {notificationPermission === 'denied' && (
+                              <div className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">
+                                Blocked
+                              </div>
+                            )}
+                            {notificationPermission === 'default' && (
+                              <div className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
+                                Not Set
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {notificationPermission !== 'granted' && (
+                          <Button
+                            onClick={() => {
+                              if (notificationPermission === 'denied') {
+                                toast({
+                                  title: "Notifications Blocked",
+                                  description: "Please enable notifications in your browser settings to receive alerts.",
+                                  variant: "destructive",
+                                });
+                              } else {
+                                setShowNotificationModal(true);
+                              }
+                            }}
+                            className="bg-blue-600 text-white hover:bg-blue-700 w-full gap-2 h-10 shadow-sm hover:shadow transition-all font-semibold rounded-lg"
+                          >
+                            <Bell size={14} />
+                            {notificationPermission === 'denied' ? 'Open Browser Settings' : 'Enable Notifications'}
+                          </Button>
+                        )}
+
+                        {notificationPermission === 'granted' && (
+                          <div className="space-y-2">
+                            <div className="flex items-start gap-2 text-xs text-muted-foreground">
+                              <div className="w-1.5 h-1.5 bg-green-500 rounded-full mt-1.5 flex-shrink-0" />
+                              <p>You will receive notifications for:</p>
+                            </div>
+                            <ul className="space-y-1 ml-4 text-xs text-muted-foreground">
+                              <li>• Low stock alerts (before products reach minimum stock)</li>
+                              <li>• Upcoming schedule reminders</li>
+                              <li>• New user registrations (admin only)</li>
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Delete Account */}
             {activeSection === "account" && (
               <div className="form-card border border-transparent bg-white animate-fade-in">
@@ -930,6 +1048,22 @@ const Settings = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Notification Permission Modal */}
+      <NotificationPermissionModal
+        open={showNotificationModal}
+        onOpenChange={(open) => {
+          setShowNotificationModal(open);
+          // Refresh permission status when modal closes
+          if (!open) {
+            setNotificationPermission(notificationService.checkPermission());
+          }
+        }}
+        onPermissionGranted={() => {
+          setNotificationPermission(notificationService.checkPermission());
+          localStorage.removeItem('profit-pilot-notification-declined');
+        }}
+      />
     </AppLayout>
   );
 };
