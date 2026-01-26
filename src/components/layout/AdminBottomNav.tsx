@@ -22,7 +22,12 @@ interface AdminBottomNavProps {
 
 export function AdminBottomNav({ activeSection, onSectionChange }: AdminBottomNavProps) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 lg:hidden">
+    <nav 
+      className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 lg:hidden"
+      style={{ 
+        paddingBottom: 'max(1rem, calc(env(safe-area-inset-bottom) + 0.5rem))',
+      }}
+    >
       <div className="flex items-center justify-around h-16 px-2">
         {adminMenuItems.map((item) => {
           const isActive = activeSection === item.section;

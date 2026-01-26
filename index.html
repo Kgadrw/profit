@@ -149,7 +149,62 @@
   </head>
 
   <body>
+    <!-- Splash Screen - Shows immediately while app loads -->
+    <div id="splash-screen" class="fixed inset-0 z-[9999] bg-white flex flex-col items-center justify-center">
+      <!-- Logo -->
+      <div class="flex flex-col items-center gap-3 mb-8">
+        <img 
+          src="/logo.png" 
+          alt="Trippo Logo" 
+          class="h-16 w-16 sm:h-20 sm:w-20 object-contain"
+          style="animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;"
+        />
+        <span class="text-2xl sm:text-3xl font-normal text-gray-700 lowercase">
+          trippo
+        </span>
+      </div>
+
+      <!-- Loading Bars -->
+      <div class="flex items-center gap-1.5">
+        <div class="w-2 h-8 bg-blue-600 rounded-full" style="animation: loading-bar 1.2s ease-in-out infinite; animation-delay: 0s;"></div>
+        <div class="w-2 h-8 bg-blue-600 rounded-full" style="animation: loading-bar 1.2s ease-in-out infinite; animation-delay: 0.15s;"></div>
+        <div class="w-2 h-8 bg-blue-600 rounded-full" style="animation: loading-bar 1.2s ease-in-out infinite; animation-delay: 0.3s;"></div>
+        <div class="w-2 h-8 bg-blue-600 rounded-full" style="animation: loading-bar 1.2s ease-in-out infinite; animation-delay: 0.45s;"></div>
+        <div class="w-2 h-8 bg-blue-600 rounded-full" style="animation: loading-bar 1.2s ease-in-out infinite; animation-delay: 0.6s;"></div>
+      </div>
+    </div>
+
+    <style>
+      @keyframes loading-bar {
+        0%, 40%, 100% {
+          transform: scaleY(0.4);
+          opacity: 0.5;
+        }
+        20% {
+          transform: scaleY(1);
+          opacity: 1;
+        }
+      }
+    </style>
+
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Hide splash screen when React app loads -->
+    <script>
+      // Hide splash screen after React app loads
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          const splash = document.getElementById('splash-screen');
+          if (splash) {
+            splash.style.transition = 'opacity 0.5s ease-out';
+            splash.style.opacity = '0';
+            setTimeout(function() {
+              splash.remove();
+            }, 500);
+          }
+        }, 800);
+      });
+    </script>
   </body>
 </html>

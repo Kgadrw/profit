@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { AddToHomeScreen } from "@/components/AddToHomeScreen";
+import { SplashScreen } from "@/components/SplashScreen";
 import { initAudio } from "@/lib/sound";
 import { LanguageProvider } from "@/hooks/useLanguage";
 import { ThemeProvider } from "@/hooks/useTheme";
@@ -59,6 +60,7 @@ const App = () => {
       <BrowserRouter>
         <ThemeProvider>
           <LanguageProvider>
+            <SplashScreen />
             <Routes>
               <Route path="/" element={<Home />} />
               <Route 
