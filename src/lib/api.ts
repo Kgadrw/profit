@@ -76,6 +76,8 @@ async function request<T>(
   // For non-auth endpoints, userId is required for data isolation
   const isAuthEndpoint = endpoint.startsWith('/auth/register') || 
                          endpoint.startsWith('/auth/login') ||
+                         endpoint.startsWith('/auth/forgot-pin') ||
+                         endpoint.startsWith('/auth/reset-pin') ||
                          endpoint.startsWith('/auth/me');
   
   // Admin endpoints don't require regular userId (admin has special userId)
@@ -208,6 +210,22 @@ export const authApi = {
   async deleteAccount(): Promise<ApiResponse> {
     return request('/auth/delete-account', {
       method: 'DELETE',
+    });
+  },
+
+  // Forgot PIN - Send OTP
+  async forgotPin(data: { email: string }): Promise<ApiResponse> {
+    return request('/auth/forgot-pin', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  // Reset PIN - Verify OTP and reset
+  async resetPin(data: { email: string; otp: string; newPin: string }): Promise<ApiResponse> {
+    return request('/auth/reset-pin', {
+      method: 'POST',
+      body: JSON.stringify(data),
     });
   },
 };

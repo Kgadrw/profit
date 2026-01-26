@@ -13,6 +13,7 @@ export function AddToHomeScreen() {
   const [showPrompt, setShowPrompt] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isAndroid, setIsAndroid] = useState(false);
+  const [isWindows, setIsWindows] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
@@ -29,6 +30,10 @@ export function AddToHomeScreen() {
     // Detect Android
     const android = /Android/.test(navigator.userAgent);
     setIsAndroid(android);
+
+    // Detect Windows
+    const windows = /Windows/.test(navigator.userAgent);
+    setIsWindows(windows);
 
     // Listen for the beforeinstallprompt event (Android Chrome)
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -86,10 +91,90 @@ export function AddToHomeScreen() {
     return null;
   }
 
+  // Windows/Desktop prompt (Chrome/Edge)
+  if ((isWindows || (!isIOS && !isAndroid)) && deferredPrompt) {
+    return (
+      <div className="fixed bottom-4 right-4 z-50 animate-fade-in max-w-sm">
+        <div className="bg-white border-2 border-blue-600 rounded-lg shadow-xl p-4">
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Download className="text-blue-600" size={20} />
+              <h3 className="font-semibold text-gray-900">Install Trippo</h3>
+            </div>
+            <button
+              onClick={handleDismiss}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X size={18} />
+            </button>
+          </div>
+          <p className="text-sm text-gray-600 mb-3">
+            Install Trippo as an app on your computer. It will run in its own window, work offline, and launch faster.
+          </p>
+          <div className="flex gap-2">
+            <Button
+              onClick={handleInstallClick}
+              className="flex-1 bg-blue-600 text-white hover:bg-blue-700"
+              size="sm"
+            >
+              <Download size={16} className="mr-2" />
+              Install App
+            </Button>
+            <Button
+              onClick={handleDismiss}
+              variant="outline"
+              className="flex-1"
+              size="sm"
+            >
+              Not now
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Windows/Desktop manual instructions (if prompt not available)
+  if ((isWindows || (!isIOS && !isAndroid)) && !deferredPrompt) {
+    return (
+      <div className="fixed bottom-4 right-4 z-50 animate-fade-in max-w-sm">
+        <div className="bg-white border-2 border-blue-600 rounded-lg shadow-xl p-4">
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Download className="text-blue-600" size={20} />
+              <h3 className="font-semibold text-gray-900">Install Trippo</h3>
+            </div>
+            <button
+              onClick={handleDismiss}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X size={18} />
+            </button>
+          </div>
+          <p className="text-sm text-gray-600 mb-3">
+            Install Trippo as an app on Windows:
+          </p>
+          <ol className="text-xs text-gray-700 space-y-2 mb-3 list-decimal list-inside">
+            <li>Click the <strong>Install</strong> icon <span className="text-blue-600">⊕</span> in the address bar, or</li>
+            <li>Click the <strong>Menu</strong> button <span className="text-blue-600">⋮</span> (three dots) → <strong>"Install Trippo"</strong></li>
+            <li>The app will open in its own window</li>
+          </ol>
+          <Button
+            onClick={handleDismiss}
+            className="w-full bg-blue-600 text-white hover:bg-blue-700"
+            size="sm"
+          >
+            Got it!
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   // iOS instructions
   if (isIOS) {
     return (
-      <div className="fixed bottom-20 left-4 right-4 z-50 lg:hidden animate-fade-in">
+      <div className="fixed bottom-20 left-4 right-4 z-50 animate-fade-in">
         <div className="bg-white border-2 border-blue-600 rounded-lg shadow-lg p-4 max-w-md mx-auto">
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-2">
@@ -126,7 +211,7 @@ export function AddToHomeScreen() {
   // Android prompt
   if (isAndroid && deferredPrompt) {
     return (
-      <div className="fixed bottom-20 left-4 right-4 z-50 lg:hidden animate-fade-in">
+      <div className="fixed bottom-20 left-4 right-4 z-50 animate-fade-in">
         <div className="bg-white border-2 border-blue-600 rounded-lg shadow-lg p-4 max-w-md mx-auto">
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-2">
@@ -169,7 +254,7 @@ export function AddToHomeScreen() {
   // Android manual instructions (if prompt not available)
   if (isAndroid && !deferredPrompt) {
     return (
-      <div className="fixed bottom-20 left-4 right-4 z-50 lg:hidden animate-fade-in">
+      <div className="fixed bottom-20 left-4 right-4 z-50 animate-fade-in">
         <div className="bg-white border-2 border-blue-600 rounded-lg shadow-lg p-4 max-w-md mx-auto">
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-2">

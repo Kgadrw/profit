@@ -1,7 +1,7 @@
 // Service Worker for PWA and offline support
 
 const CACHE_VERSION = Date.now().toString();
-const CACHE_NAME = `tracka-${CACHE_VERSION}`;
+const CACHE_NAME = `trippo-${CACHE_VERSION}`;
 
 // Install event - cache resources
 self.addEventListener("install", (event) => {
