@@ -6,6 +6,7 @@ import { NotificationPermissionModal } from './NotificationPermissionModal';
 import { notificationService } from '@/lib/notifications';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { backgroundSyncManager } from '@/lib/backgroundSync';
 
 export function NotificationManager() {
   const { user } = useCurrentUser();
@@ -40,10 +41,29 @@ export function NotificationManager() {
     }
   }, [user, hasCheckedPermission]);
 
-  const handlePermissionGranted = () => {
+  // Set up background sync when permission is granted
+  useEffect(() => {
+    if (notificationService.isAllowed() && user) {
+      // Register periodic background sync
+      backgroundSyncManager.registerPeriodicSync();
+      
+      // Send userId to service worker
+      const userId = localStorage.getItem('profit-pilot-user-id');
+      backgroundSyncManager.sendUserIdToServiceWorker(userId);
+    }
+  }, [user, notificationService.isAllowed()]);
+
+  const handlePermissionGranted = async () => {
     setShowPermissionModal(false);
     // Clear any previous decline status
     localStorage.removeItem('profit-pilot-notification-declined');
+    
+    // Register background sync for background notifications
+    await backgroundSyncManager.registerPeriodicSync();
+    
+    // Send userId to service worker
+    const userId = localStorage.getItem('profit-pilot-user-id');
+    await backgroundSyncManager.sendUserIdToServiceWorker(userId);
   };
 
   return (

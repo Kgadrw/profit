@@ -90,7 +90,7 @@ class NotificationService {
   }
 
   /**
-   * Show a notification
+   * Show a notification (prefers service worker for background support)
    */
   public async showNotification(
     type: NotificationType,
@@ -114,36 +114,68 @@ class NotificationService {
     this.lastNotificationTimes.set(notificationKey, now);
 
     try {
-      const notificationOptions: NotificationOptions = {
-        body: data.body,
-        icon: data.icon || '/logo.png',
-        badge: data.badge || '/logo.png',
-        tag: data.tag || notificationKey,
-        requireInteraction: data.requireInteraction || false,
-        silent: data.silent || false,
-        data: data.data || {},
-      };
-
-      const notification = new Notification(data.title, notificationOptions);
-
-      // Handle notification click
-      notification.onclick = (event) => {
-        event.preventDefault();
-        window.focus();
+      // Try to use service worker for background notifications
+      if ('serviceWorker' in navigator) {
+        const registration = await navigator.serviceWorker.ready;
         
-        // Handle navigation if data contains route
-        if (data.data?.route) {
-          window.location.href = data.data.route;
-        }
-        
-        notification.close();
-      };
+        // Send notification to service worker (works even when app is closed)
+        registration.active?.postMessage({
+          type: 'SHOW_NOTIFICATION',
+          notification: {
+            title: data.title,
+            body: data.body,
+            icon: data.icon || '/logo.png',
+            badge: data.badge || '/logo.png',
+            tag: data.tag || notificationKey,
+            requireInteraction: data.requireInteraction || false,
+            silent: data.silent || false,
+            data: data.data || {},
+          },
+        });
 
-      // Auto-close after 5 seconds (unless requireInteraction is true)
-      if (!data.requireInteraction) {
-        setTimeout(() => {
+        // Also show directly as fallback
+        await registration.showNotification(data.title, {
+          body: data.body,
+          icon: data.icon || '/logo.png',
+          badge: data.badge || '/logo.png',
+          tag: data.tag || notificationKey,
+          requireInteraction: data.requireInteraction || false,
+          silent: data.silent || false,
+          data: data.data || {},
+        });
+      } else {
+        // Fallback to regular Notification API
+        const notificationOptions: NotificationOptions = {
+          body: data.body,
+          icon: data.icon || '/logo.png',
+          badge: data.badge || '/logo.png',
+          tag: data.tag || notificationKey,
+          requireInteraction: data.requireInteraction || false,
+          silent: data.silent || false,
+          data: data.data || {},
+        };
+
+        const notification = new Notification(data.title, notificationOptions);
+
+        // Handle notification click
+        notification.onclick = (event) => {
+          event.preventDefault();
+          window.focus();
+          
+          // Handle navigation if data contains route
+          if (data.data?.route) {
+            window.location.href = data.data.route;
+          }
+          
           notification.close();
-        }, 5000);
+        };
+
+        // Auto-close after 5 seconds (unless requireInteraction is true)
+        if (!data.requireInteraction) {
+          setTimeout(() => {
+            notification.close();
+          }, 5000);
+        }
       }
     } catch (error) {
       console.error('Error showing notification:', error);

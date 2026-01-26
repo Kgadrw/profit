@@ -50,21 +50,21 @@
       "short_name": "Dashboard",
       "description": "View dashboard with sales and inventory overview",
       "url": "/dashboard",
-      "icons": [{ "src": "/logo.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/icon-shortcut-96.png", "sizes": "96x96", "type": "image/png" }]
     },
     {
       "name": "Products",
       "short_name": "Products",
       "description": "Manage products and inventory",
       "url": "/products",
-      "icons": [{ "src": "/logo.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/icon-shortcut-96.png", "sizes": "96x96", "type": "image/png" }]
     },
     {
       "name": "Sales",
       "short_name": "Sales",
       "description": "Record and track sales",
       "url": "/sales",
-      "icons": [{ "src": "/logo.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/icon-shortcut-96.png", "sizes": "96x96", "type": "image/png" }]
     }
   ]
 }

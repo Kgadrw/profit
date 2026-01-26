@@ -5,6 +5,7 @@ import { notificationService } from '@/lib/notifications';
 import { useCurrentUser } from './useCurrentUser';
 import { useApi } from './useApi';
 import { adminApi } from '@/lib/api';
+import { backgroundSyncManager } from '@/lib/backgroundSync';
 
 interface Product {
   id?: number;
@@ -55,6 +56,10 @@ export function useAdminNotifications() {
     if (!isAdmin || !user || !notificationService.isAllowed()) {
       return;
     }
+
+    // Send userId to service worker for background checks
+    const userId = localStorage.getItem('profit-pilot-user-id');
+    backgroundSyncManager.sendUserIdToServiceWorker(userId);
 
     // Initial check
     checkNewUsers();
@@ -132,6 +137,9 @@ export function useLowStockNotifications() {
       return;
     }
 
+    // Send userId to service worker for background checks
+    backgroundSyncManager.sendUserIdToServiceWorker(userId);
+
     // Initial check
     checkLowStock();
 
@@ -145,7 +153,7 @@ export function useLowStockNotifications() {
         clearInterval(checkInterval.current);
       }
     };
-  }, [user, isAdmin, products]);
+  }, [user, isAdmin, products, userId]);
 
   const checkLowStock = async () => {
     if (!products || products.length === 0) return;
@@ -198,6 +206,9 @@ export function useScheduleNotifications() {
       return;
     }
 
+    // Send userId to service worker for background checks
+    backgroundSyncManager.sendUserIdToServiceWorker(userId);
+
     // Initial check
     checkUpcomingSchedules();
 
@@ -211,7 +222,7 @@ export function useScheduleNotifications() {
         clearInterval(checkInterval.current);
       }
     };
-  }, [user, isAdmin, schedules]);
+  }, [user, isAdmin, schedules, userId]);
 
   const checkUpcomingSchedules = async () => {
     if (!schedules || schedules.length === 0) return;

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate Shortcut Icon</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        canvas {
+            border: 1px solid #ddd;
+            margin: 20px 0;
+            display: block;
+        }
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #1d4ed8;
+        }
+        .info {
+            background: #e0f2fe;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Generate Shortcut Icon with White Background</h1>
+        <div class="info">
+            <p>This tool generates a shortcut icon with a white background and smaller logo.</p>
+            <p>Click "Generate Icon" to create the icon, then right-click and "Save image as..." to save it as <code>icon-shortcut-96.png</code> in the public folder.</p>
+        </div>
+        
+        <canvas id="iconCanvas" width="96" height="96"></canvas>
+        
+        <div>
+            <button onclick="generateIcon()">Generate Icon</button>
+            <button onclick="downloadIcon()">Download Icon</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('iconCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        function generateIcon() {
+            // Clear canvas
+            ctx.clearRect(0, 0, 96, 96);
+            
+            // Draw white background
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, 96, 96);
+            
+            // Load logo image
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = function() {
+                // Calculate size to make logo smaller (60% of canvas)
+                const logoSize = 96 * 0.6; // 57.6px
+                const padding = (96 - logoSize) / 2; // Center the logo
+                
+                // Draw logo centered on white background
+                ctx.drawImage(img, padding, padding, logoSize, logoSize);
+            };
+            img.onerror = function() {
+                // If logo fails to load, draw a simple placeholder
+                ctx.fillStyle = '#2563eb';
+                ctx.font = 'bold 24px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('T', 48, 48);
+            };
+            img.src = '/logo.png';
+        }
+        
+        function downloadIcon() {
+            canvas.toBlob(function(blob) {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'icon-shortcut-96.png';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 'image/png');
+        }
+        
+        // Generate icon on page load
+        window.onload = generateIcon;
+    </script>
+</body>
+</html>
