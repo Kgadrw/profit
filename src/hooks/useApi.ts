@@ -326,35 +326,54 @@ export function useApi<T extends { _id?: string; id?: number }>({
       throw new Error('User not authenticated. Please login.');
     }
     
+    // For sales, require online connection - no offline support
+    if (endpoint === 'sales' && !navigator.onLine) {
+      const error: any = new Error('Cannot record sales while offline. Please check your internet connection.');
+      error.response = { connectionError: true };
+      throw error;
+    }
+    
     try {
       await initDB();
       const storeName = endpoint;
       
-      // Generate local ID if not present
-      const itemWithId = { ...item };
-      if (!itemWithId.id && !itemWithId._id) {
-        (itemWithId as any).id = generateUniqueId();
+      // For sales, don't save to IndexedDB first - only save after successful server response
+      // For other endpoints, use offline-first approach
+      const isSalesEndpoint = endpoint === 'sales';
+      let localId: any = null;
+      let itemWithId: any = null;
+      
+      if (!isSalesEndpoint) {
+        // Generate local ID if not present
+        itemWithId = { ...item };
+        if (!itemWithId.id && !itemWithId._id) {
+          (itemWithId as any).id = generateUniqueId();
+        }
+        localId = (itemWithId as any).id || (itemWithId as any)._id;
+        
+        // Save to IndexedDB first (offline-first)
+        await addItem(storeName, itemWithId);
+        
+        // Update UI immediately
+        const newItem = mapItem(itemWithId);
+        setItems((prev) => [...prev, newItem]);
       }
-      const localId = (itemWithId as any).id || (itemWithId as any)._id;
       
-      // Save to IndexedDB first (offline-first)
-      await addItem(storeName, itemWithId);
-      
-      // Update UI immediately
-      const newItem = mapItem(itemWithId);
-      setItems((prev) => [...prev, newItem]);
-      
-      // Try to sync with backend (silently fail if offline)
+      // ALWAYS try to send to backend when online - this is the primary path
       const itemData = { ...item };
       delete (itemData as any).id;
       delete (itemData as any)._id;
+      
+      console.log(`[useApi] Sending ${endpoint} to backend (online: ${navigator.onLine}):`, itemData);
       
       try {
         let response;
         if (endpoint === 'products') {
           response = await productApi.create(itemData);
         } else if (endpoint === 'sales') {
+          console.log(`[useApi] Creating sale via API:`, itemData);
           response = await saleApi.create(itemData);
+          console.log(`[useApi] Sale API response:`, response);
         } else if (endpoint === 'clients') {
           response = await clientApi.create(itemData);
         } else if (endpoint === 'schedules') {
@@ -363,20 +382,39 @@ export function useApi<T extends { _id?: string; id?: number }>({
           throw new Error(`Unknown endpoint: ${endpoint}`);
         }
 
-        if (response.data) {
-          const syncedItem = mapItem(response.data);
-          // Find and remove the local item with the temporary ID
-          const existingItems = await getAllItems<T>(storeName);
-          const localItemToRemove = existingItems.find((i) => {
-            const currentId = (i as any)._id || (i as any).id;
-            return currentId === localId;
-          });
+        console.log(`[useApi] Backend response received for ${endpoint}:`, response);
+        console.log(`[useApi] Response structure:`, {
+          hasData: !!response?.data,
+          hasResponse: !!response,
+          responseKeys: response ? Object.keys(response) : [],
+        });
+        
+        // Handle response - backend may return data in response.data or directly
+        const responseData = response?.data || response;
+        console.log(`[useApi] Extracted response data for ${endpoint}:`, responseData);
+        
+        if (responseData) {
+          console.log(`[useApi] Processing response data for ${endpoint}:`, responseData);
+          const syncedItem = mapItem(responseData);
+          console.log(`[useApi] Mapped synced item for ${endpoint}:`, syncedItem);
           
-          // Remove the local item if it exists
-          if (localItemToRemove) {
-            const numericId = typeof localId === 'string' ? parseInt(localId) : localId;
-            if (!isNaN(numericId)) {
-              await deleteItem(storeName, numericId);
+          // CRITICAL: If we got here, the backend call succeeded!
+          console.log(`[useApi] ✓ Successfully sent ${endpoint} to backend!`);
+          
+          if (!isSalesEndpoint) {
+            // For non-sales endpoints, find and remove the local item with the temporary ID
+            const existingItems = await getAllItems<T>(storeName);
+            const localItemToRemove = existingItems.find((i) => {
+              const currentId = (i as any)._id || (i as any).id;
+              return currentId === localId;
+            });
+            
+            // Remove the local item if it exists
+            if (localItemToRemove) {
+              const numericId = typeof localId === 'string' ? parseInt(localId) : localId;
+              if (!isNaN(numericId)) {
+                await deleteItem(storeName, numericId);
+              }
             }
           }
           
@@ -389,13 +427,11 @@ export function useApi<T extends { _id?: string; id?: number }>({
           
           // Update UI - replace local item with synced item and remove duplicates
           setItems((prev) => {
-            const updated = prev.map((i) => {
-              const currentId = (i as any)._id || (i as any).id;
-              return currentId === localId ? syncedItem : i;
-            });
-            
-            // Deduplicate sales by content
-            if (endpoint === 'sales') {
+            if (isSalesEndpoint) {
+              // For sales, just add the new item
+              const updated = [...prev, syncedItem];
+              
+              // Deduplicate sales by content
               const seen = new Map<string, T>();
               for (const item of updated) {
                 const sale = item as any;
@@ -421,12 +457,23 @@ export function useApi<T extends { _id?: string; id?: number }>({
                 }
               }
               return Array.from(seen.values());
+            } else {
+              // For other endpoints, replace local item
+              const updated = prev.map((i) => {
+                const currentId = (i as any)._id || (i as any).id;
+                return currentId === localId ? syncedItem : i;
+              });
+              return updated;
             }
-            
-            return updated;
           });
         }
       } catch (apiError: any) {
+        // For sales, don't queue for sync - just throw the error
+        if (isSalesEndpoint) {
+          // Remove any local item that might have been added (shouldn't happen, but safety check)
+          throw apiError;
+        }
+        
         // Check if it's actually a connection/network error (not a server validation error)
         const isNetworkError = !navigator.onLine || 
                                apiError?.message?.includes('Failed to fetch') ||
@@ -434,7 +481,7 @@ export function useApi<T extends { _id?: string; id?: number }>({
                                apiError?.message?.includes('Network request failed') ||
                                (apiError?.response?.connectionError === true);
         
-        // Only queue for sync if it's a REAL network/connection error
+        // Only queue for sync if it's a REAL network/connection error (for non-sales endpoints)
         if (isNetworkError) {
           console.log(`[useApi] Network error detected for ${endpoint}, queueing for sync:`, apiError);
           await syncManager.queueAction({
@@ -647,7 +694,7 @@ export function useApi<T extends { _id?: string; id?: number }>({
     }
   }, [endpoint, onError, syncManager]);
 
-  // Bulk add (for sales) - save to IndexedDB first, then sync with backend
+  // Bulk add (for sales) - require online connection, no offline support
   const bulkAdd = useCallback(async (itemsToAdd: T[]): Promise<void> => {
     if (endpoint !== 'sales') {
       throw new Error('Bulk add is only available for sales');
@@ -659,28 +706,18 @@ export function useApi<T extends { _id?: string; id?: number }>({
       throw new Error('User not authenticated. Please login.');
     }
 
+    // For sales, require online connection - no offline support
+    if (!navigator.onLine) {
+      const error: any = new Error('Cannot record sales while offline. Please check your internet connection.');
+      error.response = { connectionError: true };
+      throw error;
+    }
+
     try {
       await initDB();
       const storeName = endpoint;
       
-      // Save all items to IndexedDB first (offline-first)
-      const itemsWithIds = itemsToAdd.map((item) => {
-        const itemWithId = { ...item };
-        if (!itemWithId.id && !itemWithId._id) {
-          (itemWithId as any).id = generateUniqueId();
-        }
-        return itemWithId;
-      });
-      
-      for (const item of itemsWithIds) {
-        await addItem(storeName, item);
-      }
-      
-      // Update UI immediately
-      const newItems = itemsWithIds.map(mapItem);
-      setItems((prev) => [...prev, ...newItems]);
-      
-      // Try to sync with backend (silently fail if offline)
+      // Don't save to IndexedDB first - only save after successful server response
       const itemsData = itemsToAdd.map((item) => {
         const itemData = { ...item };
         delete (itemData as any).id;
@@ -689,36 +726,19 @@ export function useApi<T extends { _id?: string; id?: number }>({
       });
       
       try {
+        console.log(`[useApi] Attempting to send bulk ${endpoint} to backend:`, itemsData);
+        console.log(`[useApi] Online status:`, navigator.onLine);
         const response = await saleApi.createBulk(itemsData);
+        console.log(`[useApi] Backend response for bulk ${endpoint}:`, response);
 
-        if (response.data) {
-          const syncedItems = response.data.map(mapItem);
-          const existingItems = await getAllItems<T>(storeName);
+        // Handle both response.data and direct response
+        if (response?.data || response) {
+          const responseData = response.data || response;
+          console.log(`[useApi] Processing bulk response data for ${endpoint}:`, responseData);
+          const syncedItems = (Array.isArray(responseData) ? responseData : [responseData]).map(mapItem);
           
-          // Match synced items with local items by content (product, date, quantity) since IDs differ
+          // Add all synced items with server IDs
           for (const syncedItem of syncedItems) {
-            const syncedSale = syncedItem as any;
-            
-            // Find matching local item by content (for sales: product, date, quantity)
-            const matchingLocalItem = existingItems.find((localItem) => {
-              const localSale = localItem as any;
-              // Match by product name, date, and quantity
-              return localSale.product === syncedSale.product &&
-                     localSale.date === syncedSale.date &&
-                     localSale.quantity === syncedSale.quantity &&
-                     Math.abs((localSale.revenue || 0) - (syncedSale.revenue || 0)) < 0.01; // Allow small floating point differences
-            });
-            
-            if (matchingLocalItem) {
-              // Remove the local item with temporary ID
-              const localId = (matchingLocalItem as any)._id || (matchingLocalItem as any).id;
-              const numericId = typeof localId === 'string' ? parseInt(localId) : localId;
-              if (!isNaN(numericId)) {
-                await deleteItem(storeName, numericId);
-              }
-            }
-            
-            // Add the synced item with server ID
             await addItem(storeName, syncedItem);
           }
           
@@ -726,33 +746,9 @@ export function useApi<T extends { _id?: string; id?: number }>({
           apiCache.invalidateStore(endpoint);
           localStorage.setItem(`profit-pilot-${endpoint}-changed`, "true");
           
-          // Update UI - replace local items with synced items and remove duplicates
+          // Update UI - add synced items and remove duplicates
           setItems((prev) => {
-            const updated = [...prev];
-            syncedItems.forEach((syncedItem) => {
-              const syncedSale = syncedItem as any;
-              // Find by content matching
-              const index = updated.findIndex((i) => {
-                const localSale = i as any;
-                // Normalize dates for comparison
-                const localDate = typeof localSale.date === 'string' 
-                  ? localSale.date.split('T')[0] 
-                  : new Date(localSale.date).toISOString().split('T')[0];
-                const syncedDate = typeof syncedSale.date === 'string' 
-                  ? syncedSale.date.split('T')[0] 
-                  : new Date(syncedSale.date).toISOString().split('T')[0];
-                return localSale.product === syncedSale.product &&
-                       localDate === syncedDate &&
-                       localSale.quantity === syncedSale.quantity &&
-                       Math.abs((localSale.revenue || 0) - (syncedSale.revenue || 0)) < 0.01;
-              });
-              if (index !== -1) {
-                updated[index] = syncedItem;
-              } else {
-                // If not found, add it (shouldn't happen, but safety check)
-                updated.push(syncedItem);
-              }
-            });
+            const updated = [...prev, ...syncedItems];
             
             // Deduplicate sales by content to remove any remaining duplicates
             const seen = new Map<string, T>();
@@ -783,45 +779,12 @@ export function useApi<T extends { _id?: string; id?: number }>({
           });
         }
       } catch (apiError: any) {
-        // Check if it's actually a connection/network error (not a server validation error)
-        const isNetworkError = !navigator.onLine || 
-                               apiError?.message?.includes('Failed to fetch') ||
-                               apiError?.message?.includes('NetworkError') ||
-                               apiError?.message?.includes('Network request failed') ||
-                               (apiError?.response?.connectionError === true);
-        
-        // Only queue for sync if it's a REAL network/connection error
-        if (isNetworkError) {
-          console.log(`[useApi] Network error detected for bulk ${endpoint}, queueing for sync:`, apiError);
-          // Queue each item for sync
-          for (const item of itemsWithIds) {
-            await syncManager.queueAction({
-              type: "create",
-              store: storeName,
-              data: item,
-            });
-          }
-          // Throw a silent error so the UI can show success message
-          const silentError: any = new Error("Items saved locally. Will sync when online.");
-          silentError.response = { silent: true, connectionError: true };
-          throw silentError;
-        } else {
-          // Real API error (validation, server error, etc.) - show error but items are saved locally
-          console.error(`[useApi] API error for bulk ${endpoint} (not network):`, apiError);
-          // Don't queue for sync - this is a real error that needs to be fixed
-          // The items are already saved locally, so user can retry
-          throw apiError;
-        }
+        // For sales, don't queue for sync - just throw the error
+        throw apiError;
       }
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to bulk add items');
-      // Check if it's a silent connection error
-      if ((error as any).response?.silent || (error as any).response?.connectionError) {
-        // Re-throw as-is for UI handling
-        throw error;
-      }
       setError(error);
-      // Don't show errors for connection issues
       if (onError && !(error as any).silent) {
         onError(error);
       }

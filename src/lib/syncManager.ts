@@ -106,7 +106,8 @@ export class SyncManager {
           if (action.store === "products") {
             response = await productApi.create(itemData);
           } else if (action.store === "sales") {
-            response = await saleApi.create(itemData);
+            // Sales should not be synced - they require online connection
+            throw new Error("Sales cannot be synced offline. Please record sales when online.");
           } else if (action.store === "clients") {
             response = await clientApi.create(itemData);
           } else if (action.store === "schedules") {
@@ -125,7 +126,8 @@ export class SyncManager {
           if (action.store === "products") {
             response = await productApi.update(itemId.toString(), itemData);
           } else if (action.store === "sales") {
-            response = await saleApi.update(itemId.toString(), itemData);
+            // Sales should not be synced - they require online connection
+            throw new Error("Sales cannot be synced offline. Please update sales when online.");
           } else if (action.store === "clients") {
             response = await clientApi.update(itemId.toString(), itemData);
           } else if (action.store === "schedules") {
@@ -144,7 +146,8 @@ export class SyncManager {
           if (action.store === "products") {
             response = await productApi.delete(deleteId.toString());
           } else if (action.store === "sales") {
-            response = await saleApi.delete(deleteId.toString());
+            // Sales should not be synced - they require online connection
+            throw new Error("Sales cannot be synced offline. Please delete sales when online.");
           } else if (action.store === "clients") {
             response = await clientApi.delete(deleteId.toString());
           } else if (action.store === "schedules") {
@@ -170,36 +173,25 @@ export class SyncManager {
         
         console.log(`[SyncManager] Updating IndexedDB with synced item for ${action.store}:`, syncedItem);
         
-        // For create operations, find and remove the local item with temporary ID
-        if (action.type === "create") {
-          const existingItems = await getAllItems(action.store);
-          // Try to find the local item by matching content (for sales: product, date, quantity)
-          const matchingLocalItem = existingItems.find((localItem: any) => {
-            if (action.store === "sales") {
-              const localSale = localItem;
-              const syncedSale = syncedItem;
-              // Match by product name, date, and quantity
-              return localSale.product === syncedSale.product &&
-                     localSale.date === syncedSale.date &&
-                     localSale.quantity === syncedSale.quantity &&
-                     Math.abs((localSale.revenue || 0) - (syncedSale.revenue || 0)) < 0.01;
-            } else {
-              // For other stores, try to match by the original local ID stored in action.data
-              const originalLocalId = (action.data as any)._id || (action.data as any).id;
+          // For create operations, find and remove the local item with temporary ID
+          if (action.type === "create") {
+            const existingItems = await getAllItems(action.store);
+            // Try to find the local item by matching the original local ID stored in action.data
+            const originalLocalId = (action.data as any)._id || (action.data as any).id;
+            const matchingLocalItem = existingItems.find((localItem: any) => {
               const currentId = (localItem as any)._id || (localItem as any).id;
               return currentId === originalLocalId;
-            }
-          });
-          
-          if (matchingLocalItem) {
-            // Remove the local item with temporary ID
-            const localId = (matchingLocalItem as any)._id || (matchingLocalItem as any).id;
-            const numericId = typeof localId === 'string' ? parseInt(localId) : localId;
-            if (!isNaN(numericId)) {
-              await deleteItem(action.store, numericId);
+            });
+            
+            if (matchingLocalItem) {
+              // Remove the local item with temporary ID
+              const localId = (matchingLocalItem as any)._id || (matchingLocalItem as any).id;
+              const numericId = typeof localId === 'string' ? parseInt(localId) : localId;
+              if (!isNaN(numericId)) {
+                await deleteItem(action.store, numericId);
+              }
             }
           }
-        }
         
         // Add/update the synced item with server ID
         await updateItem(action.store, syncedItem);

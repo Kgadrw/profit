@@ -138,13 +138,15 @@ async function request<T>(
     }
 
     if (!response.ok) {
+      console.error(`[API] Request failed: ${response.status}`, data);
       throw new ApiError(
-        data.error || 'An error occurred',
+        data.error || data.message || 'An error occurred',
         response.status,
         data
       );
     }
 
+    console.log(`[API] Request successful:`, data);
     return data;
   } catch (error) {
     if (error instanceof ApiError) {
