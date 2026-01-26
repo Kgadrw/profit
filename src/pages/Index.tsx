@@ -4,6 +4,7 @@ import { KPICard } from "@/components/dashboard/KPICard";
 import { SalesTrendChart } from "@/components/dashboard/SalesTrendChart";
 import { LowStockAlert } from "@/components/dashboard/LowStockAlert";
 import { MarketAnalysis } from "@/components/dashboard/MarketAnalysis";
+import { AddToHomeScreen } from "@/components/AddToHomeScreen";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -1100,6 +1101,7 @@ const Dashboard = () => {
           />
         )}
       </div>
+      <AddToHomeScreen />
     </AppLayout>
   );
 };

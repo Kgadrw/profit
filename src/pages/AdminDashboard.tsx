@@ -53,6 +53,7 @@ import { adminApi } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { UptimeTimeline } from "@/components/admin/UptimeTimeline";
+import { AddToHomeScreen } from "@/components/AddToHomeScreen";
 
 interface SystemStats {
   totalUsers: number;
@@ -1371,6 +1372,7 @@ const AdminDashboard = () => {
           </AlertDialogContent>
         </AlertDialog>
       </div>
+      <AddToHomeScreen />
     </AdminLayout>
   );
 };

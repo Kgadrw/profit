@@ -138,7 +138,6 @@ const App = () => {
               <Route path="*" element={<NotFound />} />
             </Routes>
             <OfflineIndicator />
-            <AddToHomeScreen />
           </LanguageProvider>
         </ThemeProvider>
       </BrowserRouter>
