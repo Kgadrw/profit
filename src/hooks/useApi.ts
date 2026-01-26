@@ -13,9 +13,6 @@ interface UseApiOptions<T> {
   onError?: (error: Error) => void;
 }
 
-// Request debouncing to prevent rapid successive calls
-const requestDebouncers = new Map<string, NodeJS.Timeout>();
-
 export function useApi<T extends { _id?: string; id?: number }>({
   endpoint,
   defaultValue,
@@ -37,26 +34,9 @@ export function useApi<T extends { _id?: string; id?: number }>({
   }, []);
 
   // Load data from IndexedDB first, then try to sync with API
-  const loadData = useCallback(async (immediate: boolean = false) => {
+  const loadData = useCallback(async () => {
     // Prevent multiple simultaneous requests
     if (isLoadingDataRef.current) {
-      return;
-    }
-    
-    // Debounce requests to prevent rate limiting (except for immediate calls)
-    if (!immediate) {
-      const debounceKey = `load-${endpoint}`;
-      const existingDebounce = requestDebouncers.get(debounceKey);
-      if (existingDebounce) {
-        clearTimeout(existingDebounce);
-      }
-      
-      const debounced = setTimeout(() => {
-        requestDebouncers.delete(debounceKey);
-        loadData(true);
-      }, 500); // 500ms debounce
-      
-      requestDebouncers.set(debounceKey, debounced);
       return;
     }
 
@@ -401,9 +381,9 @@ export function useApi<T extends { _id?: string; id?: number }>({
     }
   }, [endpoint, defaultValue, mapItem, onError, syncManager]);
 
-  // Load data on mount only (immediate call, no debounce)
+  // Load data on mount only
   useEffect(() => {
-    loadData(true);
+    loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run on mount
 
@@ -1012,21 +992,9 @@ export function useApi<T extends { _id?: string; id?: number }>({
   }, []);
 
   // Refresh function that resets error state
-  // Use a debounce to prevent multiple rapid refreshes
-  const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const refresh = useCallback(() => {
     hasErrorShownRef.current = false;
-    
-    // Clear any pending refresh
-    if (refreshTimeoutRef.current) {
-      clearTimeout(refreshTimeoutRef.current);
-    }
-    
-    // Debounce refresh by 500ms to prevent rapid successive calls
-    refreshTimeoutRef.current = setTimeout(() => {
-      loadData(true); // Immediate call since we already debounced here
-      refreshTimeoutRef.current = null;
-    }, 500);
+    loadData();
   }, [loadData]);
 
   return {

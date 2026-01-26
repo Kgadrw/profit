@@ -1,5 +1,5 @@
 // API Configuration and Utilities
-import { apiRateLimiter, sanitizeInput, validateObjectId } from './security';
+import { sanitizeInput, validateObjectId } from './security';
 import { logger } from './logger';
 
 // API URL Configuration
@@ -59,16 +59,6 @@ async function request<T>(
   // Sanitize endpoint to prevent path traversal
   const sanitizedEndpoint = sanitizeInput(endpoint);
   const url = `${API_BASE_URL}${sanitizedEndpoint}`;
-  
-  // Client-side rate limiting
-  const rateLimitKey = `api-${endpoint.split('/')[0]}`;
-  if (!apiRateLimiter.canMakeRequest(rateLimitKey)) {
-    throw new ApiError(
-      'Too many requests. Please wait a moment and try again.',
-      429,
-      { rateLimited: true }
-    );
-  }
   
   // Get userId from localStorage - REQUIRED for all requests except auth endpoints
   const userId = localStorage.getItem("profit-pilot-user-id");

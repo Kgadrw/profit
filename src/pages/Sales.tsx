@@ -815,6 +815,29 @@ const Sales = () => {
     setPinInput("");
   };
 
+  // Handle delete all sales
+  const handleDeleteAll = () => {
+    if (sales.length === 0) {
+      toast({
+        title: "No Sales",
+        description: "There are no sales to delete.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!hasPin) {
+      toast({
+        title: "PIN Required",
+        description: "Please set a PIN in Settings before deleting sales.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setDeleteMode("all");
+    setShowPinDialog(true);
+    setPinInput("");
+  };
+
 
   const handlePinVerification = async () => {
     initAudio();
@@ -1583,6 +1606,19 @@ const Sales = () => {
           
       {/* Mobile Card View - Full Page Scroll - Outside flex container */}
       <div className="lg:hidden bg-white rounded-lg mt-4 p-4 pb-20 space-y-4">
+            {/* Mobile Delete All Button */}
+            {sales.length > 0 && (
+              <div className="mb-4 pb-4 border-b border-gray-200">
+                <Button
+                  onClick={handleDeleteAll}
+                  className="w-full bg-red-600 hover:bg-red-700 text-white border-0 rounded-lg px-4 py-2.5 font-semibold flex items-center justify-center gap-2"
+                >
+                  <Trash2 size={18} />
+                  <span>{t("delete")} All Sales ({sales.length})</span>
+                </Button>
+              </div>
+            )}
+            
             {filteredSales.length > 0 ? (
               filteredSales.map((sale) => {
                 const saleId = (sale as any)._id || sale.id;
