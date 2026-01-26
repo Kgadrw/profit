@@ -109,13 +109,6 @@ export function NotificationPermissionModal({
                 <p className="text-xs text-gray-600">Never miss important appointments</p>
               </div>
             </div>
-            <div className="flex items-start gap-3">
-              <CheckCircle2 className="text-blue-600 flex-shrink-0 mt-0.5" size={18} />
-              <div>
-                <p className="text-sm font-medium text-gray-900">New User Notifications</p>
-                <p className="text-xs text-gray-600">Admins get alerts for new registrations</p>
-              </div>
-            </div>
           </div>
 
           {/* Permission status */}
@@ -158,7 +151,7 @@ export function NotificationPermissionModal({
             <Button
               onClick={handleDecline}
               variant="ghost"
-              className="flex-1 rounded-full hover:bg-gray-100/80 transition-all duration-200 font-medium"
+              className="flex-1 rounded-full hover:bg-red-100 hover:text-red-700 transition-all duration-200 font-medium"
             >
               Not Now
             </Button>
