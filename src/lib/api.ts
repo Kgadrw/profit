@@ -297,20 +297,91 @@ export const saleApi = {
     });
   },
 
-  // Create sale
+  // Create sale - Direct API call to server (no offline storage, no syncing)
   async create(data: any): Promise<ApiResponse> {
-    return request('/sales', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+    console.log('[saleApi] ===== DIRECT API CALL: Creating sale =====');
+    console.log('[saleApi] Sale data:', JSON.stringify(data, null, 2));
+    console.log('[saleApi] API URL:', `${API_BASE_URL}/sales`);
+    console.log('[saleApi] Online status:', navigator.onLine);
+    
+    if (!navigator.onLine) {
+      const error: any = new Error('Cannot record sales while offline. Please check your internet connection.');
+      error.response = { connectionError: true };
+      throw error;
+    }
+    
+    try {
+      const response = await request('/sales', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+      
+      if (!response || (!response.data && !response)) {
+        console.error('[saleApi] ✗ Invalid response structure:', response);
+        throw new Error('Invalid response from sales API. Please try again.');
+      }
+      
+      console.log('[saleApi] ✓ Sale created successfully via DIRECT API:', response);
+      return response;
+    } catch (error: any) {
+      console.error('[saleApi] ✗ Error creating sale via DIRECT API:', error);
+      // Re-throw with connection error flag if it's a network error
+      if (!navigator.onLine || 
+          error?.message?.includes('Failed to fetch') ||
+          error?.message?.includes('NetworkError') ||
+          error?.message?.includes('Network request failed')) {
+        const connectionError: any = new Error('Cannot record sales while offline. Please check your internet connection.');
+        connectionError.response = { connectionError: true };
+        throw connectionError;
+      }
+      throw error;
+    }
   },
 
-  // Create bulk sales
+  // Create bulk sales - Direct API call to server (no offline storage, no syncing)
   async createBulk(sales: any[]): Promise<ApiResponse> {
-    return request('/sales/bulk', {
-      method: 'POST',
-      body: JSON.stringify({ sales }),
-    });
+    console.log('[saleApi] ===== DIRECT API CALL: Creating bulk sales =====');
+    console.log('[saleApi] Sales count:', sales.length);
+    console.log('[saleApi] Sales data:', JSON.stringify(sales, null, 2));
+    console.log('[saleApi] API URL:', `${API_BASE_URL}/sales/bulk`);
+    console.log('[saleApi] Online status:', navigator.onLine);
+    
+    if (!navigator.onLine) {
+      const error: any = new Error('Cannot record sales while offline. Please check your internet connection.');
+      error.response = { connectionError: true };
+      throw error;
+    }
+    
+    if (!sales || sales.length === 0) {
+      throw new Error('No sales data provided for bulk creation.');
+    }
+    
+    try {
+      const response = await request('/sales/bulk', {
+        method: 'POST',
+        body: JSON.stringify({ sales }),
+      });
+      
+      if (!response || (!response.data && !response)) {
+        console.error('[saleApi] ✗ Invalid bulk response structure:', response);
+        throw new Error('Invalid response from bulk sales API. Please try again.');
+      }
+      
+      console.log('[saleApi] ✓ Bulk sales created successfully via DIRECT API:', response);
+      return response;
+    } catch (error: any) {
+      console.error('[saleApi] ✗ Error creating bulk sales via DIRECT API:', error);
+      // Re-throw with connection error flag if it's a network error
+      if (!navigator.onLine || 
+          error?.message?.includes('Failed to fetch') ||
+          error?.message?.includes('NetworkError') ||
+          error?.message?.includes('Network request failed')) {
+        const connectionError: any = new Error('Cannot record sales while offline. Please check your internet connection.');
+        connectionError.response = { connectionError: true };
+        throw connectionError;
+      }
+      throw error;
+    }
   },
 
   // Update sale

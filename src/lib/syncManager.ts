@@ -104,7 +104,8 @@ export class SyncManager {
       switch (action.type) {
         case "create":
           if (action.store === "products") {
-            response = await productApi.create(itemData);
+            // Products should not be synced - they require online connection
+            throw new Error("Products cannot be synced offline. Please create products when online.");
           } else if (action.store === "sales") {
             // Sales should not be synced - they require online connection
             throw new Error("Sales cannot be synced offline. Please record sales when online.");
@@ -124,7 +125,8 @@ export class SyncManager {
             throw new Error("Item ID is required for update");
           }
           if (action.store === "products") {
-            response = await productApi.update(itemId.toString(), itemData);
+            // Products should not be synced - they require online connection
+            throw new Error("Products cannot be synced offline. Please update products when online.");
           } else if (action.store === "sales") {
             // Sales should not be synced - they require online connection
             throw new Error("Sales cannot be synced offline. Please update sales when online.");
@@ -144,7 +146,8 @@ export class SyncManager {
             throw new Error("Item ID is required for delete");
           }
           if (action.store === "products") {
-            response = await productApi.delete(deleteId.toString());
+            // Products should not be synced - they require online connection
+            throw new Error("Products cannot be synced offline. Please delete products when online.");
           } else if (action.store === "sales") {
             // Sales should not be synced - they require online connection
             throw new Error("Sales cannot be synced offline. Please delete sales when online.");
@@ -252,7 +255,27 @@ export class SyncManager {
 
     try {
       const queue = await getAllItems<SyncAction>("syncQueue");
-      const pendingActions = queue.filter((action) => !action.synced);
+      // Filter out products and sales from sync queue - they require online connection
+      const pendingActions = queue.filter((action) => 
+        !action.synced && 
+        action.store !== "products" && 
+        action.store !== "sales"
+      );
+
+      // Remove products and sales from sync queue (mark as synced to skip them)
+      const productsAndSalesActions = queue.filter((action) => 
+        !action.synced && 
+        (action.store === "products" || action.store === "sales")
+      );
+      
+      if (productsAndSalesActions.length > 0) {
+        console.log(`[SyncManager] Removing ${productsAndSalesActions.length} product/sales actions from sync queue (not supported)`);
+        for (const action of productsAndSalesActions) {
+          if (action.id !== undefined) {
+            await this.markAsSynced(action.id);
+          }
+        }
+      }
 
       if (pendingActions.length === 0) {
         return; // Nothing to sync

@@ -371,9 +371,17 @@ export function useApi<T extends { _id?: string; id?: number }>({
         if (endpoint === 'products') {
           response = await productApi.create(itemData);
         } else if (endpoint === 'sales') {
-          console.log(`[useApi] Creating sale via API:`, itemData);
+          console.log(`[useApi] Creating sale via DIRECT API call:`, itemData);
+          console.log(`[useApi] Online status: ${navigator.onLine}`);
+          console.log(`[useApi] API Base URL: ${import.meta.env.VITE_API_URL || 'https://profit-backend-e4w1.onrender.com/api'}`);
+          
+          // Direct API call - no offline storage, no syncing
           response = await saleApi.create(itemData);
-          console.log(`[useApi] Sale API response:`, response);
+          
+          console.log(`[useApi] ✓ Sale API response received:`, response);
+          if (!response || (!response.data && !response)) {
+            throw new Error('Invalid response from sales API. No data received.');
+          }
         } else if (endpoint === 'clients') {
           response = await clientApi.create(itemData);
         } else if (endpoint === 'schedules') {
@@ -393,83 +401,86 @@ export function useApi<T extends { _id?: string; id?: number }>({
         const responseData = response?.data || response;
         console.log(`[useApi] Extracted response data for ${endpoint}:`, responseData);
         
-        if (responseData) {
-          console.log(`[useApi] Processing response data for ${endpoint}:`, responseData);
-          const syncedItem = mapItem(responseData);
-          console.log(`[useApi] Mapped synced item for ${endpoint}:`, syncedItem);
+        if (!responseData) {
+          console.error(`[useApi] ✗ No data in response for ${endpoint}:`, response);
+          throw new Error(`Invalid API response: No data received from server for ${endpoint}`);
+        }
+        
+        console.log(`[useApi] Processing response data for ${endpoint}:`, responseData);
+        const syncedItem = mapItem(responseData);
+        console.log(`[useApi] Mapped synced item for ${endpoint}:`, syncedItem);
+        
+        // CRITICAL: If we got here, the backend call succeeded!
+        console.log(`[useApi] ✓ Successfully sent ${endpoint} to backend via DIRECT API call!`);
+        
+        if (!isSalesEndpoint) {
+          // For non-sales endpoints, find and remove the local item with the temporary ID
+          const existingItems = await getAllItems<T>(storeName);
+          const localItemToRemove = existingItems.find((i) => {
+            const currentId = (i as any)._id || (i as any).id;
+            return currentId === localId;
+          });
           
-          // CRITICAL: If we got here, the backend call succeeded!
-          console.log(`[useApi] ✓ Successfully sent ${endpoint} to backend!`);
-          
-          if (!isSalesEndpoint) {
-            // For non-sales endpoints, find and remove the local item with the temporary ID
-            const existingItems = await getAllItems<T>(storeName);
-            const localItemToRemove = existingItems.find((i) => {
-              const currentId = (i as any)._id || (i as any).id;
-              return currentId === localId;
-            });
-            
-            // Remove the local item if it exists
-            if (localItemToRemove) {
-              const numericId = typeof localId === 'string' ? parseInt(localId) : localId;
-              if (!isNaN(numericId)) {
-                await deleteItem(storeName, numericId);
-              }
+          // Remove the local item if it exists
+          if (localItemToRemove) {
+            const numericId = typeof localId === 'string' ? parseInt(localId) : localId;
+            if (!isNaN(numericId)) {
+              await deleteItem(storeName, numericId);
             }
           }
-          
-          // Add the synced item with server ID
-          await addItem(storeName, syncedItem);
-          
-          // Invalidate cache for this endpoint since data changed
-          apiCache.invalidateStore(endpoint);
-          localStorage.setItem(`profit-pilot-${endpoint}-changed`, "true");
-          
-          // Update UI - replace local item with synced item and remove duplicates
-          setItems((prev) => {
-            if (isSalesEndpoint) {
-              // For sales, just add the new item
-              const updated = [...prev, syncedItem];
+        }
+        
+        // Add the synced item with server ID
+        await addItem(storeName, syncedItem);
+        
+        // Invalidate cache for this endpoint since data changed
+        apiCache.invalidateStore(endpoint);
+        localStorage.setItem(`profit-pilot-${endpoint}-changed`, "true");
+        
+        // Update UI - replace local item with synced item and remove duplicates
+        setItems((prev) => {
+          if (isSalesEndpoint) {
+            // For sales, just add the new item
+            const updated = [...prev, syncedItem];
+            
+            // Deduplicate sales by content
+            const seen = new Map<string, T>();
+            for (const item of updated) {
+              const sale = item as any;
+              const dateStr = typeof sale.date === 'string' 
+                ? sale.date.split('T')[0] 
+                : new Date(sale.date).toISOString().split('T')[0];
+              const key = `${sale.product}_${dateStr}_${sale.quantity}_${sale.revenue}`;
               
-              // Deduplicate sales by content
-              const seen = new Map<string, T>();
-              for (const item of updated) {
-                const sale = item as any;
-                const dateStr = typeof sale.date === 'string' 
-                  ? sale.date.split('T')[0] 
-                  : new Date(sale.date).toISOString().split('T')[0];
-                const key = `${sale.product}_${dateStr}_${sale.quantity}_${sale.revenue}`;
+              if (seen.has(key)) {
+                const existing = seen.get(key)!;
+                const existingId = (existing as any)._id || (existing as any).id;
+                const currentId = (sale as any)._id || (sale as any).id;
                 
-                if (seen.has(key)) {
-                  const existing = seen.get(key)!;
-                  const existingId = (existing as any)._id || (existing as any).id;
-                  const currentId = (sale as any)._id || (sale as any).id;
-                  
-                  // Prefer server ID over temporary ID
-                  const existingIsServerId = typeof existingId === 'string' || (typeof existingId === 'number' && existingId < 1e15);
-                  const currentIsServerId = typeof currentId === 'string' || (typeof currentId === 'number' && currentId < 1e15);
-                  
-                  if (currentIsServerId && !existingIsServerId) {
-                    seen.set(key, item);
-                  }
-                } else {
+                // Prefer server ID over temporary ID
+                const existingIsServerId = typeof existingId === 'string' || (typeof existingId === 'number' && existingId < 1e15);
+                const currentIsServerId = typeof currentId === 'string' || (typeof currentId === 'number' && currentId < 1e15);
+                
+                if (currentIsServerId && !existingIsServerId) {
                   seen.set(key, item);
                 }
+              } else {
+                seen.set(key, item);
               }
-              return Array.from(seen.values());
-            } else {
-              // For other endpoints, replace local item
-              const updated = prev.map((i) => {
-                const currentId = (i as any)._id || (i as any).id;
-                return currentId === localId ? syncedItem : i;
-              });
-              return updated;
             }
-          });
-        }
+            return Array.from(seen.values());
+          } else {
+            // For other endpoints, replace local item
+            const updated = prev.map((i) => {
+              const currentId = (i as any)._id || (i as any).id;
+              return currentId === localId ? syncedItem : i;
+            });
+            return updated;
+          }
+        });
       } catch (apiError: any) {
-        // For sales, don't queue for sync - just throw the error
-        if (isSalesEndpoint) {
+        // For sales and products, don't queue for sync - just throw the error
+        if (isSalesEndpoint || endpoint === 'products') {
           // Remove any local item that might have been added (shouldn't happen, but safety check)
           throw apiError;
         }
@@ -481,7 +492,7 @@ export function useApi<T extends { _id?: string; id?: number }>({
                                apiError?.message?.includes('Network request failed') ||
                                (apiError?.response?.connectionError === true);
         
-        // Only queue for sync if it's a REAL network/connection error (for non-sales endpoints)
+        // Only queue for sync if it's a REAL network/connection error (for non-sales, non-products endpoints)
         if (isNetworkError) {
           console.log(`[useApi] Network error detected for ${endpoint}, queueing for sync:`, apiError);
           await syncManager.queueAction({
@@ -582,6 +593,11 @@ export function useApi<T extends { _id?: string; id?: number }>({
           );
         }
       } catch (apiError: any) {
+        // For sales and products, don't queue for sync - just throw the error
+        if (endpoint === 'sales' || endpoint === 'products') {
+          throw apiError;
+        }
+        
         // Check if it's actually a connection/network error (not a server validation error)
         const isNetworkError = !navigator.onLine || 
                                apiError?.message?.includes('Failed to fetch') ||
@@ -589,7 +605,7 @@ export function useApi<T extends { _id?: string; id?: number }>({
                                apiError?.message?.includes('Network request failed') ||
                                (apiError?.response?.connectionError === true);
         
-        // Only queue for sync if it's a REAL network/connection error
+        // Only queue for sync if it's a REAL network/connection error (for non-sales, non-products endpoints)
         if (isNetworkError) {
           console.log(`[useApi] Network error detected for ${endpoint} update, queueing for sync:`, apiError);
           await syncManager.queueAction({
@@ -663,6 +679,12 @@ export function useApi<T extends { _id?: string; id?: number }>({
           throw new Error(`Unknown endpoint: ${endpoint}`);
         }
       } catch (apiError: any) {
+        // For sales and products, don't queue for sync - just log the error
+        if (endpoint === 'sales' || endpoint === 'products') {
+          console.error(`[useApi] API error for ${endpoint} delete:`, apiError);
+          return;
+        }
+        
         // Check if it's actually a connection/network error
         const isNetworkError = !navigator.onLine || 
                                apiError?.message?.includes('Failed to fetch') ||
@@ -670,7 +692,7 @@ export function useApi<T extends { _id?: string; id?: number }>({
                                apiError?.message?.includes('Network request failed') ||
                                (apiError?.response?.connectionError === true);
         
-        // Only queue for sync if it's a REAL network/connection error
+        // Only queue for sync if it's a REAL network/connection error (for non-sales, non-products endpoints)
         if (isNetworkError) {
           console.log(`[useApi] Network error detected for ${endpoint} delete, queueing for sync:`, apiError);
           await syncManager.queueAction({
@@ -726,58 +748,75 @@ export function useApi<T extends { _id?: string; id?: number }>({
       });
       
       try {
-        console.log(`[useApi] Attempting to send bulk ${endpoint} to backend:`, itemsData);
-        console.log(`[useApi] Online status:`, navigator.onLine);
+        console.log(`[useApi] Attempting to send bulk sales via DIRECT API call:`, itemsData);
+        console.log(`[useApi] Online status: ${navigator.onLine}`);
+        console.log(`[useApi] API Base URL: ${import.meta.env.VITE_API_URL || 'https://profit-backend-e4w1.onrender.com/api'}`);
+        
+        // Direct API call - no offline storage, no syncing
         const response = await saleApi.createBulk(itemsData);
-        console.log(`[useApi] Backend response for bulk ${endpoint}:`, response);
+        
+        console.log(`[useApi] ✓ Bulk sales API response received:`, response);
+        if (!response || (!response.data && !response)) {
+          throw new Error('Invalid response from bulk sales API. No data received.');
+        }
 
         // Handle both response.data and direct response
-        if (response?.data || response) {
-          const responseData = response.data || response;
-          console.log(`[useApi] Processing bulk response data for ${endpoint}:`, responseData);
-          const syncedItems = (Array.isArray(responseData) ? responseData : [responseData]).map(mapItem);
+        if (!response || (!response.data && !response)) {
+          console.error(`[useApi] ✗ Invalid bulk response for ${endpoint}:`, response);
+          throw new Error(`Invalid API response: No data received from server for bulk ${endpoint}`);
+        }
+        
+        const responseData = response.data || response;
+        console.log(`[useApi] Processing bulk response data for ${endpoint}:`, responseData);
+        
+        if (!responseData || (Array.isArray(responseData) && responseData.length === 0)) {
+          console.error(`[useApi] ✗ Empty bulk response data for ${endpoint}:`, responseData);
+          throw new Error(`Invalid API response: Empty data received from server for bulk ${endpoint}`);
+        }
+        
+        const syncedItems = (Array.isArray(responseData) ? responseData : [responseData]).map(mapItem);
+        console.log(`[useApi] ✓ Successfully processed ${syncedItems.length} bulk sales from DIRECT API call`);
+        
+        // Add all synced items with server IDs
+        for (const syncedItem of syncedItems) {
+          await addItem(storeName, syncedItem);
+        }
+        
+        // Invalidate cache for this endpoint since data changed
+        apiCache.invalidateStore(endpoint);
+        localStorage.setItem(`profit-pilot-${endpoint}-changed`, "true");
+        
+        // Update UI - add synced items and remove duplicates
+        setItems((prev) => {
+          const updated = [...prev, ...syncedItems];
           
-          // Add all synced items with server IDs
-          for (const syncedItem of syncedItems) {
-            await addItem(storeName, syncedItem);
-          }
-          
-          // Invalidate cache for this endpoint since data changed
-          apiCache.invalidateStore(endpoint);
-          localStorage.setItem(`profit-pilot-${endpoint}-changed`, "true");
-          
-          // Update UI - add synced items and remove duplicates
-          setItems((prev) => {
-            const updated = [...prev, ...syncedItems];
+          // Deduplicate sales by content to remove any remaining duplicates
+          const seen = new Map<string, T>();
+          for (const item of updated) {
+            const sale = item as any;
+            const dateStr = typeof sale.date === 'string' 
+              ? sale.date.split('T')[0] 
+              : new Date(sale.date).toISOString().split('T')[0];
+            const key = `${sale.product}_${dateStr}_${sale.quantity}_${sale.revenue}`;
             
-            // Deduplicate sales by content to remove any remaining duplicates
-            const seen = new Map<string, T>();
-            for (const item of updated) {
-              const sale = item as any;
-              const dateStr = typeof sale.date === 'string' 
-                ? sale.date.split('T')[0] 
-                : new Date(sale.date).toISOString().split('T')[0];
-              const key = `${sale.product}_${dateStr}_${sale.quantity}_${sale.revenue}`;
+            if (seen.has(key)) {
+              const existing = seen.get(key)!;
+              const existingId = (existing as any)._id || (existing as any).id;
+              const currentId = (sale as any)._id || (sale as any).id;
               
-              if (seen.has(key)) {
-                const existing = seen.get(key)!;
-                const existingId = (existing as any)._id || (existing as any).id;
-                const currentId = (sale as any)._id || (sale as any).id;
-                
-                // Prefer server ID over temporary ID
-                const existingIsServerId = typeof existingId === 'string' || (typeof existingId === 'number' && existingId < 1e15);
-                const currentIsServerId = typeof currentId === 'string' || (typeof currentId === 'number' && currentId < 1e15);
-                
-                if (currentIsServerId && !existingIsServerId) {
-                  seen.set(key, item);
-                }
-              } else {
+              // Prefer server ID over temporary ID
+              const existingIsServerId = typeof existingId === 'string' || (typeof existingId === 'number' && existingId < 1e15);
+              const currentIsServerId = typeof currentId === 'string' || (typeof currentId === 'number' && currentId < 1e15);
+              
+              if (currentIsServerId && !existingIsServerId) {
                 seen.set(key, item);
               }
+            } else {
+              seen.set(key, item);
             }
-            return Array.from(seen.values());
-          });
-        }
+          }
+          return Array.from(seen.values());
+        });
       } catch (apiError: any) {
         // For sales, don't queue for sync - just throw the error
         throw apiError;
