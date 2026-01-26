@@ -64,8 +64,8 @@ export function NotificationPermissionModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in-0 duration-300">
-      <div className="relative bg-gradient-to-br from-white via-blue-50/30 to-purple-50/20 backdrop-blur-xl rounded-2xl shadow-2xl p-6 max-w-md mx-4 border-0 overflow-hidden animate-slide-up-fade">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-4 bg-black/50 backdrop-blur-sm animate-in fade-in-0 duration-300">
+      <div className="relative bg-gradient-to-br from-white via-blue-50/30 to-purple-50/20 backdrop-blur-xl rounded-2xl shadow-2xl p-6 max-w-md mx-4 border-0 overflow-hidden animate-slide-down-fade">
         {/* Decorative gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5 pointer-events-none" />
         
