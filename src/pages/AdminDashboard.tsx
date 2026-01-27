@@ -361,7 +361,7 @@ const AdminDashboard = () => {
           <>
             {/* KPI Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card className="bg-white">
+              <Card className="lg:bg-white bg-white/80 backdrop-blur-sm">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-normal">Total Users</CardTitle>
                   <Users className="h-4 w-4 text-muted-foreground" />
@@ -374,7 +374,7 @@ const AdminDashboard = () => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-white">
+              <Card className="lg:bg-white bg-white/80 backdrop-blur-sm">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-normal">Total Products</CardTitle>
                   <Package className="h-4 w-4 text-muted-foreground" />
@@ -387,7 +387,7 @@ const AdminDashboard = () => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-white">
+              <Card className="lg:bg-white bg-white/80 backdrop-blur-sm">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-normal">Total Sales</CardTitle>
                   <ShoppingCart className="h-4 w-4 text-muted-foreground" />
@@ -400,7 +400,7 @@ const AdminDashboard = () => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-white">
+              <Card className="lg:bg-white bg-white/80 backdrop-blur-sm">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-normal">Total Revenue</CardTitle>
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -418,7 +418,7 @@ const AdminDashboard = () => {
 
             {/* Summary Cards */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <Card className="bg-white">
+              <Card className="lg:bg-white bg-white/80 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="font-normal">System Summary</CardTitle>
                   <CardDescription>Overall system statistics</CardDescription>
@@ -451,7 +451,7 @@ const AdminDashboard = () => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-white">
+              <Card className="lg:bg-white bg-white/80 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="font-normal">Recent Activity (7 Days)</CardTitle>
                   <CardDescription>New items in the last week</CardDescription>
@@ -541,7 +541,7 @@ const AdminDashboard = () => {
             {/* Usage Summary */}
             {usageSummary && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card className="bg-white">
+                <Card className="lg:bg-white bg-white/80 backdrop-blur-sm">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-normal">Total Users</CardTitle>
                   </CardHeader>
@@ -552,7 +552,7 @@ const AdminDashboard = () => {
                     </p>
                   </CardContent>
                 </Card>
-                <Card className="bg-white">
+                <Card className="lg:bg-white bg-white/80 backdrop-blur-sm">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-normal">Total Products</CardTitle>
                   </CardHeader>
@@ -563,7 +563,7 @@ const AdminDashboard = () => {
                     </p>
                   </CardContent>
                 </Card>
-                <Card className="bg-white">
+                <Card className="lg:bg-white bg-white/80 backdrop-blur-sm">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-normal">Total Sales</CardTitle>
                   </CardHeader>
@@ -574,7 +574,7 @@ const AdminDashboard = () => {
                     </p>
                   </CardContent>
                 </Card>
-                <Card className="bg-white">
+                <Card className="lg:bg-white bg-white/80 backdrop-blur-sm">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-normal">Active Users</CardTitle>
                   </CardHeader>
@@ -703,7 +703,7 @@ const AdminDashboard = () => {
 
             {/* Recent Activity */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <Card className="bg-white">
+              <Card className="lg:bg-white bg-white/80 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="font-normal">Recent Product Creations</CardTitle>
                   <CardDescription>Products created in the last 7 days</CardDescription>
@@ -731,7 +731,7 @@ const AdminDashboard = () => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-white">
+              <Card className="lg:bg-white bg-white/80 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="font-normal">Recent Sales</CardTitle>
                   <CardDescription>Sales made in the last 7 days</CardDescription>
@@ -768,7 +768,7 @@ const AdminDashboard = () => {
           <div className="space-y-4">
             {/* Schedule Statistics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card className="bg-white">
+              <Card className="lg:bg-white bg-white/80 backdrop-blur-sm">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-normal flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
@@ -783,7 +783,7 @@ const AdminDashboard = () => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-white">
+              <Card className="lg:bg-white bg-white/80 backdrop-blur-sm">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-normal flex items-center gap-2">
                     <Mail className="h-4 w-4" />
@@ -798,7 +798,7 @@ const AdminDashboard = () => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-white">
+              <Card className="lg:bg-white bg-white/80 backdrop-blur-sm">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-normal flex items-center gap-2">
                     <CheckCircle className="h-4 w-4" />
@@ -813,7 +813,7 @@ const AdminDashboard = () => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-white">
+              <Card className="lg:bg-white bg-white/80 backdrop-blur-sm">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-normal flex items-center gap-2">
                     <DollarSign className="h-4 w-4" />
@@ -832,7 +832,7 @@ const AdminDashboard = () => {
             {/* Charts Row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {/* Schedules by Status */}
-              <Card className="bg-white">
+              <Card className="lg:bg-white bg-white/80 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="font-normal flex items-center gap-2">
                     <BarChart3 className="h-5 w-5" />
@@ -875,7 +875,7 @@ const AdminDashboard = () => {
               </Card>
 
               {/* Schedules by Frequency */}
-              <Card className="bg-white">
+              <Card className="lg:bg-white bg-white/80 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="font-normal flex items-center gap-2">
                     <TrendingUp className="h-5 w-5" />
@@ -911,7 +911,7 @@ const AdminDashboard = () => {
             {/* Schedule Activity and Email Activity */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {/* Schedule Activity Over Time */}
-              <Card className="bg-white">
+              <Card className="lg:bg-white bg-white/80 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="font-normal flex items-center gap-2">
                     <Activity className="h-5 w-5" />
@@ -944,7 +944,7 @@ const AdminDashboard = () => {
               </Card>
 
               {/* Email Activity Over Time */}
-              <Card className="bg-white">
+              <Card className="lg:bg-white bg-white/80 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="font-normal flex items-center gap-2">
                     <Mail className="h-5 w-5" />
@@ -980,7 +980,7 @@ const AdminDashboard = () => {
             {/* Email Statistics and Top Users */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {/* Email Statistics */}
-              <Card className="bg-white">
+              <Card className="lg:bg-white bg-white/80 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="font-normal flex items-center gap-2">
                     <Mail className="h-5 w-5" />
@@ -1023,7 +1023,7 @@ const AdminDashboard = () => {
               </Card>
 
               {/* Top Users by Schedule Usage */}
-              <Card className="bg-white">
+              <Card className="lg:bg-white bg-white/80 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="font-normal flex items-center gap-2">
                     <Users className="h-5 w-5" />
@@ -1075,7 +1075,7 @@ const AdminDashboard = () => {
           <div className="space-y-4">
             {/* System Status Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card className="bg-white">
+              <Card className="lg:bg-white bg-white/80 backdrop-blur-sm">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-normal flex items-center gap-2">
                     <Server className="h-4 w-4" />
@@ -1098,7 +1098,7 @@ const AdminDashboard = () => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-white">
+              <Card className="lg:bg-white bg-white/80 backdrop-blur-sm">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-normal flex items-center gap-2">
                     <Radio className="h-4 w-4" />
@@ -1113,7 +1113,7 @@ const AdminDashboard = () => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-white">
+              <Card className="lg:bg-white bg-white/80 backdrop-blur-sm">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-normal flex items-center gap-2">
                     <Clock className="h-4 w-4" />
@@ -1128,7 +1128,7 @@ const AdminDashboard = () => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-white">
+              <Card className="lg:bg-white bg-white/80 backdrop-blur-sm">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-normal flex items-center gap-2">
                     <Database className="h-4 w-4" />
@@ -1167,7 +1167,7 @@ const AdminDashboard = () => {
             {/* Charts Row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {/* API Requests Over Time */}
-              <Card className="bg-white">
+              <Card className="lg:bg-white bg-white/80 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="font-normal flex items-center gap-2">
                     <BarChart3 className="h-5 w-5" />
@@ -1203,7 +1203,7 @@ const AdminDashboard = () => {
               </Card>
 
               {/* Endpoint Distribution Pie Chart */}
-              <Card className="bg-white">
+              <Card className="lg:bg-white bg-white/80 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="font-normal flex items-center gap-2">
                     <TrendingUp className="h-5 w-5" />
@@ -1250,7 +1250,7 @@ const AdminDashboard = () => {
             {/* Live API Requests and Endpoint Stats */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {/* Live API Requests */}
-              <Card className="bg-white">
+              <Card className="lg:bg-white bg-white/80 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="font-normal flex items-center gap-2">
                     <Radio className="h-5 w-5" />
@@ -1295,7 +1295,7 @@ const AdminDashboard = () => {
               </Card>
 
               {/* Endpoint Statistics Table */}
-              <Card className="bg-white">
+              <Card className="lg:bg-white bg-white/80 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="font-normal flex items-center gap-2">
                     <BarChart3 className="h-5 w-5" />

@@ -563,7 +563,7 @@ const AddProduct = () => {
         </div>
 
         {/* Form */}
-        <div className="form-card">
+        <div className="form-card lg:bg-white bg-white/80 backdrop-blur-sm">
           {mode === "bulk" ? (
             /* Bulk Add Form */
             <div className="space-y-4">
@@ -581,7 +581,7 @@ const AddProduct = () => {
               {/* Mobile Card Layout */}
               <div className="md:hidden space-y-4">
                 {bulkProducts.map((product, index) => (
-                  <div key={index} className="border border-gray-200 rounded-lg p-4 bg-white space-y-3">
+                  <div key={index} className="border border-gray-200 rounded-lg p-4 lg:bg-white bg-white/80 backdrop-blur-sm space-y-3">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-semibold text-gray-700">Product #{index + 1}</span>
                       {bulkProducts.length > 1 && (
@@ -689,7 +689,7 @@ const AddProduct = () => {
               {/* Desktop Table Layout */}
               <div className="hidden md:block border border-transparent overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-white border-b border-transparent">
+                  <thead className="lg:bg-white bg-white/80 backdrop-blur-sm border-b border-transparent">
                     <tr>
                       <th className="text-left p-2 text-xs font-medium text-foreground">Product Name</th>
                       <th className="text-left p-2 text-xs font-medium text-foreground">Category</th>

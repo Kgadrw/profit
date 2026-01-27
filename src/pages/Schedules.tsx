@@ -984,19 +984,75 @@ const Schedules = () => {
   // Schedules Page Skeleton
   const SchedulesSkeleton = () => (
     <AppLayout title="Schedules">
-      <div className="flex flex-col h-[calc(100vh-3rem)]">
-        <div className="bg-white shadow-sm flex-1 flex flex-col min-h-0 overflow-hidden rounded-lg">
-          <div className="bg-white border-b border-gray-200 px-4 py-6 flex-shrink-0">
-            <div className="flex flex-col gap-4">
-              <Skeleton className="h-8 w-48" />
-              <Skeleton className="h-10 w-full" />
-            </div>
+      <div className="flex flex-col gap-4 pb-4">
+        {/* Stats Section Skeleton */}
+        <div className="form-card border-transparent flex-shrink-0 bg-blue-500 border-blue-600 lg:bg-blue-500">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+            <Skeleton className="h-6 w-48 bg-white/20" />
+            <Skeleton className="h-10 w-32 bg-white/20" />
           </div>
-          <div className="overflow-auto flex-1">
-            <div className="p-4 space-y-4">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <Skeleton key={i} className="h-40 w-full" />
-              ))}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-200 rounded-lg p-4">
+                <Skeleton className="h-4 w-16 mb-2" />
+                <Skeleton className="h-8 w-20" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Filters Section Skeleton */}
+        <div className="form-card border-transparent flex-shrink-0 lg:bg-white bg-white/80 backdrop-blur-md">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Skeleton className="h-10 flex-1 rounded-lg" />
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-10 w-full sm:w-48 rounded-lg" />
+            ))}
+          </div>
+        </div>
+
+        {/* Content Section Skeleton */}
+        <div className="lg:bg-white bg-white/80 backdrop-blur-md shadow-sm rounded-lg">
+          <div className="p-2 sm:p-4">
+            <div className="overflow-x-auto -mx-2 sm:mx-0 rounded-lg border border-gray-200">
+              <table className="w-full border-collapse min-w-[800px] sm:min-w-0">
+                <thead className="sticky top-0 z-10 lg:bg-gray-100 bg-gray-100/80 backdrop-blur-sm border-b-2 border-gray-300">
+                  <tr>
+                    {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+                      <th key={i} className="text-left py-3 sm:py-4 px-3 sm:px-6">
+                        <Skeleton className="h-4 w-20" />
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="lg:bg-white bg-white/80 backdrop-blur-sm">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <tr key={i} className="border-b border-gray-200">
+                      <td className="py-3 sm:py-4 px-3 sm:px-6">
+                        <Skeleton className="h-4 w-6" />
+                      </td>
+                      <td className="py-3 sm:py-4 px-3 sm:px-6">
+                        <Skeleton className="h-4 w-32" />
+                      </td>
+                      <td className="py-3 sm:py-4 px-3 sm:px-6 hidden md:table-cell">
+                        <Skeleton className="h-4 w-24" />
+                      </td>
+                      <td className="py-3 sm:py-4 px-3 sm:px-6 hidden lg:table-cell">
+                        <Skeleton className="h-4 w-32" />
+                      </td>
+                      <td className="py-3 sm:py-4 px-3 sm:px-6 hidden lg:table-cell">
+                        <Skeleton className="h-4 w-24" />
+                      </td>
+                      <td className="py-3 sm:py-4 px-3 sm:px-6">
+                        <Skeleton className="h-6 w-20 rounded-full" />
+                      </td>
+                      <td className="py-3 sm:py-4 px-3 sm:px-6">
+                        <Skeleton className="h-8 w-8 rounded" />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -1012,7 +1068,7 @@ const Schedules = () => {
     <AppLayout title="Schedules & Reminders">
       <div className="flex flex-col gap-4 pb-4">
         {/* Stats Section */}
-        <div className="form-card border-transparent flex-shrink-0 bg-blue-500 border-blue-600">
+        <div className="form-card border-transparent flex-shrink-0 bg-blue-500 border-blue-600 lg:bg-blue-500">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
             <h3 className="section-title flex items-center gap-2 text-white">
               <CalendarIcon size={20} className="text-white" />
@@ -1030,19 +1086,19 @@ const Schedules = () => {
 
               {/* Quick Stats */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <div className="lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-200 rounded-lg p-4">
               <div className="text-xs text-blue-600 font-medium mb-1">Total</div>
               <div className="text-2xl font-semibold text-blue-700">{schedules.length}</div>
                 </div>
-            <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <div className="lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-200 rounded-lg p-4">
               <div className="text-xs text-blue-600 font-medium mb-1">Upcoming</div>
               <div className="text-2xl font-semibold text-blue-700">{upcomingSchedules.length}</div>
                 </div>
-            <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <div className="lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-200 rounded-lg p-4">
               <div className="text-xs text-red-600 font-medium mb-1">Overdue</div>
               <div className="text-2xl font-semibold text-red-700">{overdueSchedules.length}</div>
                 </div>
-            <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <div className="lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-200 rounded-lg p-4">
               <div className="text-xs text-green-600 font-medium mb-1">Completed</div>
               <div className="text-2xl font-semibold text-green-700">
                     {schedules.filter(s => s.status === "completed").length}
@@ -1052,7 +1108,7 @@ const Schedules = () => {
               </div>
 
         {/* Filters Section */}
-        <div className="form-card border-transparent flex-shrink-0">
+        <div className="form-card border-transparent flex-shrink-0 lg:bg-white bg-white/80 backdrop-blur-sm">
           <div className="flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10" />
@@ -1132,12 +1188,12 @@ const Schedules = () => {
           </div>
 
           {/* Content Section */}
-        <div className="bg-white shadow-sm rounded-lg">
+        <div className="lg:bg-white bg-white/80 backdrop-blur-sm shadow-sm rounded-lg">
           <div className="p-2 sm:p-4">
               {filteredClients.length > 0 ? (
                 <div className="overflow-x-auto -mx-2 sm:mx-0 rounded-lg border border-gray-200">
                   <table className="w-full border-collapse min-w-[800px] sm:min-w-0">
-                    <thead className="sticky top-0 z-10 bg-gray-100 border-b-2 border-gray-300">
+                    <thead className="sticky top-0 z-10 lg:bg-gray-100 bg-gray-100/80 backdrop-blur-sm border-b-2 border-gray-300">
                       <tr>
                         <th className="text-left text-xs sm:text-sm font-semibold text-gray-700 py-3 sm:py-4 px-3 sm:px-6 w-10 sm:w-12"></th>
                         <th className="text-left text-xs sm:text-sm font-semibold text-gray-700 py-3 sm:py-4 px-3 sm:px-6">Client Name</th>
@@ -1148,7 +1204,7 @@ const Schedules = () => {
                         <th className="text-left text-xs sm:text-sm font-semibold text-gray-700 py-3 sm:py-4 px-3 sm:px-6">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white">
+                    <tbody className="lg:bg-white bg-white/80 backdrop-blur-sm">
                       {filteredClients.map((client, index) => {
                         const clientId = (client as any)._id || client.id;
                         const clientIdStr = clientId?.toString() || "";
@@ -1261,10 +1317,10 @@ const Schedules = () => {
                                     <div className="mb-2 sm:mb-3">
                                       <h4 className="text-xs sm:text-sm font-semibold text-gray-700">Schedules for {client.name}</h4>
                                     </div>
-                                    <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
+                                    <div className="lg:bg-white bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200 overflow-x-auto">
                                       <table className="w-full min-w-[600px] sm:min-w-0">
                                         <thead>
-                                          <tr className="bg-white border-b border-gray-200">
+                                          <tr className="lg:bg-white bg-white/80 backdrop-blur-sm border-b border-gray-200">
                                             <th className="text-left text-xs sm:text-sm font-semibold text-gray-700 py-2 sm:py-3 px-2 sm:px-4">Title</th>
                                             <th className="text-left text-xs sm:text-sm font-semibold text-gray-700 py-2 sm:py-3 px-2 sm:px-4">Status</th>
                                             <th className="text-left text-xs sm:text-sm font-semibold text-gray-700 py-2 sm:py-3 px-2 sm:px-4">Due Date</th>
@@ -1285,7 +1341,7 @@ const Schedules = () => {
                         key={scheduleId}
                         className={cn(
                                                   "border-b border-gray-200",
-                                                  sIndex % 2 === 0 ? "bg-white" : "bg-gray-50"
+                                                  sIndex % 2 === 0 ? "lg:bg-white bg-white/80 backdrop-blur-sm" : "bg-gray-50"
                         )}
                       >
                                                 <td className="py-2 sm:py-3 px-2 sm:px-4">
@@ -1425,7 +1481,7 @@ const Schedules = () => {
                   </table>
                 </div>
               ) : (
-                <div className="text-center py-8 sm:py-16 bg-white rounded border border-dashed border-gray-300 px-4">
+                <div className="text-center py-8 sm:py-16 lg:bg-white bg-white/80 backdrop-blur-sm rounded border border-dashed border-gray-300 px-4">
                   <User size={48} className="sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 text-gray-300" />
                   <p className="text-base sm:text-lg font-semibold text-gray-400 mb-2">
                     {searchQuery ? "No clients found" : "No clients yet"}
@@ -1455,7 +1511,7 @@ const Schedules = () => {
           setCurrentStep(1); // Reset step when modal closes
         }
       }}>
-        <DialogContent className="bg-white max-w-2xl w-[95vw] sm:w-full max-h-[90vh] sm:max-h-[85vh] overflow-y-auto mx-2 sm:mx-4">
+        <DialogContent className="lg:bg-white bg-white/80 backdrop-blur-sm max-w-2xl w-[95vw] sm:w-full max-h-[90vh] sm:max-h-[85vh] overflow-y-auto mx-2 sm:mx-4">
           <DialogHeader className="border-b border-blue-200 pb-3 sm:pb-4">
             <DialogTitle className="text-lg sm:text-xl font-semibold text-blue-700">
               {editingSchedule ? "Edit Schedule" : "Create New Schedule"}
@@ -1516,7 +1572,7 @@ const Schedules = () => {
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     placeholder="e.g., Monthly Payment - Client X, Weekly Worker Payment"
-                    className="bg-white border border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded h-10"
+                    className="lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded h-10"
                   />
                   <p className="text-xs text-gray-500">A clear title helps you identify this schedule quickly</p>
                 </div>
@@ -1566,7 +1622,7 @@ const Schedules = () => {
                     value={formData.clientName}
                     onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
                     placeholder="Enter client name"
-                    className="bg-white border border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded h-10"
+                    className="lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded h-10"
                   />
                   </div>
 
@@ -1579,7 +1635,7 @@ const Schedules = () => {
                     value={formData.clientEmail}
                     onChange={(e) => setFormData({ ...formData, clientEmail: e.target.value })}
                     placeholder="client@example.com"
-                    className="bg-white border border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded h-10"
+                    className="lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded h-10"
                   />
                 </div>
 
@@ -1591,7 +1647,7 @@ const Schedules = () => {
                     value={formData.clientBusinessType}
                     onChange={(e) => setFormData({ ...formData, clientBusinessType: e.target.value })}
                     placeholder="e.g., Starlink Internet, Worker Payments"
-                    className="bg-white border border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded h-10"
+                    className="lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded h-10"
                   />
                 </div>
 
@@ -1602,7 +1658,7 @@ const Schedules = () => {
                     value={formData.clientPhone}
                     onChange={(e) => setFormData({ ...formData, clientPhone: e.target.value })}
                     placeholder="+250 7xx xxx xxx"
-                    className="bg-white border border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded h-10"
+                    className="lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded h-10"
                   />
                 </div>
 
@@ -1612,7 +1668,7 @@ const Schedules = () => {
                     value={formData.clientType} 
                     onValueChange={(value: "debtor" | "worker" | "other") => setFormData({ ...formData, clientType: value })}
                   >
-                    <SelectTrigger className="bg-white border border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded h-10">
+                    <SelectTrigger className="lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded h-10">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -1632,7 +1688,7 @@ const Schedules = () => {
                     value={formData.amount}
                     onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                     placeholder="0"
-                    className="bg-white border border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded h-10"
+                    className="lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded h-10"
                   />
                   <p className="text-xs text-gray-500">Payment amount or reminder value (optional)</p>
                 </div>
@@ -1652,7 +1708,7 @@ const Schedules = () => {
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-900">Frequency</Label>
                   <Select value={formData.frequency} onValueChange={(value: any) => setFormData({ ...formData, frequency: value })}>
-                    <SelectTrigger className="bg-white border border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded h-10">
+                    <SelectTrigger className="lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded h-10">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -1754,7 +1810,7 @@ const Schedules = () => {
                       value={formData.userNotificationMessage}
                       onChange={(e) => setFormData({ ...formData, userNotificationMessage: e.target.value })}
                       placeholder="Leave empty to use default message, or customize your notification..."
-                      className="bg-white border border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded"
+                      className="lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded"
                       rows={3}
                     />
                     <p className="text-xs text-gray-500">Optional: Customize the message you'll receive</p>
@@ -1768,7 +1824,7 @@ const Schedules = () => {
                       value={formData.clientNotificationMessage}
                       onChange={(e) => setFormData({ ...formData, clientNotificationMessage: e.target.value })}
                       placeholder="Leave empty to use default message, or customize the client notification..."
-                      className="bg-white border border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded"
+                      className="lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded"
                       rows={3}
                     />
                     <p className="text-xs text-gray-500">Optional: Customize the message the client will receive</p>
@@ -1847,7 +1903,7 @@ const Schedules = () => {
 
       {/* Create Client Modal (inline from schedules) */}
       <Dialog open={isClientModalOpen} onOpenChange={setIsClientModalOpen}>
-        <DialogContent className="bg-white max-w-3xl max-h-[95vh] overflow-y-auto">
+        <DialogContent className="lg:bg-white bg-white/80 backdrop-blur-sm max-w-3xl max-h-[95vh] overflow-y-auto">
           <DialogHeader className="border-b border-blue-200 pb-4">
             <DialogTitle className="text-xl font-semibold text-blue-700">
               {editingClient ? "Edit Client" : "Create Client"}

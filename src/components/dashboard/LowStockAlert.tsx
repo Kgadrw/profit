@@ -161,7 +161,7 @@ export function LowStockAlert() {
   };
 
   return (
-    <div className="kpi-card border border-transparent bg-white">
+    <div className="kpi-card border border-transparent lg:bg-white/80 lg:backdrop-blur-md bg-white/80 backdrop-blur-sm">
       <div className="flex items-center gap-2 mb-4">
         <div className="w-10 h-10 !border-0 outline-none flex items-center justify-center" style={{ border: 'none', background: 'transparent' }}>
           <AlertTriangle size={20} className="text-red-600" style={{ border: 'none', outline: 'none' }} />

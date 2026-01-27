@@ -361,9 +361,9 @@ const Clients = () => {
   return (
     <AppLayout title="Clients">
       <div className="flex flex-col h-[calc(100vh-3rem)]">
-        <div className="bg-white flex-1 flex flex-col min-h-0 overflow-hidden">
+        <div className="lg:bg-white bg-white/80 backdrop-blur-sm flex-1 flex flex-col min-h-0 overflow-hidden">
           {/* Filter Section */}
-          <div className="bg-white border-b border-gray-200 px-4 py-4 flex-shrink-0">
+          <div className="lg:bg-white bg-white/80 backdrop-blur-sm border-b border-gray-200 px-4 py-4 flex-shrink-0">
             <div className="flex flex-col gap-4">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <h3 className="text-sm font-semibold text-gray-800">Manage Clients</h3>
@@ -395,7 +395,7 @@ const Clients = () => {
                   placeholder="Search clients by name, email, phone, or business type..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 bg-white border border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-gray-500 rounded-lg"
+                  className="pl-9 lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-gray-500 rounded-lg"
                 />
               </div>
               <div className="text-xs text-gray-500">
@@ -418,7 +418,7 @@ const Clients = () => {
                     return (
                       <div
                         key={clientId}
-                        className="bg-white border border-gray-300 rounded p-4 transition-colors hover:border-gray-400"
+                        className="lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-300 rounded p-4 transition-colors hover:border-gray-400"
                       >
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex-1 min-w-0">

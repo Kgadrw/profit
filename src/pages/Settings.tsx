@@ -431,7 +431,7 @@ const Settings = () => {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           {/* Left Sidebar - Navigation */}
           <div className="lg:col-span-1">
-            <div className="form-card p-0 overflow-hidden border-primary/30">
+            <div className="form-card lg:bg-white bg-white/80 backdrop-blur-sm p-0 overflow-hidden border-primary/30">
               <div 
                 className="p-4 border-b border-blue-200 relative"
                 style={{
@@ -531,7 +531,7 @@ const Settings = () => {
           <div className="lg:col-span-3">
             {/* Business Information */}
             {activeSection === "business" && (
-              <div className="form-card border border-transparent bg-white animate-fade-in">
+              <div className="form-card border border-transparent lg:bg-white bg-white/80 backdrop-blur-sm animate-fade-in">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 bg-blue-100 border border-blue-200 flex items-center justify-center">
@@ -605,7 +605,7 @@ const Settings = () => {
 
             {/* Language Settings */}
             {activeSection === "language" && (
-              <div className="form-card border border-transparent bg-white animate-fade-in">
+              <div className="form-card border border-transparent lg:bg-white bg-white/80 backdrop-blur-sm animate-fade-in">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 bg-blue-100 border border-blue-200 flex items-center justify-center">
@@ -647,7 +647,7 @@ const Settings = () => {
 
             {/* Security */}
             {activeSection === "security" && (
-              <div className="form-card border border-transparent bg-white animate-fade-in">
+              <div className="form-card border border-transparent lg:bg-white bg-white/80 backdrop-blur-sm animate-fade-in">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 bg-blue-100 border border-blue-200 flex items-center justify-center">
@@ -785,7 +785,7 @@ const Settings = () => {
 
             {/* Notifications */}
             {activeSection === "notifications" && (
-              <div className="form-card border border-transparent bg-white animate-fade-in">
+              <div className="form-card border border-transparent lg:bg-white bg-white/80 backdrop-blur-sm animate-fade-in">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 bg-blue-100 border border-blue-200 flex items-center justify-center">
@@ -908,7 +908,7 @@ const Settings = () => {
 
             {/* Delete Account */}
             {activeSection === "account" && (
-              <div className="form-card border border-transparent bg-white animate-fade-in">
+              <div className="form-card border border-transparent lg:bg-white bg-white/80 backdrop-blur-sm animate-fade-in">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 bg-red-100 border border-red-200 flex items-center justify-center">
@@ -971,7 +971,7 @@ const Settings = () => {
 
       {/* Mobile Logout Button - Only visible on mobile */}
       <div className="lg:hidden mt-6">
-        <div className="form-card border border-transparent bg-white">
+        <div className="form-card border border-transparent lg:bg-white bg-white/80 backdrop-blur-sm">
           <Button
             onClick={handleLogoutClick}
             variant="outline"

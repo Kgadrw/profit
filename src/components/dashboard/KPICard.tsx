@@ -55,13 +55,17 @@ export function KPICard({
   return (
     <div
       className={cn(
-        "kpi-card",
+        "kpi-card relative",
         bgColor,
         isImageVariant && "text-white"
       )}
       style={cardStyle}
     >
-      <div className="flex items-start justify-between">
+      {/* White overlay for image background */}
+      {isImageVariant && (
+        <div className="absolute inset-0 bg-white/30 rounded-lg" />
+      )}
+      <div className="flex items-start justify-between relative z-10">
         <div className="space-y-1 sm:space-y-2 flex-1 min-w-0">
           <p
             className={cn(

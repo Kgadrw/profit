@@ -47,7 +47,7 @@ export function SalesTrendChart({ sales = [] }: SalesTrendChartProps) {
     });
   }, [sales]);
   return (
-    <div className="kpi-card">
+    <div className="kpi-card lg:bg-white/80 lg:backdrop-blur-md bg-white/80 backdrop-blur-sm">
       <h3 className="section-title text-gray-600">Sales Trend (Last 7 Days)</h3>
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">

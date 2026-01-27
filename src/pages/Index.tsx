@@ -697,23 +697,18 @@ const Dashboard = () => {
 
   // Chart Skeleton Component
   const ChartSkeleton = () => (
-    <div className="kpi-card">
-      <Skeleton className="h-6 w-48 mb-4" />
-      <div className="h-64 flex items-center justify-center">
-        <div className="w-full h-full space-y-2">
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-5/6" />
-          <Skeleton className="h-4 w-4/6" />
-          <Skeleton className="h-4 w-3/6" />
-          <Skeleton className="h-4 w-2/6" />
-        </div>
+    <div className="lg:bg-white bg-white/80 backdrop-blur-md lg:backdrop-blur-none border border-gray-200 rounded-lg p-4 sm:p-6">
+      <div className="flex items-center gap-2 mb-6">
+        <Skeleton className="w-5 h-5 rounded" />
+        <Skeleton className="h-6 w-48" />
       </div>
+      <Skeleton className="h-64 w-full rounded" />
     </div>
   );
 
   // Low Stock Alert Skeleton Component
   const LowStockSkeleton = () => (
-    <div className="kpi-card border border-transparent bg-white">
+    <div className="kpi-card border border-transparent lg:bg-white bg-white/80 backdrop-blur-md lg:backdrop-blur-none">
       <div className="flex items-center gap-2 mb-4">
         <Skeleton className="w-10 h-10 rounded" />
         <Skeleton className="h-6 w-32" />
@@ -750,28 +745,30 @@ const Dashboard = () => {
               value={todayStats.totalItems.toString()}
               subtitle={t("language") === "rw" ? "ibintu byagurishwe" : "items sold"}
               icon={ShoppingCart}
-              variant="imageDark"
+              bgColor="bg-white/80 backdrop-blur-sm"
+              valueColor="text-orange-600"
             />
             <KPICard
               title={t("todaysRevenue")}
               value={`${todayStats.totalRevenue.toLocaleString()} rwf`}
               icon={DollarSign}
-              variant="imageDark"
-              valueColor="text-blue-500"
+              bgColor="bg-white/80 backdrop-blur-sm"
+              valueColor="text-blue-600"
             />
             <KPICard
               title={t("todaysProfit")}
               value={`${todayStats.totalProfit.toLocaleString()} rwf`}
               icon={TrendingUp}
-              variant="imageDark"
-              valueColor="text-green-500"
+              bgColor="bg-white/80 backdrop-blur-sm"
+              valueColor="text-green-600"
             />
             <KPICard
               title={t("currentStockValue")}
               value={`${stockStats.totalStockValue.toLocaleString()} rwf`}
               subtitle={`${stockStats.totalItems} ${t("items")}`}
               icon={Package}
-              variant="imageDark"
+              bgColor="bg-white/80 backdrop-blur-sm"
+              valueColor="text-purple-600"
             />
           </>
         )}
@@ -793,21 +790,21 @@ const Dashboard = () => {
               value={todayStats.totalItems.toString()}
               subtitle={t("language") === "rw" ? "ibintu byagurishwe" : "items sold"}
               icon={ShoppingCart}
-              bgColor="bg-white"
+              bgColor="bg-white/80 backdrop-blur-md"
               valueColor="text-orange-600"
             />
             <KPICard
               title={t("todaysRevenue")}
               value={`${todayStats.totalRevenue.toLocaleString()} rwf`}
               icon={DollarSign}
-              bgColor="bg-white"
+              bgColor="bg-white/80 backdrop-blur-md"
               valueColor="text-blue-600"
             />
             <KPICard
               title={t("todaysProfit")}
               value={`${todayStats.totalProfit.toLocaleString()} rwf`}
               icon={TrendingUp}
-              bgColor="bg-white"
+              bgColor="bg-white/80 backdrop-blur-md"
               valueColor="text-green-600"
             />
             <KPICard
@@ -815,7 +812,7 @@ const Dashboard = () => {
               value={`${stockStats.totalStockValue.toLocaleString()} rwf`}
               subtitle={`${stockStats.totalItems} ${t("items")}`}
               icon={Package}
-              bgColor="bg-white"
+              bgColor="bg-white/80 backdrop-blur-md"
               valueColor="text-purple-600"
             />
           </>
@@ -1197,7 +1194,7 @@ const Dashboard = () => {
       {/* AI Market Analysis */}
       <div className="mt-6">
         {isLoading || productsLoading || salesLoading ? (
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <div className="lg:bg-white/80 lg:backdrop-blur-md bg-white/80 backdrop-blur-sm border border-gray-200 rounded-lg p-4">
             <Skeleton className="h-6 w-48 mb-3" />
             <Skeleton className="h-32 w-full" />
           </div>

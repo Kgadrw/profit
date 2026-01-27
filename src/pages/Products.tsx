@@ -321,31 +321,54 @@ const Products = () => {
   const ProductsSkeleton = () => (
     <AppLayout title="Products">
       <div className="flex flex-col lg:h-[calc(100vh-3rem)]">
-        <div className="bg-white flex-1 flex flex-col lg:min-h-0 lg:overflow-hidden">
+        <div className="lg:bg-white flex-1 flex flex-col lg:min-h-0 lg:overflow-hidden rounded-lg">
           {/* Filter Section Skeleton */}
-          <div className="bg-white border-b border-gray-200 px-4 py-3 flex-shrink-0">
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center justify-between">
+          <div className="lg:bg-white lg:border-b lg:border-gray-200 lg:px-4 lg:py-4 flex-shrink-0">
+            {/* Mobile Filter Card Skeleton */}
+            <div className="lg:hidden rounded-lg p-4 mb-4 space-y-3 bg-white/80 backdrop-blur-md">
+              <div className="flex items-center gap-2 mb-2">
+                <Skeleton className="h-4 w-4 rounded" />
                 <Skeleton className="h-5 w-32" />
-                <div className="flex gap-2">
-                  <Skeleton className="h-10 w-32" />
-                  <Skeleton className="h-10 w-28" />
+              </div>
+              <div className="flex flex-row gap-2">
+                <Skeleton className="h-10 flex-1 rounded-lg" />
+                <Skeleton className="h-10 flex-1 rounded-lg" />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+                  <Skeleton key={i} className="h-10 w-full rounded-lg" />
+                ))}
+              </div>
+              <Skeleton className="h-4 w-48" />
+            </div>
+            
+            {/* Desktop Filter Section Skeleton */}
+            <div className="hidden lg:flex flex-col gap-4">
+              <div className="flex flex-row items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-4 w-4 rounded" />
+                  <Skeleton className="h-5 w-32" />
+                </div>
+                <div className="flex flex-row gap-2">
+                  <Skeleton className="h-10 w-32 rounded-lg" />
+                  <Skeleton className="h-10 w-36 rounded-lg" />
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3">
+              <div className="grid grid-cols-4 xl:grid-cols-7 gap-3">
                 {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-                  <Skeleton key={i} className="h-10 w-full" />
+                  <Skeleton key={i} className="h-10 w-full rounded-lg" />
                 ))}
               </div>
               <Skeleton className="h-4 w-48" />
             </div>
           </div>
+          
           {/* Desktop Table Skeleton */}
           <div className="hidden lg:block overflow-auto flex-1">
             <div className="rounded-b-lg overflow-hidden">
-              <table className="w-full">
-                <thead className="sticky top-0 z-10 bg-white">
-                  <tr className="border-b border-gray-200">
+              <table className="w-full data-table">
+                <thead className="sticky top-16 z-10 bg-white shadow-sm">
+                  <tr className="border-b border-transparent">
                     {[1, 2, 3, 4, 5, 6, 7].map((i) => (
                       <th key={i} className="text-left py-3 px-4">
                         <Skeleton className="h-4 w-20" />
@@ -353,31 +376,31 @@ const Products = () => {
                     ))}
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-100">
+                <tbody className="bg-white divide-y divide-transparent">
                   {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
                     <tr key={i}>
-                      <td className="py-3 px-4">
+                      <td className="py-4 px-4">
                         <Skeleton className="h-4 w-32" />
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-4 px-4">
                         <Skeleton className="h-4 w-20" />
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-4 px-4">
                         <Skeleton className="h-4 w-24" />
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-4 px-4">
                         <Skeleton className="h-4 w-24" />
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-4 px-4">
                         <Skeleton className="h-4 w-16" />
                       </td>
-                      <td className="py-3 px-4">
-                        <Skeleton className="h-6 w-20" />
+                      <td className="py-4 px-4">
+                        <Skeleton className="h-6 w-20 rounded-full" />
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-4 px-4">
                         <div className="flex gap-1">
-                          <Skeleton className="h-8 w-8" />
-                          <Skeleton className="h-8 w-8" />
+                          <Skeleton className="h-8 w-8 rounded" />
+                          <Skeleton className="h-8 w-8 rounded" />
                         </div>
                       </td>
                     </tr>
@@ -385,6 +408,28 @@ const Products = () => {
                 </tbody>
               </table>
             </div>
+          </div>
+          
+          {/* Mobile Cards Skeleton */}
+          <div className="lg:hidden p-4 space-y-4">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="bg-white/80 backdrop-blur-md rounded-lg p-4 border border-gray-200">
+                <div className="flex items-start justify-between mb-3">
+                  <Skeleton className="h-5 w-32" />
+                  <Skeleton className="h-6 w-20 rounded-full" />
+                </div>
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+                <div className="flex gap-2">
+                  <Skeleton className="h-8 w-8 rounded" />
+                  <Skeleton className="h-8 w-8 rounded" />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -398,29 +443,150 @@ const Products = () => {
   return (
     <AppLayout title="Products">
       <div className="flex flex-col lg:h-[calc(100vh-3rem)]">
-      <div className="bg-white flex-1 flex flex-col lg:min-h-0 lg:overflow-hidden rounded-lg">
+      <div className="lg:bg-white flex-1 flex flex-col lg:min-h-0 lg:overflow-hidden rounded-lg">
           {/* Filter Section */}
-          <div className="bg-white border-b border-gray-200 px-4 py-4 flex-shrink-0">
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="lg:bg-white lg:border-b lg:border-gray-200 lg:px-4 lg:py-4 flex-shrink-0">
+            {/* Mobile Filter Card */}
+            <div className="lg:hidden rounded-lg p-4 mb-4 space-y-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Filter size={18} className="text-white" />
+                <h3 className="text-sm font-semibold text-white">{t("filter")} {t("products")}</h3>
+              </div>
+              {/* Buttons on same line for mobile */}
+              <div className="flex flex-row gap-2">
+                <Button onClick={openAddModal} className="bg-blue-600 text-white hover:bg-blue-700 font-semibold px-3 py-2 gap-2 flex-1">
+                  <Plus size={18} />
+                  <span>{t("add")}</span>
+                </Button>
+                <Button onClick={openBulkAddModal} className="bg-green-600 text-white hover:bg-green-700 border border-transparent font-medium px-3 py-2 gap-2 flex-1">
+                  <Plus size={18} />
+                  <span>{t("bulkAdd")}</span>
+                </Button>
+              </div>
+              {/* Filters - Two per line */}
+              <div className="grid grid-cols-2 gap-2">
+                {/* Search Input */}
+                <div className="relative col-span-2">
+                  <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10" />
+                <Input
+                  placeholder={t("search") + " " + t("products").toLowerCase() + "..."}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9 lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-gray-500 rounded-lg w-full"
+                />
+              </div>
+                
+                {/* Category Filter */}
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger className="lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-900 focus:border-gray-500 rounded-lg w-full">
+                    <SelectValue placeholder={t("allCategories")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("allCategories")}</SelectItem>
+                    {uniqueCategories.map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                {/* Stock Status Filter */}
+                <Select value={stockStatusFilter} onValueChange={setStockStatusFilter}>
+                  <SelectTrigger className="lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-900 focus:border-gray-500 rounded-lg w-full">
+                    <SelectValue placeholder={t("status")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("allStatus")}</SelectItem>
+                    <SelectItem value="in-stock">{t("inStock")}</SelectItem>
+                    <SelectItem value="low-stock">{t("lowStock")}</SelectItem>
+                    {/* Out of stock products are shown in Low Stock Alert, not in product list */}
+                  </SelectContent>
+                </Select>
+                
+                {/* Product Type Filter */}
+                {uniqueProductTypes.length > 0 && (
+                  <Select value={productTypeFilter} onValueChange={setProductTypeFilter}>
+                    <SelectTrigger className="lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-900 focus:border-gray-500 rounded-lg w-full">
+                      <SelectValue placeholder="Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Types</SelectItem>
+                      {uniqueProductTypes.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                
+                {/* Package Filter */}
+                <Select value={packageFilter} onValueChange={setPackageFilter}>
+                  <SelectTrigger className="lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-900 focus:border-gray-500 rounded-lg w-full">
+                    <SelectValue placeholder="Package" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("allProducts")}</SelectItem>
+                    <SelectItem value="package">Packaged</SelectItem>
+                    <SelectItem value="non-package">Non-Packaged</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                {/* Sort By */}
+                <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
+                  <SelectTrigger className="lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-900 focus:border-gray-500 rounded-lg w-full">
+                    <div className="flex items-center gap-2">
+                      <ArrowUpDown size={14} className="text-gray-400" />
+                      <SelectValue placeholder={t("sortBy")} />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="newest">{t("newest")}</SelectItem>
+                    <SelectItem value="oldest">{t("oldest")}</SelectItem>
+                    <SelectItem value="name-asc">{t("nameAsc")}</SelectItem>
+                    <SelectItem value="name-desc">{t("nameDesc")}</SelectItem>
+                    <SelectItem value="price-asc">{t("priceAsc")}</SelectItem>
+                    <SelectItem value="price-desc">{t("priceDesc")}</SelectItem>
+                    <SelectItem value="stock-asc">{t("stock")} ({t("language") === "rw" ? "Guke-Gukomeye" : "Low to High"})</SelectItem>
+                    <SelectItem value="stock-desc">{t("stock")} ({t("language") === "rw" ? "Gukomeye-Guke" : "High to Low"})</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                {/* Clear Filters */}
+                <Button
+                  onClick={handleClearFilters}
+                  variant="outline"
+                  className="lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg w-full"
+                >
+                  <X size={14} className="mr-2" />
+                  {t("cancel")}
+              </Button>
+              </div>
+              <div className="text-xs text-white">
+                {t("language") === "rw" ? "Byerekana" : "Showing"} {filteredProducts.length} {t("language") === "rw" ? "bya" : "of"} {products.length} {t("products").toLowerCase()}
+            </div>
+            </div>
+            
+            {/* Desktop Filter Section */}
+            <div className="hidden lg:flex flex-col gap-4">
+              <div className="flex flex-row items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <Filter size={18} className="text-gray-700" />
-                  <h3 className="text-sm font-semibold text-gray-800">{t("filter")} {t("products")}</h3>
+                  <Filter size={18} className="text-white" />
+                  <h3 className="text-sm font-semibold text-white">{t("filter")} {t("products")}</h3>
                 </div>
-                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                  <Button onClick={openAddModal} className="bg-blue-600 text-white hover:bg-blue-700 font-semibold px-4 py-2 gap-2 w-full sm:w-auto">
+                <div className="flex flex-row gap-2">
+                  <Button onClick={openAddModal} className="bg-blue-600 text-white hover:bg-blue-700 font-semibold px-4 py-2 gap-2">
                     <Plus size={18} />
-                    <span className="hidden xs:inline">{t("addProduct")}</span>
-                    <span className="xs:hidden">{t("add")}</span>
+                    <span>{t("addProduct")}</span>
                   </Button>
-                  <Button onClick={openBulkAddModal} className="bg-green-600 text-white hover:bg-green-700 border border-transparent font-medium px-4 py-2 gap-2 w-full sm:w-auto">
+                  <Button onClick={openBulkAddModal} className="bg-green-600 text-white hover:bg-green-700 border border-transparent font-medium px-4 py-2 gap-2">
                     <Plus size={18} />
-                    <span className="hidden xs:inline">{t("bulkAddProducts")}</span>
-                    <span className="xs:hidden">{t("bulkAdd")}</span>
+                    <span>{t("bulkAddProducts")}</span>
                   </Button>
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3">
+              <div className="grid grid-cols-4 xl:grid-cols-7 gap-3">
                 {/* Search Input */}
                 <div className="relative">
                   <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10" />
@@ -456,7 +622,6 @@ const Products = () => {
                     <SelectItem value="all">{t("allStatus")}</SelectItem>
                     <SelectItem value="in-stock">{t("inStock")}</SelectItem>
                     <SelectItem value="low-stock">{t("lowStock")}</SelectItem>
-                    {/* Out of stock products are shown in Low Stock Alert, not in product list */}
                   </SelectContent>
                 </Select>
                 
@@ -519,7 +684,7 @@ const Products = () => {
                   {t("cancel")}
               </Button>
               </div>
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-white">
                 {t("language") === "rw" ? "Byerekana" : "Showing"} {filteredProducts.length} {t("language") === "rw" ? "bya" : "of"} {products.length} {t("products").toLowerCase()}
             </div>
           </div>
@@ -668,7 +833,7 @@ const Products = () => {
                 const status = getStockStatus(product);
                 const productId = (product as any)._id || product.id;
                 return (
-                  <div key={productId} className="bg-white border border-gray-200 rounded-lg p-4">
+                  <div key={productId} className="lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-200 rounded-lg p-4">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap mb-2">

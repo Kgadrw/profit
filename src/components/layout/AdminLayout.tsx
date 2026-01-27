@@ -25,6 +25,68 @@ export function AdminLayout({ children, title, activeSection, onSectionChange }:
   const [showArrow, setShowArrow] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [mobileSidebarExpanded, setMobileSidebarExpanded] = useState(false);
+  
+  // Rotating background images for mobile (1.jpg through 5.jpg)
+  const backgroundImages = ['/1.jpg', '/2.jpg', '/3.jpg', '/4.jpg', '/5.jpg'];
+  const [currentBgIndex, setCurrentBgIndex] = useState(() => {
+    // Load saved index and timestamp from localStorage
+    const savedIndex = localStorage.getItem('profit-pilot-bg-index');
+    const savedTimestamp = localStorage.getItem('profit-pilot-bg-timestamp');
+    
+    if (savedIndex && savedTimestamp) {
+      const lastChange = parseInt(savedTimestamp, 10);
+      const now = Date.now();
+      const oneDayInMs = 24 * 60 * 60 * 1000; // 1 day in milliseconds
+      
+      // If less than 1 day has passed, use saved index
+      if (now - lastChange < oneDayInMs) {
+        return parseInt(savedIndex, 10);
+      }
+      // If 1 day has passed, rotate to next image
+      const nextIndex = (parseInt(savedIndex, 10) + 1) % backgroundImages.length;
+      localStorage.setItem('profit-pilot-bg-index', nextIndex.toString());
+      localStorage.setItem('profit-pilot-bg-timestamp', now.toString());
+      return nextIndex;
+    }
+    
+    // First time - start with index 0
+    const now = Date.now();
+    localStorage.setItem('profit-pilot-bg-index', '0');
+    localStorage.setItem('profit-pilot-bg-timestamp', now.toString());
+    return 0;
+  });
+  
+  // Check daily rotation
+  useEffect(() => {
+    if (!isMobile) return;
+    
+    const checkAndRotate = () => {
+      const savedIndex = localStorage.getItem('profit-pilot-bg-index');
+      const savedTimestamp = localStorage.getItem('profit-pilot-bg-timestamp');
+      
+      if (savedIndex && savedTimestamp) {
+        const lastChange = parseInt(savedTimestamp, 10);
+        const now = Date.now();
+        const oneDayInMs = 24 * 60 * 60 * 1000; // 1 day in milliseconds
+        
+        // If 1 day has passed, rotate to next image
+        if (now - lastChange >= oneDayInMs) {
+          const nextIndex = (parseInt(savedIndex, 10) + 1) % backgroundImages.length;
+          setCurrentBgIndex(nextIndex);
+          localStorage.setItem('profit-pilot-bg-index', nextIndex.toString());
+          localStorage.setItem('profit-pilot-bg-timestamp', now.toString());
+        }
+      }
+    };
+    
+    // Check immediately
+    checkAndRotate();
+    
+    // Check every hour to see if a day has passed
+    const intervalId = setInterval(checkAndRotate, 60 * 60 * 1000); // Check every hour
+    
+    return () => clearInterval(intervalId);
+  }, [isMobile, backgroundImages.length]);
 
   // Save sidebar collapsed state to localStorage whenever it changes (only on desktop)
   useEffect(() => {
@@ -145,7 +207,16 @@ export function AdminLayout({ children, title, activeSection, onSectionChange }:
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div 
+      className="min-h-screen bg-background lg:bg-background"
+      style={{
+        backgroundImage: isMobile ? `url('${backgroundImages[currentBgIndex]}')` : undefined,
+        backgroundSize: isMobile ? "cover" : undefined,
+        backgroundPosition: isMobile ? "center" : undefined,
+        backgroundRepeat: isMobile ? "no-repeat" : undefined,
+        backgroundAttachment: isMobile ? "fixed" : undefined,
+      }}
+    >
       {/* Sidebar - Hidden on mobile, visible on desktop */}
       <div className="hidden lg:block">
         <AdminSidebar

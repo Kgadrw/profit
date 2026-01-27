@@ -682,23 +682,23 @@ const Reports = () => {
     <AppLayout title="Reports">
       <div className="flex flex-col space-y-6 pb-6">
         {/* Report Filters Skeleton */}
-        <div className="form-card border-transparent">
+        <div className="form-card border-transparent lg:bg-white bg-white/80 backdrop-blur-md">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             {[1, 2, 3].map((i) => (
               <div key={i} className="space-y-2">
                 <Skeleton className="h-4 w-20" />
-                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full rounded-lg" />
               </div>
             ))}
           </div>
-          <div className="flex flex-wrap gap-3">
-            <Skeleton className="h-10 w-32" />
-            <Skeleton className="h-10 w-32" />
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Skeleton className="h-10 w-full sm:w-32 rounded-lg" />
+            <Skeleton className="h-10 w-full sm:w-32 rounded-lg" />
           </div>
         </div>
 
         {/* Report Summary Cards Skeleton */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-2">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="kpi-card">
               <div className="flex items-start justify-between">
@@ -715,17 +715,17 @@ const Reports = () => {
         </div>
 
         {/* Charts Section Skeleton */}
-        <div className="grid grid-cols-1 gap-6">
-          <div className="bg-white shadow-sm rounded-lg p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Skeleton className="w-5 h-5" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white/80 backdrop-blur-md lg:bg-white border border-gray-200 rounded-lg p-4 sm:p-6 overflow-x-auto">
+            <div className="flex items-center gap-2 mb-6">
+              <Skeleton className="w-5 h-5 rounded" />
               <Skeleton className="h-6 w-48" />
             </div>
             <Skeleton className="h-96 w-full rounded" />
           </div>
-          <div className="bg-white shadow-sm rounded-lg p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Skeleton className="w-5 h-5" />
+          <div className="bg-white/80 backdrop-blur-md lg:bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
+            <div className="flex items-center gap-2 mb-6">
+              <Skeleton className="w-5 h-5 rounded" />
               <Skeleton className="h-6 w-48" />
             </div>
             <Skeleton className="h-96 w-full rounded" />
@@ -817,7 +817,7 @@ const Reports = () => {
           {/* Charts Section */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Sales Over Time Histogram - Based on Report Type */}
-            <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 overflow-x-auto">
+            <div className="bg-white/80 backdrop-blur-md lg:bg-white border border-gray-200 rounded-lg p-4 sm:p-6 overflow-x-auto">
               <div className="flex items-center gap-2 mb-6">
                 <BarChart3 size={20} className="text-gray-600 shrink-0" />
                 <h3 className="text-base sm:text-lg font-semibold text-gray-800">
@@ -905,7 +905,7 @@ const Reports = () => {
             </div>
 
             {/* Product Rankings Pyramid */}
-            <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
+            <div className="bg-white/80 backdrop-blur-md lg:bg-white border border-gray-200 rounded-lg p-4 sm:p-6">
               <div className="flex items-center gap-2 mb-6">
                 <Trophy size={20} className="text-gray-600 shrink-0" />
                 <h3 className="text-base sm:text-lg font-semibold text-gray-800">

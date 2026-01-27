@@ -13,6 +13,7 @@ const Home = () => {
   const navigate = useNavigate();
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [loginModalTab, setLoginModalTab] = useState<"login" | "create">("create");
+  const [isMobile, setIsMobile] = useState(false);
 
   // Redirect authenticated users to dashboard
   useEffect(() => {
@@ -36,6 +37,16 @@ const Home = () => {
       setLanguage("en");
     }
   }, [language, setLanguage]);
+
+  // Handle responsive detection
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // Reset login modal state when user logs out (listen for auth changes)
   useEffect(() => {
@@ -77,7 +88,7 @@ const Home = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white lg:bg-white">
       <Navbar />
       
       {/* Hero Section */}

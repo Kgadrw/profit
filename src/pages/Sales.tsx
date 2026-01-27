@@ -984,79 +984,128 @@ const Sales = () => {
   // Sales Page Skeleton
   const SalesSkeleton = () => (
       <AppLayout title="Sales">
-      <div className="flex flex-col lg:h-[calc(100vh-3rem)]">
+      <div className="flex flex-col min-h-0 pb-4 lg:pb-4">
         {/* Record New Sale Form Skeleton */}
         <div className="form-card mb-6 border-transparent flex-shrink-0 bg-blue-500 border-blue-600">
-          <div className="flex items-center justify-between mb-4">
-            <Skeleton className="h-6 w-40" />
-            <Skeleton className="h-10 w-28" />
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+            <Skeleton className="h-6 w-40 bg-white/20" />
+            <Skeleton className="h-10 w-28 bg-white/20" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[1, 2, 3, 4, 5].map((i) => (
+            {[1, 2, 3, 4, 5, 6].map((i) => (
               <div key={i} className="space-y-2">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-4 w-24 bg-white/20" />
+                <Skeleton className="h-10 w-full bg-white/20" />
               </div>
             ))}
           </div>
           <div className="mt-4">
-            <Skeleton className="h-10 w-32 ml-auto" />
+            <Skeleton className="h-10 w-32 ml-auto bg-white/20" />
           </div>
         </div>
 
-        {/* Filters Skeleton */}
-        <div className="form-card mb-6 border-transparent flex-shrink-0">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="space-y-2">
-                <Skeleton className="h-4 w-20" />
-                <Skeleton className="h-10 w-full" />
+        {/* Filters and Table Container Skeleton */}
+        <div className="lg:bg-white flex-1 flex flex-col lg:min-h-0 lg:overflow-hidden rounded-lg">
+          {/* Filter Section Skeleton */}
+          <div className="lg:bg-white lg:border-b lg:border-gray-200 lg:px-4 lg:py-4 flex-shrink-0">
+            {/* Mobile Filter Card Skeleton */}
+            <div className="lg:hidden rounded-lg p-4 mb-4 space-y-3 bg-white/80 backdrop-blur-md">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-4 w-4 rounded" />
+                  <Skeleton className="h-5 w-32" />
+                </div>
+                <Skeleton className="h-6 w-24 rounded-lg" />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Skeleton key={i} className="h-10 w-full rounded-lg" />
+                ))}
+              </div>
+              <Skeleton className="h-4 w-48" />
+            </div>
+            
+            {/* Desktop Filter Section Skeleton */}
+            <div className="hidden lg:flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-4 w-4 rounded" />
+                  <Skeleton className="h-5 w-32" />
+                </div>
+                <Skeleton className="h-6 w-24 rounded-lg" />
+              </div>
+              <div className="grid grid-cols-5 gap-3">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Skeleton key={i} className="h-10 w-full rounded-lg" />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Sales Table Skeleton */}
+          <div className="hidden lg:block overflow-auto flex-1">
+            <div className="rounded-b-lg overflow-hidden">
+              <table className="w-full data-table">
+                <thead className="sticky top-16 z-10 bg-white shadow-sm">
+                  <tr className="border-b border-transparent">
+                    {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+                      <th key={i} className="text-left py-3 px-4">
+                        <Skeleton className="h-4 w-20" />
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-transparent">
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                    <tr key={i}>
+                      <td className="py-4 px-4">
+                        <Skeleton className="h-4 w-32" />
+                      </td>
+                      <td className="py-4 px-4">
+                        <Skeleton className="h-4 w-16" />
+                      </td>
+                      <td className="py-4 px-4">
+                        <Skeleton className="h-4 w-24" />
+                      </td>
+                      <td className="py-4 px-4">
+                        <Skeleton className="h-4 w-24" />
+                      </td>
+                      <td className="py-4 px-4">
+                        <Skeleton className="h-4 w-24" />
+                      </td>
+                      <td className="py-4 px-4">
+                        <Skeleton className="h-4 w-20" />
+                      </td>
+                      <td className="py-4 px-4">
+                        <Skeleton className="h-4 w-20" />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
+          {/* Mobile Cards Skeleton */}
+          <div className="lg:hidden p-4 space-y-4">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="bg-white/80 backdrop-blur-md rounded-lg p-4 border border-gray-200">
+                <div className="flex items-start justify-between mb-3">
+                  <Skeleton className="h-5 w-32" />
+                  <Skeleton className="h-6 w-20 rounded-full" />
+                </div>
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+                <div className="flex gap-2">
+                  <Skeleton className="h-8 w-8 rounded" />
+                  <Skeleton className="h-8 w-8 rounded" />
+                </div>
               </div>
             ))}
-          </div>
-        </div>
-
-        {/* Sales Table Skeleton */}
-        <div className="bg-white flex-1 flex flex-col lg:min-h-0 lg:overflow-hidden rounded-lg">
-          <div className="hidden lg:block overflow-auto flex-1">
-            <table className="w-full">
-              <thead className="sticky top-0 z-10 bg-white border-b border-gray-200">
-                <tr>
-                  {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-                    <th key={i} className="text-left py-3 px-4">
-                      <Skeleton className="h-4 w-20" />
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-100">
-                {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                  <tr key={i}>
-                    <td className="py-3 px-4">
-                      <Skeleton className="h-4 w-32" />
-                    </td>
-                    <td className="py-3 px-4">
-                      <Skeleton className="h-4 w-16" />
-                    </td>
-                    <td className="py-3 px-4">
-                      <Skeleton className="h-4 w-24" />
-                    </td>
-                    <td className="py-3 px-4">
-                      <Skeleton className="h-4 w-24" />
-                    </td>
-                    <td className="py-3 px-4">
-                      <Skeleton className="h-4 w-24" />
-                    </td>
-                    <td className="py-3 px-4">
-                      <Skeleton className="h-4 w-20" />
-                    </td>
-                    <td className="py-3 px-4">
-                      <Skeleton className="h-4 w-20" />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </div>
         </div>
         </div>
@@ -1425,14 +1474,15 @@ const Sales = () => {
       </div>
 
       {/* Sales History Table - Static Header with Scrollable Body */}
-      <div className="bg-white lg:flex-1 lg:flex lg:flex-col lg:min-h-0 lg:overflow-hidden rounded-lg">
+      <div className="lg:bg-white lg:flex-1 lg:flex lg:flex-col lg:min-h-0 lg:overflow-hidden rounded-lg">
         {/* Filter Section */}
-        <div className="bg-white border-b border-gray-200 px-4 py-4 flex-shrink-0">
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between">
+        <div className="lg:bg-white lg:border-b lg:border-gray-200 lg:px-4 lg:py-4 flex-shrink-0">
+          {/* Mobile Filter Card */}
+          <div className="lg:hidden rounded-lg p-4 mb-4 space-y-3">
+            <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <Filter size={18} className="text-gray-700" />
-                <h3 className="text-sm font-semibold text-gray-700">{t("filterSales")}</h3>
+                <Filter size={18} className="text-white" />
+                <h3 className="text-sm font-semibold text-white">{t("filterSales")}</h3>
               </div>
               {selectedSales.size > 0 && (
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 border border-gray-300 rounded-lg">
@@ -1442,12 +1492,115 @@ const Sales = () => {
                 </div>
               )}
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+            {/* Filters - Two per line */}
+            <div className="grid grid-cols-2 gap-2">
+              {/* Search Input */}
+              <div className="relative col-span-2">
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10" />
+                <Input
+                  placeholder={t("search") + " " + (t("language") === "rw" ? "ku bicuruzwa" : "by product...")}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-gray-500 rounded-lg w-full"
+                  autoComplete="off"
+                  name="search-products"
+                />
+              </div>
+              
+              {/* Start Date */}
+              <div className="relative">
+                <Calendar size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10" />
+                <Input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="pl-9 lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-900 focus:border-gray-500 rounded-lg w-full"
+                />
+              </div>
+              
+              {/* End Date */}
+              <div className="relative">
+                <Calendar size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10" />
+                <Input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="pl-9 lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-900 focus:border-gray-500 rounded-lg w-full"
+                />
+              </div>
+              
+              {/* Sort By */}
+              <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+                <SelectTrigger className="lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-900 focus:border-gray-500 rounded-lg w-full">
+                  <div className="flex items-center gap-2">
+                    <ArrowUpDown size={14} className="text-gray-400" />
+                    <SelectValue placeholder={t("sortBy")} />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="date-desc">Date (Newest First)</SelectItem>
+                  <SelectItem value="date-asc">Date (Oldest First)</SelectItem>
+                  <SelectItem value="product-asc">Product (A-Z)</SelectItem>
+                  <SelectItem value="product-desc">Product (Z-A)</SelectItem>
+                  <SelectItem value="revenue-desc">Revenue (High to Low)</SelectItem>
+                  <SelectItem value="revenue-asc">Revenue (Low to High)</SelectItem>
+                  <SelectItem value="profit-desc">Profit (High to Low)</SelectItem>
+                  <SelectItem value="profit-asc">Profit (Low to High)</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              {/* Clear Filters */}
+              <Button
+                onClick={handleClearFilters}
+                variant="outline"
+                className="lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-700 hover:bg-blue-500 hover:text-white rounded-lg w-full"
+              >
+                <X size={14} className="mr-2" />
+                {t("cancel")}
+              </Button>
+              
+              {/* Delete Selected Sales */}
+              {selectedSales.size > 0 && (
+                <Button
+                  onClick={handleDeleteSelected}
+                  className="bg-red-600 hover:bg-red-700 text-white border-0 rounded-lg px-4 py-2 font-semibold flex items-center gap-2 w-full col-span-2"
+                >
+                  <div className="relative">
+                    <Trash2 size={16} />
+                    <span className="absolute -top-1 -right-1 bg-white text-red-600 text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                      {selectedSales.size}
+                    </span>
+                  </div>
+                  <span>{t("delete")} Selected</span>
+                </Button>
+              )}
+            </div>
+            <div className="text-xs text-white">
+              {t("language") === "rw" ? "Byerekana" : "Showing"} {filteredSales.length} {t("language") === "rw" ? "bya" : "of"} {sales.length} {t("sales").toLowerCase()}
+            </div>
+          </div>
+          
+          {/* Desktop Filter Section */}
+          <div className="hidden lg:flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Filter size={18} className="text-white" />
+                <h3 className="text-sm font-semibold text-white">{t("filterSales")}</h3>
+              </div>
+              {selectedSales.size > 0 && (
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 border border-gray-300 rounded-lg">
+                  <span className="text-xs font-semibold text-gray-700">
+                    {selectedSales.size} {selectedSales.size === 1 ? 'sale' : 'sales'} selected
+                  </span>
+                </div>
+              )}
+            </div>
+            <div className="grid grid-cols-5 gap-3">
               {/* Search Input */}
               <div className="relative">
                 <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10" />
                 <Input
-                  placeholder={t("search") + " " + t("language") === "rw" ? "ku bicuruzwa" : "by product..."}
+                  placeholder={t("search") + " " + (t("language") === "rw" ? "ku bicuruzwa" : "by product...")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9 bg-white border border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-gray-500 rounded-lg"
@@ -1523,9 +1676,8 @@ const Sales = () => {
                   <span>{t("delete")} Selected</span>
                 </Button>
               )}
-              
             </div>
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-white">
               {t("language") === "rw" ? "Byerekana" : "Showing"} {filteredSales.length} {t("language") === "rw" ? "bya" : "of"} {sales.length} {t("sales").toLowerCase()}
             </div>
           </div>
@@ -1557,7 +1709,7 @@ const Sales = () => {
                 <th className="text-left text-sm font-semibold text-gray-700 py-2 px-4">{t("actions")}</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="lg:bg-white bg-white/80 backdrop-blur-sm divide-y divide-gray-200">
               {filteredSales.length > 0 ? (
                 filteredSales.map((sale, index) => {
                   const saleId = (sale as any)._id || sale.id;
@@ -1567,7 +1719,7 @@ const Sales = () => {
                   return (
                     <tr key={saleId || index} className={cn(
                       "border-b border-gray-200",
-                      index % 2 === 0 ? "bg-white" : "bg-gray-50",
+                      index % 2 === 0 ? "lg:bg-white bg-white/80 backdrop-blur-sm" : "bg-gray-50",
                       isSelected && "bg-blue-50"
                     )}>
                       <td className="py-2 px-4">
@@ -1639,7 +1791,7 @@ const Sales = () => {
         </div>
           
       {/* Mobile Card View - Full Page Scroll - Outside flex container */}
-      <div className="lg:hidden bg-white rounded-lg mt-4 p-4 pb-20 space-y-4">
+      <div className="lg:hidden mt-4 p-4 pb-20 space-y-4">
             {/* Mobile Delete All Button */}
             {sales.length > 0 && (
               <div className="mb-4 pb-4 border-b border-gray-200">
@@ -1659,7 +1811,7 @@ const Sales = () => {
                 const idString = saleId?.toString() || '';
                 const isSelected = selectedSales.has(idString);
                 return (
-                  <div key={saleId || sale.id} className={cn("bg-white border border-gray-200 rounded-lg p-4", isSelected && "bg-gray-50 border-gray-300")}>
+                  <div key={saleId || sale.id} className={cn("lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-200 rounded-lg p-4", isSelected && "bg-gray-50 border-gray-300")}>
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
