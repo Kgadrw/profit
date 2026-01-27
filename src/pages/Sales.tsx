@@ -347,6 +347,27 @@ const Sales = () => {
     setSaleDate(getTodayDate());
   }, []);
 
+  // Listen for sale-recorded events to auto-refresh the sales list
+  useEffect(() => {
+    const handleSaleRecorded = async () => {
+      // Refresh sales data immediately when a sale is recorded
+      try {
+        await refreshSales();
+        // Also refresh products to update stock levels
+        await refreshProducts();
+      } catch (error) {
+        // Silently handle errors - the useApi hook will handle offline scenarios
+        console.log("Auto-refresh after sale recorded:", error);
+      }
+    };
+
+    window.addEventListener('sale-recorded', handleSaleRecorded);
+
+    return () => {
+      window.removeEventListener('sale-recorded', handleSaleRecorded);
+    };
+  }, [refreshSales, refreshProducts]);
+
   // Clear selected product if it becomes out of stock
   useEffect(() => {
     if (selectedProduct) {

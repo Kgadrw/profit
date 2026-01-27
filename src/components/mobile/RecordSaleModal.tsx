@@ -377,6 +377,12 @@ export function RecordSaleModal({ open, onOpenChange, onSaleRecorded }: RecordSa
           // Silently ignore refresh errors when offline
         }
       }
+      
+      // Dispatch custom event to notify all pages (especially Sales page) to refresh
+      window.dispatchEvent(new CustomEvent('sale-recorded', { 
+        detail: { sale: newSale } 
+      }));
+      
       onSaleRecorded?.();
       
       // Close modal after a short delay
@@ -399,6 +405,11 @@ export function RecordSaleModal({ open, onOpenChange, onSaleRecorded }: RecordSa
         setSellingPrice("");
         setPaymentMethod("cash");
         setSaleDate(new Date().toISOString().split("T")[0]);
+        
+        // Dispatch custom event to notify all pages (especially Sales page) to refresh
+        window.dispatchEvent(new CustomEvent('sale-recorded', { 
+          detail: { sale: { product: product.name, quantity: qty, revenue } } 
+        }));
         
         onSaleRecorded?.();
         

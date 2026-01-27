@@ -701,7 +701,7 @@ const Dashboard = () => {
       <div className="flex items-center gap-2 mb-6">
         <Skeleton className="w-5 h-5 rounded" />
         <Skeleton className="h-6 w-48" />
-      </div>
+        </div>
       <Skeleton className="h-64 w-full rounded" />
     </div>
   );
