@@ -448,24 +448,30 @@ export function RecordSaleModal({ open, onOpenChange, onSaleRecorded }: RecordSa
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto lg:max-w-md p-0 bg-blue-500 border-blue-600">
-        <div className="p-6">
-          <DialogHeader className="mb-4">
-            <DialogTitle className="flex items-center gap-2 text-white">
-              <Plus size={20} className="text-white" />
-              {t("recordNewSale")}
+      <DialogContent className="max-w-[360px] max-h-[85vh] overflow-y-auto p-0 bg-white border-gray-200 rounded-2xl shadow-xl">
+        <div className="p-4">
+          <DialogHeader className="mb-3 pb-3 border-b border-gray-100">
+            <DialogTitle className="flex items-center justify-between text-gray-900 text-lg font-semibold">
+              <span className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                  <Plus size={18} className="text-white" />
+                </div>
+                <span>{t("recordNewSale")}</span>
+              </span>
             </DialogTitle>
           </DialogHeader>
 
-          {/* Single Sale Form */}
-          <div className="grid grid-cols-1 gap-4">
-            <div className="space-y-2">
-              <Label className="text-white">{t("selectProduct")}</Label>
+          {/* Compact Form */}
+          <div className="space-y-3">
+            {/* Product Selection */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-gray-600">{t("selectProduct")}</Label>
               <ProductCombobox
                 value={selectedProduct}
                 onValueChange={handleProductChange}
                 products={products}
-                placeholder="Search products by name, category, or type..."
+                placeholder="Search product..."
+                className="h-10 text-sm"
                 onError={(message) => {
                   playErrorBeep();
                   toast({
@@ -475,78 +481,100 @@ export function RecordSaleModal({ open, onOpenChange, onSaleRecorded }: RecordSa
                   });
                 }}
               />
+              {selectedProduct && (
+                <p className="text-xs text-gray-500">
+                  Stock: {products.find(p => {
+                    const id = (p as any)._id || p.id;
+                    return id.toString() === selectedProduct;
+                  })?.stock || 0}
+                </p>
+              )}
             </div>
-            <div className="space-y-2">
-              <Label className="text-white">{t("quantity")}</Label>
-              <Input
-                type="number"
-                min="1"
-                max={selectedProduct ? products.find(p => {
-                  const id = (p as any)._id || p.id;
-                  return id.toString() === selectedProduct;
-                })?.stock || 0 : undefined}
-                value={quantity}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value === "") {
-                    setQuantity("");
-                    return;
-                  }
-                  const numValue = parseInt(value);
-                  if (selectedProduct) {
-                    const product = products.find(p => {
-                      const id = (p as any)._id || p.id;
-                      return id.toString() === selectedProduct;
-                    });
-                    if (product && numValue > product.stock) {
-                      setQuantity(product.stock.toString());
-                      playErrorBeep();
-                      toast({
-                        title: "Maximum Quantity",
-                        description: `Only ${product.stock} ${product.stock === 1 ? 'item' : 'items'} available in stock.`,
-                        variant: "destructive",
-                      });
+
+            {/* Quantity and Price in Grid */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-gray-600">{t("quantity")}</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  max={selectedProduct ? products.find(p => {
+                    const id = (p as any)._id || p.id;
+                    return id.toString() === selectedProduct;
+                  })?.stock || 0 : undefined}
+                  value={quantity}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === "") {
+                      setQuantity("");
                       return;
                     }
-                  }
-                  setQuantity(value);
-                }}
-                className="input-field"
-                placeholder={t("enterQuantity") || "Enter quantity"}
-              />
-              {selectedProduct && (
-                <p className="text-xs text-white/80">
-                  {t("availableStock")}: {products.find(p => {
-                    const id = (p as any)._id || p.id;
-                    return id.toString() === selectedProduct;
-                  })?.stock || 0} {products.find(p => {
-                    const id = (p as any)._id || p.id;
-                    return id.toString() === selectedProduct;
-                  })?.stock === 1 ? 'item' : 'items'}
-                </p>
-              )}
+                    const numValue = parseInt(value);
+                    if (selectedProduct) {
+                      const product = products.find(p => {
+                        const id = (p as any)._id || p.id;
+                        return id.toString() === selectedProduct;
+                      });
+                      if (product && numValue > product.stock) {
+                        setQuantity(product.stock.toString());
+                        playErrorBeep();
+                        toast({
+                          title: "Maximum Quantity",
+                          description: `Only ${product.stock} ${product.stock === 1 ? 'item' : 'items'} available.`,
+                          variant: "destructive",
+                        });
+                        return;
+                      }
+                    }
+                    setQuantity(value);
+                  }}
+                  className="h-10 text-sm bg-gray-50 border-gray-200"
+                  placeholder="Qty"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-gray-600">Price (rwf)</Label>
+                <Input
+                  type="number"
+                  value={sellingPrice}
+                  onChange={(e) => setSellingPrice(e.target.value)}
+                  className="h-10 text-sm bg-gray-50 border-gray-200"
+                  placeholder="Price"
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label className="text-white">{t("sellingPrice")} (rwf)</Label>
-              <Input
-                type="number"
-                value={sellingPrice}
-                onChange={(e) => setSellingPrice(e.target.value)}
-                className="input-field"
-                placeholder={selectedProduct ? "Enter price" : "Select product first"}
-              />
-              {selectedProduct && (
-                <p className="text-xs text-white/80">
-                  {t("suggestedPrice")}: rwf {products.find(p => {
-                    const id = (p as any)._id || p.id;
-                    return id.toString() === selectedProduct;
-                  })?.sellingPrice.toLocaleString() || ""} - You can change this
-                </p>
-              )}
+
+            {/* Payment and Date in Grid */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-gray-600">Payment</Label>
+                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                  <SelectTrigger className="h-10 text-sm bg-gray-50 border-gray-200">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cash">{t("cash")}</SelectItem>
+                    <SelectItem value="momo">{t("momoPay")}</SelectItem>
+                    <SelectItem value="card">{t("card")}</SelectItem>
+                    <SelectItem value="airtel">{t("airtelPay")}</SelectItem>
+                    <SelectItem value="transfer">{t("bankTransfer")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-gray-600">Date</Label>
+                <Input
+                  type="date"
+                  value={saleDate}
+                  onChange={(e) => setSaleDate(e.target.value)}
+                  className="h-10 text-sm bg-gray-50 border-gray-200"
+                />
+              </div>
             </div>
-            {/* Revenue, Cost, and Profit Preview */}
+
+            {/* Profit Preview - Compact */}
             {selectedProduct && quantity && sellingPrice && parseInt(quantity) > 0 && parseFloat(sellingPrice) > 0 && (
-              <div className="grid grid-cols-3 gap-4 p-4 bg-blue-600/30 rounded-lg border border-blue-400/30">
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3 border border-blue-100">
                 {(() => {
                   const product = products.find(p => {
                     const id = (p as any)._id || p.id;
@@ -560,60 +588,32 @@ export function RecordSaleModal({ open, onOpenChange, onSaleRecorded }: RecordSa
                   const profit = revenue - cost;
                   
                   return (
-                    <>
-                      <div className="text-center">
-                        <p className="text-xs text-white/80 mb-1">Revenue</p>
-                        <p className="text-lg font-semibold text-blue-200">rwf {revenue.toLocaleString()}</p>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs text-gray-600">Revenue</p>
+                        <p className="text-sm font-semibold text-gray-900">rwf {revenue.toLocaleString()}</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-xs text-white/80 mb-1">Cost</p>
-                        <p className="text-lg font-semibold text-orange-200">rwf {cost.toLocaleString()}</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-xs text-white/80 mb-1">Profit</p>
-                        <p className={`text-lg font-semibold ${profit >= 0 ? 'text-green-200' : 'text-red-200'}`}>
-                          rwf {profit.toLocaleString()}
+                        <p className="text-xs text-gray-600">Profit</p>
+                        <p className={`text-sm font-bold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {profit >= 0 ? '+' : ''}rwf {profit.toLocaleString()}
                         </p>
                       </div>
-                    </>
+                    </div>
                   );
                 })()}
               </div>
             )}
-            <div className="space-y-2">
-              <Label className="text-white">{t("paymentMethod")}</Label>
-              <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                <SelectTrigger className="input-field w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="cash">{t("cash")}</SelectItem>
-                  <SelectItem value="momo">{t("momoPay")}</SelectItem>
-                  <SelectItem value="card">{t("card")}</SelectItem>
-                  <SelectItem value="airtel">{t("airtelPay")}</SelectItem>
-                  <SelectItem value="transfer">{t("bankTransfer")}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-white">{t("saleDate")}</Label>
-              <Input
-                type="date"
-                value={saleDate}
-                onChange={(e) => setSaleDate(e.target.value)}
-                className="input-field w-full"
-              />
-            </div>
-            <div className="flex items-end pt-2">
-              <Button 
-                onClick={handleRecordSale} 
-                disabled={isRecordingSale}
-                className="bg-green-600 text-white hover:bg-green-700 shadow-sm hover:shadow transition-all font-semibold px-4 py-2 border border-transparent w-full gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <ShoppingCart size={16} />
-                {isRecordingSale ? t("recording") : t("recordSale")}
-              </Button>
-            </div>
+
+            {/* Submit Button */}
+            <Button 
+              onClick={handleRecordSale} 
+              disabled={isRecordingSale || !selectedProduct || !quantity || !sellingPrice}
+              className="w-full h-11 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold shadow-md hover:shadow-lg transition-all rounded-lg gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ShoppingCart size={18} />
+              {isRecordingSale ? t("recording") : t("recordSale")}
+            </Button>
           </div>
         </div>
       </DialogContent>
