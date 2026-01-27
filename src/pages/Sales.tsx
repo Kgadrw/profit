@@ -506,7 +506,12 @@ const Sales = () => {
       if (salesToCreate.length > 0) {
           try {
             await bulkAddSales(salesToCreate as any);
-            // Don't refresh sales - bulkAdd already updates the UI with synced items
+            // Refresh sales to ensure table updates immediately with latest data
+            try {
+              await refreshSales();
+            } catch (refreshError) {
+              // Silently ignore refresh errors
+            }
             // Refresh products to update stock levels
             try {
               await refreshProducts();
@@ -631,7 +636,12 @@ const Sales = () => {
 
         try {
           await addSale(newSale as any);
-          // Don't refresh sales - add already updates the UI with synced item
+          // Refresh sales to ensure table updates immediately with latest data
+          try {
+            await refreshSales();
+          } catch (refreshError) {
+            // Silently ignore refresh errors
+          }
           // Refresh products to update stock levels
           try {
             await refreshProducts();

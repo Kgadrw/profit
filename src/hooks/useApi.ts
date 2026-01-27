@@ -557,11 +557,23 @@ export function useApi<T extends { _id?: string; id?: number }>({
           // Update UI - replace local item with synced item and remove duplicates
           setItems((prev) => {
           if (isSalesEndpoint) {
-            // For sales, replace local item with server item and deduplicate
-            const updated = prev.map((i) => {
+            // For sales, replace local item with server item or add if not found, then deduplicate
+            const itemExists = prev.some((i) => {
               const currentId = (i as any)._id || (i as any).id;
-              return currentId === localId ? syncedItem : i;
+              return currentId === localId;
             });
+            
+            let updated: T[];
+            if (itemExists) {
+              // Replace existing item
+              updated = prev.map((i) => {
+                const currentId = (i as any)._id || (i as any).id;
+                return currentId === localId ? syncedItem : i;
+              });
+            } else {
+              // Add new item if it doesn't exist (ensures immediate update)
+              updated = [...prev, syncedItem];
+            }
             
             // Deduplicate sales by content
               const seen = new Map<string, T>();
@@ -599,12 +611,20 @@ export function useApi<T extends { _id?: string; id?: number }>({
               
               return deduplicated;
           } else {
-            // For other endpoints, replace local item
-            const updated = prev.map((i) => {
+            // For other endpoints, replace local item or add if not found
+            const itemExists = prev.some((i) => {
               const currentId = (i as any)._id || (i as any).id;
-              return currentId === localId ? syncedItem : i;
+              return currentId === localId;
             });
-            return updated;
+            
+            if (itemExists) {
+              return prev.map((i) => {
+                const currentId = (i as any)._id || (i as any).id;
+                return currentId === localId ? syncedItem : i;
+              });
+            } else {
+              return [...prev, syncedItem];
+            }
           }
         });
       } catch (apiError: any) {

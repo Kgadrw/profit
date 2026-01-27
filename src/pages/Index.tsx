@@ -734,8 +734,51 @@ const Dashboard = () => {
 
   return (
     <AppLayout title="Dashboard">
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      {/* Mobile: 2 cards per row with background image and white text */}
+      <div className="lg:hidden grid grid-cols-2 gap-4 mb-6">
+        {isLoading ? (
+          <>
+            <KPICardSkeleton />
+            <KPICardSkeleton />
+            <KPICardSkeleton />
+            <KPICardSkeleton />
+          </>
+        ) : (
+          <>
+            <KPICard
+              title={t("todaysItems")}
+              value={todayStats.totalItems.toString()}
+              subtitle={t("language") === "rw" ? "ibintu byagurishwe" : "items sold"}
+              icon={ShoppingCart}
+              variant="imageDark"
+            />
+            <KPICard
+              title={t("todaysRevenue")}
+              value={`${todayStats.totalRevenue.toLocaleString()} rwf`}
+              icon={DollarSign}
+              variant="imageDark"
+              valueColor="text-blue-500"
+            />
+            <KPICard
+              title={t("todaysProfit")}
+              value={`${todayStats.totalProfit.toLocaleString()} rwf`}
+              icon={TrendingUp}
+              variant="imageDark"
+              valueColor="text-green-500"
+            />
+            <KPICard
+              title={t("currentStockValue")}
+              value={`${stockStats.totalStockValue.toLocaleString()} rwf`}
+              subtitle={`${stockStats.totalItems} ${t("items")}`}
+              icon={Package}
+              variant="imageDark"
+            />
+          </>
+        )}
+      </div>
+
+      {/* Desktop: Individual KPI Cards */}
+      <div className="hidden lg:grid grid-cols-4 gap-4 mb-6">
         {isLoading ? (
           <>
             <KPICardSkeleton />
@@ -752,8 +795,6 @@ const Dashboard = () => {
               icon={ShoppingCart}
               bgColor="bg-white"
               valueColor="text-orange-600"
-              linkTo="/sales"
-              linkText={t("language") === "rw" ? "Reba ubucuruzi bwa nyuma" : "View previous sales"}
             />
             <KPICard
               title={t("todaysRevenue")}
@@ -761,8 +802,6 @@ const Dashboard = () => {
               icon={DollarSign}
               bgColor="bg-white"
               valueColor="text-blue-600"
-              linkTo="/reports"
-              linkText={t("language") === "rw" ? "Reba amakuru ya nyuma" : "View previous records"}
             />
             <KPICard
               title={t("todaysProfit")}
@@ -770,8 +809,6 @@ const Dashboard = () => {
               icon={TrendingUp}
               bgColor="bg-white"
               valueColor="text-green-600"
-              linkTo="/reports"
-              linkText={t("language") === "rw" ? "Reba amakuru ya nyuma" : "View previous records"}
             />
             <KPICard
               title={t("currentStockValue")}
@@ -780,8 +817,6 @@ const Dashboard = () => {
               icon={Package}
               bgColor="bg-white"
               valueColor="text-purple-600"
-              linkTo="/products"
-              linkText={t("language") === "rw" ? "Reba ibicuruzwa" : "View products"}
             />
           </>
         )}
