@@ -213,7 +213,7 @@ export function AppLayout({ children, title }: AppLayoutProps) {
         backgroundSize: isMobile ? "cover" : undefined,
         backgroundPosition: isMobile ? "center" : undefined,
         backgroundRepeat: isMobile ? "no-repeat" : undefined,
-        backgroundAttachment: isMobile ? "fixed" : undefined,
+        backgroundAttachment: isMobile ? "fixed" : "fixed",
       }}
     >
       {/* Gradient overlay for background image */}
