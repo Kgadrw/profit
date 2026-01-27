@@ -106,8 +106,8 @@ export class SyncManager {
             // Products should not be synced - they require online connection
             throw new Error("Products cannot be synced offline. Please create products when online.");
           } else if (action.store === "sales") {
-            // Sales should not be synced - they require online connection
-            throw new Error("Sales cannot be synced offline. Please record sales when online.");
+            // Sales can now be synced - they are saved to IndexedDB first and synced when online
+            response = await saleApi.create(itemData);
           } else if (action.store === "clients") {
             response = await clientApi.create(itemData);
           } else if (action.store === "schedules") {

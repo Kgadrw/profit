@@ -493,12 +493,8 @@ export function useApi<T extends { _id?: string; id?: number }>({
       throw new Error('User not authenticated. Please login.');
     }
     
-    // For sales, require online connection - no offline support
-    if (endpoint === 'sales' && !navigator.onLine) {
-      const error: any = new Error('Cannot record sales while offline. Please check your internet connection.');
-      error.response = { connectionError: true };
-      throw error;
-    }
+    // Always save to IndexedDB first, even if offline - this ensures data is never lost
+    // We'll try to sync to server, and if it fails, the item will remain in IndexedDB for later sync
     
     try {
       await initDB();
@@ -704,20 +700,34 @@ export function useApi<T extends { _id?: string; id?: number }>({
           }
         });
       } catch (apiError: any) {
-        // For sales and products, don't queue for sync - just throw the error
-        if (isSalesEndpoint || endpoint === 'products') {
-          // Remove any local item that might have been added (shouldn't happen, but safety check)
-          throw apiError;
-        }
-        
         // Check if it's actually a connection/network error (not a server validation error)
         const isNetworkError = !navigator.onLine || 
                                apiError?.message?.includes('Failed to fetch') ||
                                apiError?.message?.includes('NetworkError') ||
                                apiError?.message?.includes('Network request failed') ||
+                               apiError?.message?.includes('Cannot record sales while offline') ||
                                (apiError?.response?.connectionError === true);
         
-        // Only queue for sync if it's a REAL network/connection error (for non-sales, non-products endpoints)
+        // For sales, queue for sync if it's a network error (item is already saved to IndexedDB)
+        if (isSalesEndpoint && isNetworkError) {
+          // Queue for sync - the item is already saved locally
+          await syncManager.queueAction({
+            type: "create",
+            store: storeName,
+            data: itemWithId,
+          });
+          // Throw a silent error so the UI can show success message
+          const silentError: any = new Error("Sale saved locally. Will sync when online.");
+          silentError.response = { silent: true, connectionError: true };
+          throw silentError;
+        }
+        
+        // For products, don't queue for sync - just throw the error
+        if (endpoint === 'products') {
+          throw apiError;
+        }
+        
+        // For other endpoints, queue for sync if it's a REAL network/connection error
         if (isNetworkError) {
           // logger.log(`[useApi] Network error detected for ${endpoint}, queueing for sync:`, apiError);
           await syncManager.queueAction({

@@ -335,18 +335,13 @@ export const saleApi = {
     });
   },
 
-  // Create sale - Direct API call to server (no offline storage, no syncing)
+  // Create sale - Direct API call to server
+  // Note: Offline handling is done at the useApi hook level
   async create(data: any): Promise<ApiResponse> {
     // logger.log('[saleApi] ===== DIRECT API CALL: Creating sale =====');
     // logger.log('[saleApi] Sale data:', JSON.stringify(data, null, 2));
     // logger.log('[saleApi] API URL:', `${API_BASE_URL}/sales`);
     // logger.log('[saleApi] Online status:', navigator.onLine);
-    
-    if (!navigator.onLine) {
-      const error: any = new Error('Cannot record sales while offline. Please check your internet connection.');
-      error.response = { connectionError: true };
-      throw error;
-    }
     
     try {
       const response = await request('/sales', {
@@ -364,11 +359,13 @@ export const saleApi = {
     } catch (error: any) {
       // logger.error('[saleApi] ✗ Error creating sale via DIRECT API:', error);
       // Re-throw with connection error flag if it's a network error
+      // This allows the useApi hook to handle offline scenarios properly
       if (!navigator.onLine || 
           error?.message?.includes('Failed to fetch') ||
           error?.message?.includes('NetworkError') ||
-          error?.message?.includes('Network request failed')) {
-        const connectionError: any = new Error('Cannot record sales while offline. Please check your internet connection.');
+          error?.message?.includes('Network request failed') ||
+          error?.message?.includes('connection')) {
+        const connectionError: any = new Error('Network error: Unable to connect to server.');
         connectionError.response = { connectionError: true };
         throw connectionError;
       }
