@@ -34,7 +34,6 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useNavigate } from "react-router-dom";
 import { notificationService } from "@/lib/notifications";
-import { NotificationPermissionModal } from "@/components/NotificationPermissionModal";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -66,7 +65,6 @@ const Settings = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
-  const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
 
   // Load user data when component mounts or user changes
@@ -846,15 +844,39 @@ const Settings = () => {
 
                         {notificationPermission !== 'granted' && (
                           <Button
-                            onClick={() => {
+                            onClick={async () => {
                               if (notificationPermission === 'denied') {
                                 toast({
                                   title: "Notifications Blocked",
                                   description: "Please enable notifications in your browser settings to receive alerts.",
                                   variant: "destructive",
                                 });
-                              } else {
-                                setShowNotificationModal(true);
+                                return;
+                              }
+
+                              try {
+                                const result = await notificationService.requestPermission();
+                                setNotificationPermission(result);
+
+                                if (result === 'granted') {
+                                  toast({
+                                    title: "Notifications Enabled",
+                                    description: "You will now receive important alerts from Profit Pilot.",
+                                  });
+                                } else if (result === 'denied') {
+                                  toast({
+                                    title: "Notifications Blocked",
+                                    description: "You can change this later in your browser settings if you change your mind.",
+                                    variant: "destructive",
+                                  });
+                                }
+                              } catch (error) {
+                                console.error("Error requesting notification permission:", error);
+                                toast({
+                                  title: "Error",
+                                  description: "Failed to request notification permission. Please try again.",
+                                  variant: "destructive",
+                                });
                               }
                             }}
                             className="bg-blue-600 text-white hover:bg-blue-700 w-full gap-2 h-10 shadow-sm hover:shadow transition-all font-semibold rounded-lg"
@@ -1049,21 +1071,6 @@ const Settings = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Notification Permission Modal */}
-      <NotificationPermissionModal
-        open={showNotificationModal}
-        onOpenChange={(open) => {
-          setShowNotificationModal(open);
-          // Refresh permission status when modal closes
-          if (!open) {
-            setNotificationPermission(notificationService.checkPermission());
-          }
-        }}
-        onPermissionGranted={() => {
-          setNotificationPermission(notificationService.checkPermission());
-          localStorage.removeItem('profit-pilot-notification-declined');
-        }}
-      />
     </AppLayout>
   );
 };
