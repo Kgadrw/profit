@@ -457,6 +457,18 @@ const Dashboard = () => {
           const cost = qty * product.costPrice;
           const profit = revenue - cost;
 
+          // Combine selected date with current time to preserve hours/minutes/seconds
+          const now = new Date();
+          let saleDateTime: Date;
+          if (sale.saleDate) {
+            // Parse the date string and combine with current time
+            const selectedDate = new Date(sale.saleDate + 'T00:00:00');
+            saleDateTime = new Date(selectedDate);
+            saleDateTime.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
+          } else {
+            saleDateTime = now;
+          }
+
           return {
             product: product.name,
             productId: product._id || product.id,
@@ -464,7 +476,8 @@ const Dashboard = () => {
             revenue,
             cost,
             profit,
-            date: new Date().toISOString(),
+            date: saleDateTime.toISOString(),
+            timestamp: new Date().toISOString(), // Record exact time when sale was recorded
             paymentMethod: sale.paymentMethod || "cash",
           };
         })
@@ -574,6 +587,18 @@ const Dashboard = () => {
       const cost = qty * product.costPrice;
       const profit = revenue - cost;
 
+      // Combine selected date with current time to preserve hours/minutes/seconds
+      const now = new Date();
+      let saleDateTime: Date;
+      if (saleDate) {
+        // Parse the date string and combine with current time
+        const selectedDate = new Date(saleDate + 'T00:00:00');
+        saleDateTime = new Date(selectedDate);
+        saleDateTime.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
+      } else {
+        saleDateTime = now;
+      }
+
       const newSale = {
         product: product.name,
         productId: product._id || product.id,
@@ -581,7 +606,7 @@ const Dashboard = () => {
         revenue,
         cost,
         profit,
-        date: new Date().toISOString(),
+        date: saleDateTime.toISOString(),
         timestamp: new Date().toISOString(), // Record exact time when sale was recorded
         paymentMethod: paymentMethod,
       };

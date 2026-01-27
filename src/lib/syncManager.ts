@@ -32,12 +32,10 @@ export class SyncManager {
   private setupOnlineOfflineListeners() {
     const handleOnline = () => {
       this.isOnline = true;
-      // Small delay to ensure network is fully restored
-      setTimeout(() => {
-        this.syncAll().catch((error) => {
-          // logger.log("Auto-sync on network restore failed:", error);
-        });
-      }, 1000);
+      // Immediately trigger sync as soon as we're online (no artificial delay)
+      this.syncAll().catch((error) => {
+        // logger.log("Auto-sync on network restore failed:", error);
+      });
     };
 
     const handleOffline = () => {

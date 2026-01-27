@@ -321,13 +321,25 @@ export function RecordSaleModal({ open, onOpenChange, onSaleRecorded }: RecordSa
     setIsRecordingSale(true);
 
     try {
+      // Combine selected date with current time to preserve hours/minutes/seconds
+      const now = new Date();
+      let saleDateTime: Date;
+      if (saleDate) {
+        // Parse the date string and combine with current time
+        const selectedDate = new Date(saleDate + 'T00:00:00');
+        saleDateTime = new Date(selectedDate);
+        saleDateTime.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
+      } else {
+        saleDateTime = now;
+      }
+
       const newSale = {
         product: product.name,
         quantity: qty,
         revenue,
         profit,
         cost,
-        date: saleDate,
+        date: saleDateTime.toISOString(),
         timestamp: new Date().toISOString(), // Record exact time when sale was recorded
         paymentMethod,
       };
