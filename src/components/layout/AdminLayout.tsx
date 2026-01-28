@@ -64,6 +64,37 @@ export function AdminLayout({ children, title, activeSection, onSectionChange }:
   
   const [isAnimating, setIsAnimating] = useState(false);
   
+  // Function to manually change today's background image
+  const changeTodaysBgImage = (imageIndex?: number) => {
+    if (!isMobile) return;
+    const nextIndex = imageIndex !== undefined 
+      ? Math.max(0, Math.min(imageIndex, backgroundImages.length - 1))
+      : (currentBgIndex + 1) % backgroundImages.length;
+    setIsAnimating(true);
+    
+    setTimeout(() => {
+      setCurrentBgIndex(nextIndex);
+      localStorage.setItem('profit-pilot-bg-index', nextIndex.toString());
+      localStorage.setItem('profit-pilot-bg-date', getTodayDateString());
+      localStorage.setItem('profit-pilot-bg-changed-today', 'true');
+      
+      setTimeout(() => {
+        setIsAnimating(false);
+      }, 50);
+    }, 500);
+  };
+  
+  // Expose function to window for manual control
+  // Usage: window.changeTodaysBgImage() - changes to next image
+  //        window.changeTodaysBgImage(0) - changes to image 1.jpg (index 0)
+  //        window.changeTodaysBgImage(4) - changes to image 5.jpg (index 4)
+  useEffect(() => {
+    (window as any).changeTodaysBgImage = changeTodaysBgImage;
+    return () => {
+      delete (window as any).changeTodaysBgImage;
+    };
+  }, [currentBgIndex, isMobile]);
+  
   // Check daily rotation - changes when calendar day changes (at midnight)
   useEffect(() => {
     if (!isMobile) return;
