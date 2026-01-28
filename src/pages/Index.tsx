@@ -267,6 +267,7 @@ const Dashboard = () => {
     items: products,
     isLoading: productsLoading,
     refresh: refreshProducts,
+    update: updateProduct,
   } = useApi<Product>({
     endpoint: "products",
     defaultValue: [],
@@ -498,8 +499,40 @@ const Dashboard = () => {
 
       if (salesToCreate.length > 0) {
           await bulkAddSales(salesToCreate as any);
+        
+        // Reduce product stock locally immediately for instant UI feedback
+        // Group sales by productId to handle multiple sales of the same product
+        const stockReductions = new Map<string, number>();
+        salesToCreate.forEach((sale: any) => {
+          const productId = sale.productId?.toString();
+          if (productId) {
+            const currentReduction = stockReductions.get(productId) || 0;
+            stockReductions.set(productId, currentReduction + sale.quantity);
+          }
+        });
+        
+        // Update each product's stock
+        for (const [productId, totalQuantity] of stockReductions.entries()) {
+          try {
+            const product = products.find((p) => {
+              const id = (p as any)._id || p.id;
+              return id.toString() === productId;
+            });
+            if (product) {
+              const updatedProduct = {
+                ...product,
+                stock: Math.max(0, product.stock - totalQuantity),
+              };
+              await updateProduct(updatedProduct);
+            }
+          } catch (updateError) {
+            // Silently ignore update errors - backend will handle stock reduction
+            console.warn(`Failed to update product stock locally for product ${productId}:`, updateError);
+          }
+        }
+        
         // Don't refresh sales - bulkAdd already updates the UI with synced items
-        // Only refresh products to update stock levels (if online)
+        // Refresh products to sync with backend (if online)
         if (isOnline) {
           try {
             await refreshProducts();
@@ -618,8 +651,21 @@ const Dashboard = () => {
       };
 
         await addSale(newSale as any);
+        
+        // Reduce product stock locally immediately for instant UI feedback
+        try {
+          const updatedProduct = {
+            ...product,
+            stock: Math.max(0, product.stock - qty),
+          };
+          await updateProduct(updatedProduct);
+        } catch (updateError) {
+          // Silently ignore update errors - backend will handle stock reduction
+          console.warn("Failed to update product stock locally:", updateError);
+        }
+        
         // Don't refresh sales - add already updates the UI with synced item
-        // Only refresh products to update stock levels (if online)
+        // Refresh products to sync with backend (if online)
         if (isOnline) {
           try {
             await refreshProducts();

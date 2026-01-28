@@ -274,6 +274,7 @@ const Sales = () => {
     items: products,
     isLoading: productsLoading,
     refresh: refreshProducts,
+    update: updateProduct,
   } = useApi<Product>({
     endpoint: "products",
     defaultValue: [],
@@ -528,13 +529,45 @@ const Sales = () => {
       if (salesToCreate.length > 0) {
           try {
             await bulkAddSales(salesToCreate as any);
+            
+            // Reduce product stock locally immediately for instant UI feedback
+            // Group sales by productId to handle multiple sales of the same product
+            const stockReductions = new Map<string, number>();
+            salesToCreate.forEach((sale: any) => {
+              const productId = sale.productId?.toString();
+              if (productId) {
+                const currentReduction = stockReductions.get(productId) || 0;
+                stockReductions.set(productId, currentReduction + sale.quantity);
+              }
+            });
+            
+            // Update each product's stock
+            for (const [productId, totalQuantity] of stockReductions.entries()) {
+              try {
+                const product = products.find((p) => {
+                  const id = (p as any)._id || p.id;
+                  return id.toString() === productId;
+                });
+                if (product) {
+                  const updatedProduct = {
+                    ...product,
+                    stock: Math.max(0, product.stock - totalQuantity),
+                  };
+                  await updateProduct(updatedProduct);
+                }
+              } catch (updateError) {
+                // Silently ignore update errors - backend will handle stock reduction
+                console.warn(`Failed to update product stock locally for product ${productId}:`, updateError);
+              }
+            }
+            
             // Refresh sales to ensure table updates immediately with latest data
             try {
               await refreshSales();
             } catch (refreshError) {
               // Silently ignore refresh errors
             }
-            // Refresh products to update stock levels
+            // Refresh products to sync with backend
             try {
               await refreshProducts();
             } catch (refreshError) {
@@ -661,13 +694,26 @@ const Sales = () => {
 
         try {
           await addSale(newSale as any);
+          
+          // Reduce product stock locally immediately for instant UI feedback
+          try {
+            const updatedProduct = {
+              ...product,
+              stock: Math.max(0, product.stock - qty),
+            };
+            await updateProduct(updatedProduct);
+          } catch (updateError) {
+            // Silently ignore update errors - backend will handle stock reduction
+            console.warn("Failed to update product stock locally:", updateError);
+          }
+          
           // Refresh sales to ensure table updates immediately with latest data
           try {
             await refreshSales();
           } catch (refreshError) {
             // Silently ignore refresh errors
           }
-          // Refresh products to update stock levels
+          // Refresh products to sync with backend
           try {
             await refreshProducts();
           } catch (refreshError) {
