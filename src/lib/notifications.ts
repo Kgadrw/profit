@@ -217,7 +217,8 @@ class NotificationService {
   public async notifyLowStock(
     productName: string,
     currentStock: number,
-    minStock: number
+    minStock: number,
+    productId?: string | number
   ): Promise<void> {
     const isOutOfStock = currentStock === 0;
     await this.showNotification('low_stock', {
@@ -227,13 +228,15 @@ class NotificationService {
         : `${productName} is running low (${currentStock} left, minimum: ${minStock})`,
       icon: '/logo.png',
       tag: `low-stock-${productName}-${Date.now()}`,
-      requireInteraction: false,
+      requireInteraction: true, // Changed to true so notification stays until user interacts
       data: {
         route: '/products',
         type: 'low_stock',
         productName,
         currentStock,
         minStock,
+        productId, // Include productId for quick update
+        action: 'update_stock', // Action identifier
       },
     });
   }

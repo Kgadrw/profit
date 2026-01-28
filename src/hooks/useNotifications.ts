@@ -191,7 +191,8 @@ export function useLowStockNotifications() {
           await notificationService.notifyLowStock(
             product.name,
             currentStock,
-            minStock
+            minStock,
+            productId // Pass productId for quick update functionality
           );
           lastNotifiedProducts.current.add(productId);
         }

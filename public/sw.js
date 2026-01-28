@@ -231,6 +231,34 @@ self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
   const data = event.notification.data;
+  
+  // Handle low stock notification with quick update action
+  if (data && data.type === 'low_stock' && data.action === 'update_stock' && data.productId) {
+    event.waitUntil(
+      clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+        // Send message to all clients to show stock update dialog
+        for (const client of clientList) {
+          client.postMessage({
+            type: 'SHOW_STOCK_UPDATE',
+            productId: data.productId,
+            productName: data.productName,
+            currentStock: data.currentStock,
+            minStock: data.minStock,
+          });
+        }
+        
+        // Focus or open a window
+        if (clientList.length > 0) {
+          return clientList[0].focus();
+        } else if (clients.openWindow) {
+          return clients.openWindow('/products');
+        }
+      })
+    );
+    return;
+  }
+  
+  // Default behavior: navigate to route
   if (data && data.route) {
     event.waitUntil(
       clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {

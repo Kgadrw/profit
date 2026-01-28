@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,6 +9,7 @@ import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { AddToHomeScreen } from "@/components/AddToHomeScreen";
 import { SplashScreen } from "@/components/SplashScreen";
 import { NotificationManager } from "@/components/NotificationManager";
+import { StockUpdateDialog } from "@/components/StockUpdateDialog";
 import { useSyncReminder } from "@/hooks/useSyncReminder";
 import { initAudio } from "@/lib/sound";
 import { LanguageProvider } from "@/hooks/useLanguage";
@@ -28,6 +29,13 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 const App = () => {
+  // State for stock update dialog from notification
+  const [stockUpdateDialogOpen, setStockUpdateDialogOpen] = useState(false);
+  const [stockUpdateProductId, setStockUpdateProductId] = useState<string | number | null>(null);
+  const [stockUpdateProductName, setStockUpdateProductName] = useState<string | undefined>(undefined);
+  const [stockUpdateCurrentStock, setStockUpdateCurrentStock] = useState<number | undefined>(undefined);
+  const [stockUpdateMinStock, setStockUpdateMinStock] = useState<number | undefined>(undefined);
+
   // Enable sync reminder notifications
   useSyncReminder();
 
@@ -55,6 +63,27 @@ const App = () => {
       document.removeEventListener('keydown', initAudioOnInteraction);
       document.removeEventListener('touchstart', initAudioOnInteraction);
     };
+  }, []);
+
+  // Listen for service worker messages (notification clicks)
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      const handleMessage = (event: MessageEvent) => {
+        if (event.data && event.data.type === 'SHOW_STOCK_UPDATE') {
+          setStockUpdateProductId(event.data.productId);
+          setStockUpdateProductName(event.data.productName);
+          setStockUpdateCurrentStock(event.data.currentStock);
+          setStockUpdateMinStock(event.data.minStock);
+          setStockUpdateDialogOpen(true);
+        }
+      };
+
+      navigator.serviceWorker.addEventListener('message', handleMessage);
+
+      return () => {
+        navigator.serviceWorker.removeEventListener('message', handleMessage);
+      };
+    }
   }, []);
 
   return (
@@ -144,6 +173,13 @@ const App = () => {
             </Routes>
             <OfflineIndicator />
             <NotificationManager />
+            <StockUpdateDialog
+              productId={stockUpdateProductId}
+              productName={stockUpdateProductName}
+              currentStock={stockUpdateCurrentStock}
+              open={stockUpdateDialogOpen}
+              onOpenChange={setStockUpdateDialogOpen}
+            />
           </LanguageProvider>
         </ThemeProvider>
       </BrowserRouter>
