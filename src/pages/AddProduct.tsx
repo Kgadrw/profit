@@ -695,24 +695,24 @@ const AddProduct = () => {
                         <div>
                           <Label className="text-sm font-medium text-gray-700 mb-1 block">Manufactured Date (Optional)</Label>
                           <div className="relative">
-                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                            <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
                             <Input
                               type="date"
                               value={product.manufacturedDate}
                               onChange={(e) => updateBulkProduct(index, "manufacturedDate", e.target.value)}
-                              className="h-12 text-base pl-10"
+                              className="h-12 text-base pr-10"
                             />
                           </div>
                         </div>
                         <div>
                           <Label className="text-sm font-medium text-gray-700 mb-1 block">Expiration Date (Optional)</Label>
                           <div className="relative">
-                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                            <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
                             <Input
                               type="date"
                               value={product.expiryDate}
                               onChange={(e) => updateBulkProduct(index, "expiryDate", e.target.value)}
-                              className="h-12 text-base pl-10"
+                              className="h-12 text-base pr-10"
                             />
                           </div>
                         </div>
@@ -817,23 +817,23 @@ const AddProduct = () => {
                         </td>
                         <td className="p-2">
                           <div className="relative">
-                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                            <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
                             <Input
                               type="date"
                               value={product.manufacturedDate}
                               onChange={(e) => updateBulkProduct(index, "manufacturedDate", e.target.value)}
-                              className="input-field h-9 text-sm pl-9"
+                              className="input-field h-9 text-sm pr-9"
                             />
                           </div>
                         </td>
                         <td className="p-2">
                           <div className="relative">
-                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                            <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
                             <Input
                               type="date"
                               value={product.expiryDate}
                               onChange={(e) => updateBulkProduct(index, "expiryDate", e.target.value)}
-                              className="input-field h-9 text-sm pl-9"
+                              className="input-field h-9 text-sm pr-9"
                             />
                           </div>
                         </td>
@@ -908,24 +908,24 @@ const AddProduct = () => {
                 <div className="space-y-2">
                   <Label>Manufactured Date (Optional)</Label>
                   <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                    <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
                     <Input
                       type="date"
                       value={formData.manufacturedDate}
                       onChange={(e) => setFormData({ ...formData, manufacturedDate: e.target.value })}
-                      className="input-field pl-10"
+                      className="input-field pr-10"
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Expiration Date (Optional)</Label>
                   <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                    <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
                     <Input
                       type="date"
                       value={formData.expiryDate}
                       onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
-                      className="input-field pl-10"
+                      className="input-field pr-10"
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">Used for tracking expiry of perishable products.</p>
