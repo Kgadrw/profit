@@ -28,62 +28,90 @@ export function AdminLayout({ children, title, activeSection, onSectionChange }:
   
   // Rotating background images for mobile (1.jpg through 5.jpg)
   const backgroundImages = ['/1.jpg', '/2.jpg', '/3.jpg', '/4.jpg', '/5.jpg'];
+  
+  // Helper function to get today's date string (YYYY-MM-DD)
+  const getTodayDateString = () => {
+    const today = new Date();
+    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  };
+  
   const [currentBgIndex, setCurrentBgIndex] = useState(() => {
-    // Load saved index and timestamp from localStorage
+    // Load saved index and date from localStorage
     const savedIndex = localStorage.getItem('profit-pilot-bg-index');
-    const savedTimestamp = localStorage.getItem('profit-pilot-bg-timestamp');
+    const savedDate = localStorage.getItem('profit-pilot-bg-date');
+    const todayDate = getTodayDateString();
     
-    if (savedIndex && savedTimestamp) {
-      const lastChange = parseInt(savedTimestamp, 10);
-      const now = Date.now();
-      const oneDayInMs = 24 * 60 * 60 * 1000; // 1 day in milliseconds
-      
-      // If less than 1 day has passed, use saved index
-      if (now - lastChange < oneDayInMs) {
+    if (savedIndex && savedDate) {
+      // If it's the same day, use saved index
+      if (savedDate === todayDate) {
         return parseInt(savedIndex, 10);
       }
-      // If 1 day has passed, rotate to next image
+      // If it's a different day, immediately rotate to next image (no animation on initial load)
       const nextIndex = (parseInt(savedIndex, 10) + 1) % backgroundImages.length;
       localStorage.setItem('profit-pilot-bg-index', nextIndex.toString());
-      localStorage.setItem('profit-pilot-bg-timestamp', now.toString());
+      localStorage.setItem('profit-pilot-bg-date', todayDate);
+      // Mark that we've already changed for today, so future changes in the same session will animate
+      localStorage.setItem('profit-pilot-bg-changed-today', 'true');
       return nextIndex;
     }
     
     // First time - start with index 0
-    const now = Date.now();
     localStorage.setItem('profit-pilot-bg-index', '0');
-    localStorage.setItem('profit-pilot-bg-timestamp', now.toString());
+    localStorage.setItem('profit-pilot-bg-date', todayDate);
+    localStorage.setItem('profit-pilot-bg-changed-today', 'false');
     return 0;
   });
   
-  // Check daily rotation
+  const [isAnimating, setIsAnimating] = useState(false);
+  
+  // Check daily rotation - changes when calendar day changes (at midnight)
   useEffect(() => {
     if (!isMobile) return;
     
     const checkAndRotate = () => {
       const savedIndex = localStorage.getItem('profit-pilot-bg-index');
-      const savedTimestamp = localStorage.getItem('profit-pilot-bg-timestamp');
+      const savedDate = localStorage.getItem('profit-pilot-bg-date');
+      const changedToday = localStorage.getItem('profit-pilot-bg-changed-today');
+      const todayDate = getTodayDateString();
       
-      if (savedIndex && savedTimestamp) {
-        const lastChange = parseInt(savedTimestamp, 10);
-        const now = Date.now();
-        const oneDayInMs = 24 * 60 * 60 * 1000; // 1 day in milliseconds
+      if (savedIndex && savedDate && savedDate !== todayDate) {
+        // Day has changed! Rotate to next image
+        const nextIndex = (parseInt(savedIndex, 10) + 1) % backgroundImages.length;
         
-        // If 1 day has passed, rotate to next image
-        if (now - lastChange >= oneDayInMs) {
-          const nextIndex = (parseInt(savedIndex, 10) + 1) % backgroundImages.length;
+        // If we haven't changed today yet (initial load), change immediately without animation
+        if (changedToday !== 'true') {
           setCurrentBgIndex(nextIndex);
           localStorage.setItem('profit-pilot-bg-index', nextIndex.toString());
-          localStorage.setItem('profit-pilot-bg-timestamp', now.toString());
+          localStorage.setItem('profit-pilot-bg-date', todayDate);
+          localStorage.setItem('profit-pilot-bg-changed-today', 'true');
+        } else {
+          // If day changes during the session (midnight), animate the change
+          setIsAnimating(true);
+          
+          // Change image after fade out
+          setTimeout(() => {
+            setCurrentBgIndex(nextIndex);
+            localStorage.setItem('profit-pilot-bg-index', nextIndex.toString());
+            localStorage.setItem('profit-pilot-bg-date', todayDate);
+            
+            // Fade in
+            setTimeout(() => {
+              setIsAnimating(false);
+            }, 50);
+          }, 500); // Half of animation duration
         }
+      } else if (savedDate === todayDate && changedToday === 'true') {
+        // Same day, reset the flag for next day
+        // This ensures animation works when day changes during session
+        localStorage.setItem('profit-pilot-bg-changed-today', 'false');
       }
     };
     
     // Check immediately
     checkAndRotate();
     
-    // Check every hour to see if a day has passed
-    const intervalId = setInterval(checkAndRotate, 60 * 60 * 1000); // Check every hour
+    // Check every minute to catch midnight changes quickly
+    const intervalId = setInterval(checkAndRotate, 60 * 1000); // Check every minute
     
     return () => clearInterval(intervalId);
   }, [isMobile, backgroundImages.length]);
@@ -208,13 +236,14 @@ export function AdminLayout({ children, title, activeSection, onSectionChange }:
 
   return (
     <div 
-      className="min-h-screen bg-background lg:bg-background"
+      className="min-h-screen bg-background lg:bg-background transition-opacity duration-1000 ease-in-out"
       style={{
         backgroundImage: isMobile ? `url('${backgroundImages[currentBgIndex]}')` : undefined,
         backgroundSize: isMobile ? "cover" : undefined,
         backgroundPosition: isMobile ? "center" : undefined,
         backgroundRepeat: isMobile ? "no-repeat" : undefined,
         backgroundAttachment: isMobile ? "fixed" : undefined,
+        opacity: isMobile && isAnimating ? 0 : 1,
       }}
     >
       {/* Sidebar - Hidden on mobile, visible on desktop */}
