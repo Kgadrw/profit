@@ -224,6 +224,9 @@ const lastNotificationTimes = new Map();
 let lastKnownProductIds = new Set();
 // Store last known stock state per product (for state-based notifications)
 const lastKnownStock = new Map(); // productId -> stock number
+// Track last API fetch time to prevent excessive API calls
+let lastProductsFetchTime = 0;
+const MIN_PRODUCTS_FETCH_INTERVAL = 2 * 60 * 1000; // 2 minutes minimum between API calls
 
 // Helper to close notifications by tag
 async function closeNotificationByTag(tag) {
@@ -244,6 +247,15 @@ async function closeNotificationByTag(tag) {
 
 async function checkAndNotify(userId) {
   try {
+    const now = Date.now();
+    const timeSinceLastFetch = now - lastProductsFetchTime;
+    
+    // Only fetch from API if enough time has passed (prevent excessive API calls)
+    if (timeSinceLastFetch < MIN_PRODUCTS_FETCH_INTERVAL && lastProductsFetchTime > 0) {
+      console.log(`[SW] Skipping products fetch (only ${Math.round(timeSinceLastFetch / 1000)}s since last fetch)`);
+      return; // Skip this check to avoid excessive API calls
+    }
+    
     const headers = {
       'Content-Type': 'application/json',
       'X-User-Id': userId,
@@ -257,6 +269,9 @@ async function checkAndNotify(userId) {
         headers: headers,
         cache: 'no-store', // Explicitly disable caching
       });
+      
+      // Update last fetch time
+      lastProductsFetchTime = now;
 
       if (productsResponse.ok) {
         const productsData = await productsResponse.json();

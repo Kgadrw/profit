@@ -1115,16 +1115,36 @@ export function useApi<T extends { _id?: string; id?: number }>({
       }
 
       // Delete from IndexedDB first (offline-first)
-      const numericId = typeof itemId === 'string' ? parseInt(itemId) : itemId;
-      if (!isNaN(numericId)) {
-        await deleteItem(storeName, numericId);
+      // Find the item in IndexedDB by matching _id or id, then delete using the stored numeric id
+      try {
+        const allItems = await getAllItems<T>(storeName);
+        const itemToDelete = allItems.find((i: any) => {
+          const currentId = (i as any)._id || (i as any).id;
+          // Compare as strings to handle both string and number IDs
+          return String(currentId) === String(itemId);
+        });
+        
+        if (itemToDelete && (itemToDelete as any).id) {
+          // Delete using the numeric id stored in IndexedDB
+          await deleteItem(storeName, (itemToDelete as any).id);
+        } else {
+          // If item not found in IndexedDB, try direct numeric conversion as fallback
+          const numericId = typeof itemId === 'string' ? parseInt(itemId) : itemId;
+          if (!isNaN(numericId) && isFinite(numericId)) {
+            await deleteItem(storeName, numericId);
+          }
+        }
+      } catch (deleteError) {
+        // Log but don't fail - UI update will still happen
+        console.warn(`[useApi] Failed to delete from IndexedDB:`, deleteError);
       }
       
-      // Update UI immediately
+      // Update UI immediately - normalize IDs for comparison
       setItems((prev) =>
         prev.filter((i) => {
           const currentId = (i as any)._id || (i as any).id;
-          return currentId !== itemId;
+          // Compare as strings to handle both string and number IDs
+          return String(currentId) !== String(itemId);
         })
       );
 
@@ -1352,9 +1372,9 @@ export function useApi<T extends { _id?: string; id?: number }>({
   const REFRESH_COOLDOWN = 10000; // 10 seconds minimum between refreshes (increased to reduce API calls)
 
   // Refresh function that resets error state with rate limiting
-  const refresh = useCallback(() => {
-    // Don't refresh if already loading
-    if (isLoadingDataRef.current) {
+  const refresh = useCallback((force = false) => {
+    // Don't refresh if already loading (unless forced)
+    if (isLoadingDataRef.current && !force) {
       return;
     }
     
@@ -1369,7 +1389,13 @@ export function useApi<T extends { _id?: string; id?: number }>({
     const now = Date.now();
     const timeSinceLastRefresh = now - lastRefreshTimeRef.current;
     
-    if (timeSinceLastRefresh < REFRESH_COOLDOWN) {
+    // If forced, invalidate cache and refresh immediately
+    if (force) {
+      apiCache.invalidateStore(endpoint);
+      lastRefreshTimeRef.current = 0; // Reset to bypass cooldown
+    }
+    
+    if (timeSinceLastRefresh < REFRESH_COOLDOWN && !force) {
       // Schedule refresh after cooldown period
       const remainingTime = REFRESH_COOLDOWN - timeSinceLastRefresh;
       refreshTimeoutRef.current = setTimeout(() => {
@@ -1384,7 +1410,7 @@ export function useApi<T extends { _id?: string; id?: number }>({
       lastRefreshTimeRef.current = Date.now();
       loadData();
     }
-  }, [loadData]);
+  }, [loadData, endpoint]);
 
   return {
     items,

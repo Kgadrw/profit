@@ -93,10 +93,11 @@ export function NotificationManager() {
     // Check immediately on mount
     triggerNotificationCheck();
 
-    // Then check every 5 minutes while app is open (reduced frequency to avoid too many API calls)
+    // Then check every 15 minutes while app is open (reduced frequency to avoid too many API calls)
+    // Service worker handles background checks, so we don't need frequent polling here
     const interval = setInterval(() => {
       triggerNotificationCheck();
-    }, 5 * 60 * 1000); // 5 minutes instead of 60 seconds
+    }, 15 * 60 * 1000); // 15 minutes instead of 5 minutes
 
     // ✅ Also listen for product update events to trigger immediate check
     const handleProductUpdate = () => {

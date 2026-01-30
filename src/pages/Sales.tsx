@@ -306,6 +306,7 @@ const Sales = () => {
     add: addSale,
     bulkAdd: bulkAddSales,
     refresh: refreshSales,
+    remove: removeSale,
   } = useApi<Sale>({
     endpoint: "sales",
     defaultValue: [],
@@ -372,8 +373,8 @@ const Sales = () => {
   useEffect(() => {
     let debounceTimeout: NodeJS.Timeout | null = null;
     let lastRefreshTime = 0;
-    const DEBOUNCE_DELAY = 1000; // 1 second debounce
-    const MIN_REFRESH_INTERVAL = 10000; // 10 seconds minimum between refreshes (increased to reduce API calls)
+    const DEBOUNCE_DELAY = 2000; // 2 second debounce
+    const MIN_REFRESH_INTERVAL = 30 * 1000; // 30 seconds minimum between refreshes (increased to reduce API calls)
 
     const handleSaleRecorded = async () => {
       const now = Date.now();
@@ -1135,34 +1136,77 @@ const Sales = () => {
     setIsClearing(true);
     try {
       if (deleteMode === "all") {
-        // Delete all sales
-        await saleApi.deleteAll();
-        await refreshSales();
+        // Delete all sales - delete one by one using remove function for proper UI updates
+        let deletedCount = 0;
+        let failedCount = 0;
+
+        for (const sale of sales) {
+          try {
+            await removeSale(sale);
+            deletedCount++;
+            playDeleteBeep();
+          } catch (error: any) {
+            failedCount++;
+            console.error(`Failed to delete sale:`, error);
+            playErrorBeep();
+            toast({
+              title: "Failed to Delete Sale",
+              description: error?.message || error?.response?.error || "Unknown error",
+              variant: "destructive",
+            });
+          }
+        }
+
+        // Clear selection
         setSelectedSales(new Set());
+        
+        // Force refresh to ensure UI is updated
+        await refreshSales();
+        
+        // Dispatch event to notify other pages
+        window.dispatchEvent(new CustomEvent('sales-should-refresh'));
         
         playUpdateBeep();
         toast({
           title: "All Sales Cleared",
-          description: "All sales have been successfully deleted.",
+          description: `Successfully deleted ${deletedCount} sale(s).${failedCount > 0 ? ` ${failedCount} failed.` : ''}`,
         });
       } else if (deleteMode === "selected") {
-        // Delete selected sales
+        // Delete selected sales using remove function for proper UI updates
         const selectedArray = Array.from(selectedSales);
+        const salesToDelete = sales.filter((sale) => {
+          const saleId = (sale as any)._id || sale.id;
+          return saleId && selectedArray.includes(saleId.toString());
+        });
+        
         let deletedCount = 0;
         let failedCount = 0;
 
-        for (const saleId of selectedArray) {
+        for (const sale of salesToDelete) {
           try {
-            await saleApi.delete(saleId);
+            await removeSale(sale);
             deletedCount++;
-          } catch (error) {
+            playDeleteBeep();
+          } catch (error: any) {
             failedCount++;
-            console.error(`Failed to delete sale ${saleId}:`, error);
+            console.error(`Failed to delete sale:`, error);
+            playErrorBeep();
+            toast({
+              title: "Failed to Delete Sale",
+              description: error?.message || error?.response?.error || "Unknown error",
+              variant: "destructive",
+            });
           }
         }
 
-        await refreshSales();
+        // Clear selection
         setSelectedSales(new Set());
+        
+        // Force refresh to ensure UI is updated (bypass cache)
+        refreshSales(true);
+        
+        // Dispatch event to notify other pages
+        window.dispatchEvent(new CustomEvent('sales-should-refresh'));
 
         if (failedCount > 0) {
           playWarningBeep();
@@ -1179,23 +1223,38 @@ const Sales = () => {
           });
         }
       } else if (deleteMode === "single" && singleSaleToDelete) {
-        // Delete single sale
-        const saleId = (singleSaleToDelete as any)._id || singleSaleToDelete.id;
-        if (saleId) {
-          await saleApi.delete(saleId.toString());
-          await refreshSales();
+        // Delete single sale using remove function for proper UI updates
+        try {
+          await removeSale(singleSaleToDelete);
           
           // Remove from selection if it was selected
-          setSelectedSales((prev) => {
-            const newSet = new Set(prev);
-            newSet.delete(saleId.toString());
-            return newSet;
-          });
+          const saleId = (singleSaleToDelete as any)._id || singleSaleToDelete.id;
+          if (saleId) {
+            setSelectedSales((prev) => {
+              const newSet = new Set(prev);
+              newSet.delete(saleId.toString());
+              return newSet;
+            });
+          }
           
-          playUpdateBeep();
+          // Force refresh to ensure UI is updated (bypass cache)
+          refreshSales(true);
+          
+          // Dispatch event to notify other pages
+          window.dispatchEvent(new CustomEvent('sales-should-refresh'));
+          
+          playDeleteBeep();
           toast({
             title: "Sale Deleted",
             description: "Sale has been successfully deleted.",
+          });
+        } catch (error: any) {
+          playErrorBeep();
+          console.error("Error deleting sale:", error);
+          toast({
+            title: "Delete Failed",
+            description: error?.message || error?.response?.error || "Failed to delete sale. Please check your connection and try again.",
+            variant: "destructive",
           });
         }
       }

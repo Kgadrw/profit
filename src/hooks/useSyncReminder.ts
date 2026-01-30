@@ -191,8 +191,8 @@ export function useSyncReminder() {
       }
     };
 
-    // Check every 30 seconds when online
-    const interval = setInterval(checkPendingSyncs, 30000);
+    // Check every 15 minutes when online (reduced frequency to avoid too many API calls)
+    const interval = setInterval(checkPendingSyncs, 15 * 60 * 1000);
 
     return () => {
       clearInterval(interval);

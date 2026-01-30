@@ -186,8 +186,8 @@ const Products = () => {
   useEffect(() => {
     let debounceTimeout: NodeJS.Timeout | null = null;
     let lastRefreshTime = 0;
-    const DEBOUNCE_DELAY = 1000; // 1 second debounce
-    const MIN_REFRESH_INTERVAL = 10000; // 10 seconds minimum between refreshes (increased to reduce API calls)
+    const DEBOUNCE_DELAY = 2000; // 2 second debounce
+    const MIN_REFRESH_INTERVAL = 30 * 1000; // 30 seconds minimum between refreshes (increased to reduce API calls)
 
     const handleProductUpdate = () => {
       const now = Date.now();
@@ -533,8 +533,11 @@ const Products = () => {
           }
         }
 
-        await refreshProducts();
+        // Clear selection
         setSelectedProducts(new Set());
+        
+        // Force refresh to ensure UI is updated (bypass cache)
+        refreshProducts(true);
         
         // Dispatch event to notify other pages to refresh
         window.dispatchEvent(new CustomEvent('products-should-refresh'));
@@ -572,9 +575,12 @@ const Products = () => {
           }
         }
 
-        await refreshProducts();
+        // Clear selection
         setSelectedProducts(new Set());
         setIsSelectionMode(false);
+        
+        // Force refresh to ensure UI is updated
+        await refreshProducts();
         
         // Dispatch event to notify other pages to refresh
         window.dispatchEvent(new CustomEvent('products-should-refresh'));
@@ -586,9 +592,8 @@ const Products = () => {
         });
       } else if (deleteMode === "single" && productToDelete) {
         // Delete single product
-    try {
-      await removeProduct(productToDelete);
-      await refreshProducts();
+        try {
+          await removeProduct(productToDelete);
           
           // Remove from selection if it was selected
           const productId = (productToDelete as any)._id || productToDelete.id;
@@ -600,14 +605,17 @@ const Products = () => {
             });
           }
           
-      playDeleteBeep();
-      toast({
-        title: "Product Deleted",
-            description: "Product has been successfully deleted.",
-          });
+          // Force refresh to ensure UI is updated (bypass cache)
+          refreshProducts(true);
           
           // Dispatch event to notify other pages to refresh
           window.dispatchEvent(new CustomEvent('products-should-refresh'));
+          
+          playDeleteBeep();
+          toast({
+            title: "Product Deleted",
+            description: "Product has been successfully deleted.",
+          });
         } catch (error: any) {
           playErrorBeep();
           console.error("Error deleting product:", error);

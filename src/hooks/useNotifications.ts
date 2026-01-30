@@ -66,10 +66,11 @@ export function useAdminNotifications() {
     // Initial check
     checkNewUsers();
 
-    // Check every 2 minutes for new users (reduced frequency to avoid too many API calls)
+    // Check every 10 minutes for new users (reduced frequency to avoid too many API calls)
+    // Admin dashboard already loads users, so we don't need frequent polling here
     checkInterval.current = setInterval(() => {
       checkNewUsers();
-    }, 2 * 60 * 1000); // 2 minutes instead of 30 seconds
+    }, 10 * 60 * 1000); // 10 minutes instead of 2 minutes
 
     return () => {
       if (checkInterval.current) {
@@ -180,24 +181,21 @@ export function useLowStockNotifications() {
       return;
     }
 
-    // Check every 5 minutes for low stock (reduced frequency to avoid too many API calls)
+    // Check every 10 minutes for low stock (reduced frequency to avoid too many API calls)
     // Service worker handles background checks, so we don't need frequent polling here
+    // Don't call refreshProducts() - useApi already manages products and will refresh when needed
     checkInterval.current = setInterval(() => {
-      // Refresh products from database first to get latest data
-      refreshProducts();
-      // Wait for products to refresh from database before checking
-      // Use a longer delay to ensure API call completes
-      setTimeout(() => {
-        checkLowStock();
-      }, 2000);
-    }, 5 * 60 * 1000); // 5 minutes instead of 60 seconds
+      // Use existing products from useApi (no additional API call needed)
+      // Products are already being refreshed by useApi hook with proper caching
+      checkLowStock();
+    }, 10 * 60 * 1000); // 10 minutes - products are already managed by useApi
 
     return () => {
       if (checkInterval.current) {
         clearInterval(checkInterval.current);
       }
     };
-  }, [user, isAdmin, userId, refreshProducts]);
+  }, [user, isAdmin, userId]); // Removed refreshProducts dependency - we don't need to refresh
 
   const checkLowStock = async () => {
     // Verify user is still logged in
@@ -308,10 +306,11 @@ export function useScheduleNotifications() {
     // Initial check
     checkUpcomingSchedules();
 
-    // Check every 5 minutes for upcoming schedules
+    // Check every 15 minutes for upcoming schedules (reduced frequency to avoid too many API calls)
+    // Schedules are already loaded by useApi hook, so we don't need frequent polling
     checkInterval.current = setInterval(() => {
       checkUpcomingSchedules();
-    }, 5 * 60 * 1000);
+    }, 15 * 60 * 1000); // 15 minutes instead of 5 minutes
 
     return () => {
       if (checkInterval.current) {
