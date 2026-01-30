@@ -1160,11 +1160,13 @@ const Sales = () => {
         // Clear selection
         setSelectedSales(new Set());
         
-        // Force refresh to ensure UI is updated
-        await refreshSales();
+        // Force refresh to ensure UI is updated (bypass cache)
+        refreshSales(true);
+        refreshProducts(true);
         
         // Dispatch event to notify other pages
         window.dispatchEvent(new CustomEvent('sales-should-refresh'));
+        window.dispatchEvent(new CustomEvent('products-should-refresh'));
         
         playUpdateBeep();
         toast({
@@ -1178,6 +1180,35 @@ const Sales = () => {
           const saleId = (sale as any)._id || sale.id;
           return saleId && selectedArray.includes(saleId.toString());
         });
+        
+        // First, restore stock for selected sales before deleting
+        const stockRestorations = new Map<string, number>();
+        for (const sale of salesToDelete) {
+          const productId = (sale as any).productId?.toString();
+          if (productId) {
+            const currentQuantity = stockRestorations.get(productId) || 0;
+            stockRestorations.set(productId, currentQuantity + sale.quantity);
+          }
+        }
+
+        // Restore stock for each product
+        for (const [productId, totalQuantity] of stockRestorations.entries()) {
+          try {
+            const product = products.find((p) => {
+              const id = (p as any)._id || p.id;
+              return id.toString() === productId;
+            });
+            if (product) {
+              const updatedProduct = {
+                ...product,
+                stock: product.stock + totalQuantity,
+              };
+              await updateProduct(updatedProduct);
+            }
+          } catch (updateError) {
+            console.warn(`Failed to restore stock for product ${productId}:`, updateError);
+          }
+        }
         
         let deletedCount = 0;
         let failedCount = 0;
@@ -1204,9 +1235,11 @@ const Sales = () => {
         
         // Force refresh to ensure UI is updated (bypass cache)
         refreshSales(true);
+        refreshProducts(true);
         
         // Dispatch event to notify other pages
         window.dispatchEvent(new CustomEvent('sales-should-refresh'));
+        window.dispatchEvent(new CustomEvent('products-should-refresh'));
 
         if (failedCount > 0) {
           playWarningBeep();
@@ -1225,6 +1258,27 @@ const Sales = () => {
       } else if (deleteMode === "single" && singleSaleToDelete) {
         // Delete single sale using remove function for proper UI updates
         try {
+          // First, restore stock for this sale before deleting
+          const productId = (singleSaleToDelete as any).productId?.toString();
+          if (productId) {
+            try {
+              const product = products.find((p) => {
+                const id = (p as any)._id || p.id;
+                return id.toString() === productId;
+              });
+              if (product) {
+                const updatedProduct = {
+                  ...product,
+                  stock: product.stock + singleSaleToDelete.quantity,
+                };
+                await updateProduct(updatedProduct);
+              }
+            } catch (updateError) {
+              console.warn("Failed to restore stock locally:", updateError);
+              // Continue with deletion even if stock restore fails
+            }
+          }
+
           await removeSale(singleSaleToDelete);
           
           // Remove from selection if it was selected
@@ -1239,9 +1293,11 @@ const Sales = () => {
           
           // Force refresh to ensure UI is updated (bypass cache)
           refreshSales(true);
+          refreshProducts(true);
           
           // Dispatch event to notify other pages
           window.dispatchEvent(new CustomEvent('sales-should-refresh'));
+          window.dispatchEvent(new CustomEvent('products-should-refresh'));
           
           playDeleteBeep();
           toast({
