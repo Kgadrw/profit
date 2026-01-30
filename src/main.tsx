@@ -33,9 +33,22 @@ Promise.all([
     logger.error("Failed to register service worker:", error);
   }),
 ]).then(() => {
-  // Render immediately - don't mark body as loaded yet (let SplashScreen handle it)
+  // Render immediately - don't block on cache clearing
   // Use requestAnimationFrame to ensure smooth render
   requestAnimationFrame(() => {
     createRoot(document.getElementById("root")!).render(<App />);
+  });
+  
+  // ✅ Clear stale caches in background (non-blocking)
+  // This prevents showing old/deleted products and wrong stock numbers
+  // Do this AFTER rendering so app opens immediately
+  import('./lib/cacheManager').then(({ clearAllCachesAndData }) => {
+    clearAllCachesAndData().catch((error) => {
+      console.error('[App] Error clearing caches:', error);
+      // Don't block - continue anyway
+    });
+  }).catch((error) => {
+    console.error('[App] Error importing cacheManager:', error);
+    // Don't block - continue anyway
   });
 });

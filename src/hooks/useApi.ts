@@ -82,10 +82,14 @@ export function useApi<T extends { _id?: string; id?: number }>({
       // Store current userId for future checks
       localStorage.setItem("profit-pilot-stored-user-id", userId);
       
+      // ✅ For products, ALWAYS fetch from API first to ensure fresh data
+      // Skip IndexedDB and cache on initial load to prevent stale data
+      const shouldSkipCache = endpoint === 'products';
+      
       // For sales, ALWAYS fetch from API first - skip IndexedDB and cache
       // For other endpoints, use offline-first approach
-      if (!isSalesEndpoint) {
-        // Load from IndexedDB first (offline-first) for non-sales endpoints
+      if (!isSalesEndpoint && !shouldSkipCache) {
+        // Load from IndexedDB first (offline-first) for non-sales, non-products endpoints
         // Filter by userId if products have userId field (for data isolation)
         const localItems = await getAllItems<T>(storeName);
         
@@ -106,22 +110,18 @@ export function useApi<T extends { _id?: string; id?: number }>({
           setIsLoading(false);
         }
       
-        // Check cache first to reduce API requests (for non-sales)
-      // BUT: For products, always fetch fresh on initial load to ensure accurate stock
+        // Check cache first to reduce API requests (for non-sales, non-products)
       const cacheKey = `/${endpoint}`;
       const cached = apiCache.get(cacheKey);
+      
+      // If we have valid cached data and no local changes, use cache
       const lastSyncTime = localStorage.getItem("profit-pilot-last-sync");
       const hasLocalChanges = localStorage.getItem(`profit-pilot-${endpoint}-changed`) === "true";
       
-      // For products, skip cache on initial load to ensure fresh stock data
-      // Only use cache if it's very fresh (less than 30 seconds) and no local changes
-      const isProductsEndpoint = endpoint === 'products';
-      const cacheMaxAge = isProductsEndpoint ? 30 * 1000 : 2 * 60 * 1000; // 30s for products, 2min for others
-      
-      if (cached && !hasLocalChanges && lastSyncTime && !isProductsEndpoint) {
+      if (cached && !hasLocalChanges && lastSyncTime) {
         const cacheAge = Date.now() - parseInt(lastSyncTime);
-        // If cache is fresh, use it (but not for products on initial load)
-        if (cacheAge < cacheMaxAge) {
+        // If cache is fresh (less than 2 minutes old), use it
+        if (cacheAge < 2 * 60 * 1000) {
           const cachedItems = cached.data;
           const mappedItems = Array.isArray(cachedItems) ? cachedItems.map(mapItem) : [];
           setItems(mappedItems.length > 0 ? mappedItems : defaultValue);
@@ -129,22 +129,7 @@ export function useApi<T extends { _id?: string; id?: number }>({
           isLoadingDataRef.current = false;
           return;
         }
-      }
-      
-      // For products, even if cache exists, still fetch fresh data in background
-      // but show cached data immediately if available
-      if (isProductsEndpoint && cached && !hasLocalChanges && lastSyncTime) {
-        const cacheAge = Date.now() - parseInt(lastSyncTime);
-        if (cacheAge < 5 * 60 * 1000) { // Show cached data if less than 5 minutes old
-          const cachedItems = cached.data;
-          const mappedItems = Array.isArray(cachedItems) ? cachedItems.map(mapItem) : [];
-          if (mappedItems.length > 0) {
-            setItems(mappedItems);
-            setIsLoading(false);
-            // Continue to fetch fresh data below (don't return early)
-          }
         }
-      }
       } else {
         // For sales, check cache first to reduce API calls and avoid rate limiting
         const cacheKey = `/${endpoint}`;
@@ -297,118 +282,142 @@ export function useApi<T extends { _id?: string; id?: number }>({
             // Clear the changed flag since we've synced
             localStorage.removeItem(`profit-pilot-${endpoint}-changed`);
             
-            // Update IndexedDB with server data (merge with local data, prevent duplicates)
-            // Add userId to each item for data isolation
-            const itemsWithUserId = mappedItems.map(item => ({
-              ...item,
-              userId: userId
-            })) as T[];
-            
-            const existingItems = await getAllItems<T>(storeName);
-            // Normalize server IDs to strings for consistent comparison
-            const serverIds = new Set(itemsWithUserId.map(i => {
-              const id = (i as any)._id || (i as any).id;
-              return id ? String(id) : null;
-            }).filter(id => id !== null));
-            
-            // For other stores, use ID-based matching
-            const existingIds = new Set(existingItems.map(i => {
-              const id = (i as any).id || (i as any)._id;
-              return id ? String(id) : null;
-            }).filter(id => id !== null));
-            
-            // Remove local items that don't exist on server or belong to different user (cleanup)
-            for (const localItem of existingItems) {
-              const localId = (localItem as any)._id || (localItem as any).id;
-              const localUserId = (localItem as any).userId;
-              
-              // Remove items from different users
-              if (localUserId && localUserId !== userId) {
-                try {
-                  const itemId = (localItem as any).id;
-                  if (itemId) {
-                    const numericId = typeof itemId === 'string' ? parseInt(itemId) : itemId;
-                    if (!isNaN(numericId)) {
-                      await deleteItem(storeName, numericId);
-                    }
-                  }
-                } catch (deleteError) {
-                  // Ignore delete errors
-                }
-                continue;
+            // ✅ For products, replace all IndexedDB data with fresh server data (no merge)
+            // This ensures we don't show deleted products or stale data
+            if (endpoint === 'products') {
+              // Clear existing products first
+              try {
+                await clearStore(storeName);
+                console.log(`[useApi] Cleared products store to ensure fresh data`);
+              } catch (clearError) {
+                console.warn(`[useApi] Error clearing products store:`, clearError);
               }
               
-              // Normalize local ID to string for comparison
-              const normalizedLocalId = localId ? String(localId) : null;
-              if (normalizedLocalId && !serverIds.has(normalizedLocalId)) {
-                // Check if this is a temporary ID (very large number from generateUniqueId)
-                // Temporary IDs are typically > 1e15, server IDs are strings or smaller numbers
-                const isTemporaryId = typeof localId === 'number' && localId > 1e15;
-                if (isTemporaryId) {
-                  // This is likely a temporary ID, check if it matches any server item by content
-                  // (For now, we'll keep it if it doesn't match - it might be a pending sync)
+              // Add all fresh server items with userId
+              const itemsWithUserId = mappedItems.map(item => ({
+                ...item,
+                userId: userId
+              })) as T[];
+              
+              for (const item of itemsWithUserId) {
+                try {
+                  await addItem(storeName, item);
+                } catch (addError) {
+                  console.warn(`[useApi] Error adding product to IndexedDB:`, addError);
+                }
+              }
+              
+              // Use server data directly (fresh from backend)
+              setItems(mappedItems.length > 0 ? mappedItems : defaultValue);
+            } else {
+              // For other endpoints, use merge approach
+              // Update IndexedDB with server data (merge with local data, prevent duplicates)
+              // Add userId to each item for data isolation
+              const itemsWithUserId = mappedItems.map(item => ({
+                ...item,
+                userId: userId
+              })) as T[];
+              
+              const existingItems = await getAllItems<T>(storeName);
+              // Normalize server IDs to strings for consistent comparison
+              const serverIds = new Set(itemsWithUserId.map(i => {
+                const id = (i as any)._id || (i as any).id;
+                return id ? String(id) : null;
+              }).filter(id => id !== null));
+              
+              // Remove local items that don't exist on server or belong to different user (cleanup)
+              for (const localItem of existingItems) {
+                const localId = (localItem as any)._id || (localItem as any).id;
+                const localUserId = (localItem as any).userId;
+                
+                // Remove items from different users
+                if (localUserId && localUserId !== userId) {
+                  try {
+                    const itemId = (localItem as any).id;
+                    if (itemId) {
+                      const numericId = typeof itemId === 'string' ? parseInt(itemId) : itemId;
+                      if (!isNaN(numericId)) {
+                        await deleteItem(storeName, numericId);
+                      }
+                    }
+                  } catch (deleteError) {
+                    // Ignore delete errors
+                  }
                   continue;
                 }
                 
-                // Item doesn't exist on server and is not a temporary ID - delete it (product was deleted)
-                try {
-                  // Use the numeric id that IndexedDB uses (not _id)
-                  const itemId = (localItem as any).id;
-                  if (itemId && typeof itemId === 'number') {
-                    await deleteItem(storeName, itemId);
-                    console.log(`[useApi] Removed deleted item from IndexedDB: ${itemId} (server ID: ${localId})`);
-                  } else if (itemId) {
-                    // Try to convert to number if it's a string
-                    const numericId = typeof itemId === 'string' ? parseInt(itemId) : itemId;
-                    if (!isNaN(numericId) && isFinite(numericId)) {
-                      await deleteItem(storeName, numericId);
-                      console.log(`[useApi] Removed deleted item from IndexedDB: ${numericId} (server ID: ${localId})`);
-                    }
+                // Normalize local ID to string for comparison
+                const normalizedLocalId = localId ? String(localId) : null;
+                if (normalizedLocalId && !serverIds.has(normalizedLocalId)) {
+                  // Check if this is a temporary ID (very large number from generateUniqueId)
+                  // Temporary IDs are typically > 1e15, server IDs are strings or smaller numbers
+                  const isTemporaryId = typeof localId === 'number' && localId > 1e15;
+                  if (isTemporaryId) {
+                    // This is likely a temporary ID, check if it matches any server item by content
+                    // (For now, we'll keep it if it doesn't match - it might be a pending sync)
+                    continue;
                   }
-                } catch (deleteError) {
-                  // Log but don't fail - continue with other items
-                  console.warn(`[useApi] Error removing deleted item from IndexedDB:`, deleteError);
+                  
+                  // Item doesn't exist on server and is not a temporary ID - delete it (product was deleted)
+                  try {
+                    // Use the numeric id that IndexedDB uses (not _id)
+                    const itemId = (localItem as any).id;
+                    if (itemId && typeof itemId === 'number') {
+                      await deleteItem(storeName, itemId);
+                      console.log(`[useApi] Removed deleted item from IndexedDB: ${itemId} (server ID: ${localId})`);
+                    } else if (itemId) {
+                      // Try to convert to number if it's a string
+                      const numericId = typeof itemId === 'string' ? parseInt(itemId) : itemId;
+                      if (!isNaN(numericId) && isFinite(numericId)) {
+                        await deleteItem(storeName, numericId);
+                        console.log(`[useApi] Removed deleted item from IndexedDB: ${numericId} (server ID: ${localId})`);
+                      }
+                    }
+                  } catch (deleteError) {
+                    // Log but don't fail - continue with other items
+                    console.warn(`[useApi] Error removing deleted item from IndexedDB:`, deleteError);
+                  }
                 }
               }
-          }
-          
-          // Now add/update all server items with userId for data isolation
-          for (const item of mappedItems) {
-            const itemId = (item as any)._id || (item as any).id;
-            if (itemId) {
-              // Add userId to item for data isolation
-              const itemWithUserId = {
-                ...item,
-                userId: userId
-              } as T;
               
-              // Check if item already exists
-              const existingItem = existingItems.find((i: any) => {
-                const existingId = (i as any)._id || (i as any).id;
-                return existingId === itemId;
-              });
-              
-              if (existingItem) {
-                await updateItem(storeName, itemWithUserId);
-              } else {
-                await addItem(storeName, itemWithUserId);
+              // Now add/update all server items with userId for data isolation
+              for (const item of mappedItems) {
+                const itemId = (item as any)._id || (item as any).id;
+                if (itemId) {
+                  // Add userId to item for data isolation
+                  const itemWithUserId = {
+                    ...item,
+                    userId: userId
+                  } as T;
+                  
+                  // Check if item already exists
+                  const existingItem = existingItems.find((i: any) => {
+                    const existingId = (i as any)._id || (i as any).id;
+                    return existingId === itemId;
+                  });
+                  
+                  if (existingItem) {
+                    await updateItem(storeName, itemWithUserId);
+                  } else {
+                    await addItem(storeName, itemWithUserId);
+                  }
+                }
               }
+              
+              // Reload from IndexedDB to get the merged result, filtered by userId
+              const allItems = await getAllItems<T>(storeName);
+              const finalItems = allItems.filter((item: any) => {
+                // Only include items that belong to current user
+                if (item.userId !== undefined) {
+                  return item.userId === userId;
+                }
+                // If no userId, exclude for security (shouldn't happen after this update)
+                return false;
+              });
+              const finalMappedItems = finalItems.map(mapItem);
+              
+              setItems(finalMappedItems.length > 0 ? finalMappedItems : defaultValue);
             }
-          }
-          
-          // Reload from IndexedDB to get the merged result, filtered by userId
-          const allItems = await getAllItems<T>(storeName);
-          const finalItems = allItems.filter((item: any) => {
-            // Only include items that belong to current user
-            if (item.userId !== undefined) {
-              return item.userId === userId;
-            }
-            // If no userId, exclude for security (shouldn't happen after this update)
-            return false;
-          });
-          const finalMappedItems = finalItems.map(mapItem);
-          
-            setItems(finalMappedItems.length > 0 ? finalMappedItems : defaultValue);
           }
           
           // Update last sync timestamp in localStorage
@@ -496,9 +505,21 @@ export function useApi<T extends { _id?: string; id?: number }>({
     }
   }, [endpoint, defaultValue, mapItem, onError, syncManager]);
 
-  // Load data on mount only
+  // Load data on mount and when force refresh is requested
   useEffect(() => {
     loadData();
+    
+    // Listen for force refresh events (when caches are cleared)
+    const handleForceRefresh = () => {
+      console.log(`[useApi] Force refresh requested for ${endpoint}`);
+      loadData();
+    };
+    
+    window.addEventListener('force-refresh-data', handleForceRefresh);
+    
+    return () => {
+      window.removeEventListener('force-refresh-data', handleForceRefresh);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run on mount
 

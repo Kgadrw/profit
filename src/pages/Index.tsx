@@ -283,27 +283,6 @@ const Dashboard = () => {
       console.error("Error loading products:", error);
     },
   });
-
-  // ✅ Force refresh products on app open to ensure fresh stock data from database
-  useEffect(() => {
-    // Refresh products immediately when component mounts to get latest stock
-    // This ensures we show real data from database, not stale cache
-    const refreshOnMount = async () => {
-      try {
-        await refreshProducts();
-      } catch (error) {
-        // Silently fail - offline mode will use cached data
-        console.log('Failed to refresh products on mount:', error);
-      }
-    };
-
-    // Small delay to ensure user is authenticated
-    const timer = setTimeout(() => {
-      refreshOnMount();
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [refreshProducts]);
   const {
     items: sales,
     isLoading: salesLoading,

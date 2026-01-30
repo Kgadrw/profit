@@ -111,26 +111,6 @@ export function LowStockAlert() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<LowStockItem | null>(null);
 
-  // ✅ Force refresh on mount to ensure fresh stock data
-  useEffect(() => {
-    // Refresh products immediately when component mounts to get latest stock
-    const refreshOnMount = async () => {
-      try {
-        await refreshProducts();
-      } catch (error) {
-        // Silently fail - offline mode will use cached data
-        console.log('Failed to refresh products on mount:', error);
-      }
-    };
-
-    // Small delay to ensure API is ready
-    const timer = setTimeout(() => {
-      refreshOnMount();
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [refreshProducts]);
-
   // Auto-refresh when products are updated, added, or sales are made
   useEffect(() => {
     let debounceTimeout: NodeJS.Timeout | null = null;

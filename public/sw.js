@@ -138,6 +138,15 @@ self.addEventListener("message", (event) => {
     }
     return;
   }
+
+  // ✅ Clear notification tracking when requested (for cache clearing)
+  if (event.data.type === "CLEAR_NOTIFICATION_TRACKING") {
+    lastNotificationTimes.clear();
+    lastKnownProductIds.clear();
+    lastKnownStock.clear();
+    console.log('[SW] Cleared all notification tracking data');
+    return;
+  }
 });
 
 // Sync data function (called when online)
