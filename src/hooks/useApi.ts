@@ -82,13 +82,12 @@ export function useApi<T extends { _id?: string; id?: number }>({
       // Store current userId for future checks
       localStorage.setItem("profit-pilot-stored-user-id", userId);
       
-      // ✅ For products and sales, ALWAYS fetch from API first to ensure fresh data
-      // Skip IndexedDB and cache on initial load to prevent stale data
-      const shouldSkipCache = endpoint === 'products' || endpoint === 'sales';
+      // ✅ Smart caching strategy: Load from IndexedDB first (fast), then refresh from API in background
+      // This gives instant UI while ensuring fresh data
+      const shouldUseOfflineFirst = endpoint === 'products' || endpoint === 'sales';
       
-      // For sales and products, ALWAYS fetch from API first - skip IndexedDB and cache
-      // For other endpoints, use offline-first approach
-      if (!isSalesEndpoint && !shouldSkipCache) {
+      // For all endpoints, try to load from IndexedDB first for instant UI
+      if (!isSalesEndpoint && !shouldUseOfflineFirst) {
         // Load from IndexedDB first (offline-first) for non-sales, non-products endpoints
         // Filter by userId if products have userId field (for data isolation)
         const localItems = await getAllItems<T>(storeName);
@@ -131,11 +130,72 @@ export function useApi<T extends { _id?: string; id?: number }>({
         }
         }
       } else {
-        // For sales and products, skip cache check - always fetch fresh data
-        // This ensures data is always up-to-date when page opens
-        if (shouldSkipCache) {
-          // Skip cache, go straight to API fetch
-          console.log(`[useApi] ${endpoint}: Always fetching fresh data from API (skipping cache and IndexedDB)...`);
+        // For sales and products, use offline-first: load from IndexedDB, then refresh from API
+        if (shouldUseOfflineFirst) {
+          // Load from IndexedDB first for instant UI
+          try {
+            const localItems = await getAllItems<T>(storeName);
+            
+            // Filter items by userId if they have a userId field
+            const filteredItems = localItems.filter((item: any) => {
+              if (item.userId !== undefined) {
+                return item.userId === userId;
+              }
+              // Include items without userId for backward compatibility
+              return true;
+            });
+            
+            if (filteredItems.length > 0) {
+              const mappedItems = filteredItems.map(mapItem);
+              
+              // Sort by timestamp (newest first) for sales
+              if (isSalesEndpoint) {
+                mappedItems.sort((a, b) => {
+                  const aTime = (a as any).timestamp || (a as any).date;
+                  const bTime = (b as any).timestamp || (b as any).date;
+                  return new Date(bTime).getTime() - new Date(aTime).getTime();
+                });
+              }
+              
+              // Show IndexedDB data immediately (instant UI)
+              setItems(mappedItems);
+              setIsLoading(false);
+              console.log(`[useApi] ${endpoint}: Loaded ${mappedItems.length} items from IndexedDB (showing immediately, refreshing from API in background)...`);
+              
+              // Now fetch from API in background to update IndexedDB and UI
+              // Don't block - this happens asynchronously
+              setTimeout(async () => {
+                try {
+                  // Check if we should refresh (not too soon after last refresh)
+                  const lastSyncTime = localStorage.getItem(`profit-pilot-${endpoint}-last-refresh`);
+                  const now = Date.now();
+                  const timeSinceLastRefresh = lastSyncTime ? now - parseInt(lastSyncTime) : Infinity;
+                  
+                  // Only refresh if it's been at least 30 seconds since last refresh
+                  // This prevents excessive API calls while still keeping data fresh
+                  if (timeSinceLastRefresh >= 30 * 1000) {
+                    await fetchAndUpdateFromAPI();
+                    localStorage.setItem(`profit-pilot-${endpoint}-last-refresh`, String(now));
+                  } else {
+                    console.log(`[useApi] ${endpoint}: Skipping background refresh (only ${Math.round(timeSinceLastRefresh / 1000)}s since last refresh)`);
+                  }
+                } catch (error) {
+                  // Silently fail - we already have IndexedDB data showing
+                  console.log(`[useApi] ${endpoint}: Background refresh failed, using IndexedDB data:`, error);
+                }
+              }, 100); // Small delay to let UI render first
+              
+              // Return early - we'll update from API in background
+              isLoadingDataRef.current = false;
+              return;
+            }
+          } catch (error) {
+            console.warn(`[useApi] ${endpoint}: Error loading from IndexedDB, will fetch from API:`, error);
+            // Continue to API fetch below
+          }
+          
+          // If IndexedDB is empty or failed, fetch from API
+          console.log(`[useApi] ${endpoint}: IndexedDB empty or failed, fetching from API...`);
         } else {
           // For other endpoints, check cache first to reduce API calls
           const cacheKey = `/${endpoint}`;
@@ -189,18 +249,13 @@ export function useApi<T extends { _id?: string; id?: number }>({
         }
       }
 
-      try {
+      // Helper function to fetch from API and update IndexedDB
+      const fetchAndUpdateFromAPI = async () => {
         let response;
         if (endpoint === 'products') {
           response = await productApi.getAll();
         } else if (endpoint === 'sales') {
-          // logger.log(`[useApi] ===== ALWAYS FETCHING SALES FROM API =====`);
-          // logger.log(`[useApi] Sales: Fetching ALL sales directly from server (no cache, no IndexedDB first)...`);
           response = await saleApi.getAll();
-          // logger.log(`[useApi] ✓ Sales API response received:`, {
-          //   count: Array.isArray(response?.data) ? response.data.length : 0,
-          //   hasData: !!response?.data,
-          // });
         } else if (endpoint === 'clients') {
           response = await clientApi.getAll();
         } else if (endpoint === 'schedules') {
@@ -212,67 +267,52 @@ export function useApi<T extends { _id?: string; id?: number }>({
         // Verify userId hasn't changed during the request (prevent data leakage)
         const currentUserId = localStorage.getItem("profit-pilot-user-id");
         if (currentUserId !== userId) {
-          // User changed during request, clear data for security
-          setItems(defaultValue);
-          setIsLoading(false);
-          return;
+          throw new Error('User changed during request');
         }
+        
+        return response;
+      };
+
+      try {
+        const response = await fetchAndUpdateFromAPI();
 
         if (response.data) {
           const mappedItems = response.data.map(mapItem);
           
-          // logger.log(`[useApi] Processing ${endpoint} data from server:`, {
-          //   count: Array.isArray(response.data) ? response.data.length : 0,
-          //   isArray: Array.isArray(response.data),
-          //   mappedCount: mappedItems.length,
-          // });
-          
-          // For sales, REPLACE all IndexedDB data with fresh server data
-          if (isSalesEndpoint) {
-            // logger.log(`[useApi] Sales: Replacing all IndexedDB data with fresh server data...`);
+          // For sales and products, update IndexedDB with fresh server data
+          if (isSalesEndpoint || shouldUseOfflineFirst) {
+            console.log(`[useApi] ${endpoint}: Updating IndexedDB with fresh server data (${mappedItems.length} items)...`);
             
-            // Clear all existing sales from IndexedDB first
+            // Clear all existing items from IndexedDB first
             try {
               await clearStore(storeName);
-              // logger.log(`[useApi] Sales: Cleared all existing IndexedDB data`);
             } catch (clearError) {
-              // logger.error(`[useApi] Error clearing IndexedDB for sales:`, clearError);
-              // If clear fails, try to delete items individually
-              const existingItems = await getAllItems<T>(storeName);
-              for (const item of existingItems) {
-                const itemId = (item as any)._id || (item as any).id;
-                if (itemId) {
-                  const numericId = typeof itemId === 'string' ? parseInt(itemId) : itemId;
-                  if (!isNaN(numericId)) {
-                    try {
-                      await deleteItem(storeName, numericId);
-                    } catch (deleteError) {
-                      // Ignore individual delete errors
-                      // logger.warn(`[useApi] Could not delete item ${numericId}:`, deleteError);
-                    }
-                  }
-                }
-              }
+              console.warn(`[useApi] Error clearing IndexedDB for ${endpoint}:`, clearError);
             }
             
-            // Add all fresh server items (use updateItem which handles both add and update)
-            for (const item of mappedItems) {
+            // Add all fresh server items with userId for data isolation
+            const itemsWithUserId = mappedItems.map(item => ({
+              ...item,
+              userId: userId
+            })) as T[];
+            
+            for (const item of itemsWithUserId) {
               try {
-                // Use updateItem which will add if doesn't exist, or update if exists (avoids key conflicts)
-                await updateItem(storeName, item);
-              } catch (updateError: any) {
-                // Log error but continue with other items
-                // logger.warn(`[useApi] Error updating sales item in IndexedDB:`, updateError, item);
-                // Continue with next item instead of failing completely
+                await addItem(storeName, item);
+              } catch (addError) {
+                console.warn(`[useApi] Error adding ${endpoint} item to IndexedDB:`, addError);
               }
             }
             
-            // Sort by timestamp (newest first) for immediate display
-            const sortedItems = [...mappedItems].sort((a, b) => {
-              const aTime = (a as any).timestamp || (a as any).date;
-              const bTime = (b as any).timestamp || (b as any).date;
-              return new Date(bTime).getTime() - new Date(aTime).getTime();
-            });
+            // Sort by timestamp (newest first) for sales
+            let sortedItems = mappedItems;
+            if (isSalesEndpoint) {
+              sortedItems = [...mappedItems].sort((a, b) => {
+                const aTime = (a as any).timestamp || (a as any).date;
+                const bTime = (b as any).timestamp || (b as any).date;
+                return new Date(bTime).getTime() - new Date(aTime).getTime();
+              });
+            }
             
             // Update UI immediately with fresh data
             setItems(sortedItems.length > 0 ? sortedItems : defaultValue);
@@ -280,10 +320,15 @@ export function useApi<T extends { _id?: string; id?: number }>({
             // Cache the response for future use
             const cacheKey = `/${endpoint}`;
             apiCache.set(cacheKey, response.data);
+            
+            // Update last refresh time (prevents excessive background refreshes)
+            localStorage.setItem(`profit-pilot-${endpoint}-last-refresh`, String(Date.now()));
+            localStorage.setItem("profit-pilot-last-sync", String(Date.now()));
+            
             // Clear the changed flag since we've synced
             localStorage.removeItem(`profit-pilot-${endpoint}-changed`);
             
-            // logger.log(`[useApi] ✓ Sales table updated with ${sortedItems.length} fresh records from API`);
+            console.log(`[useApi] ✓ ${endpoint} updated with ${sortedItems.length} fresh records from API`);
           } else {
             // For other endpoints, use merge approach
             const cacheKey = `/${endpoint}`;
