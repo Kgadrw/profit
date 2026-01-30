@@ -702,8 +702,10 @@ const Products = () => {
 
   return (
     <AppLayout title="Products">
-      <div className="flex flex-col lg:h-[calc(100vh-3rem)]">
-      <div className="lg:bg-white flex-1 flex flex-col lg:min-h-0 lg:overflow-hidden rounded-lg">
+      <div className="flex flex-col min-h-0 pb-4 lg:pb-4">
+
+      {/* Products Table - Static Header with Scrollable Body */}
+      <div className="lg:bg-white lg:flex-1 lg:flex lg:flex-col lg:min-h-0 lg:overflow-hidden rounded-lg">
           {/* Add Product Buttons - Desktop - Below Card */}
           <div className="hidden lg:flex justify-end lg:px-4 lg:py-2 flex-shrink-0">
             <div className="flex flex-row gap-2">
@@ -720,16 +722,16 @@ const Products = () => {
           
           {/* Add Product Buttons - Mobile - Below Card */}
           <div className="lg:hidden flex justify-end px-4 py-2 flex-shrink-0">
-            <div className="flex flex-row gap-2">
+              <div className="flex flex-row gap-2">
               <Button onClick={openAddModal} className="bg-blue-600 text-white hover:bg-blue-700 font-semibold px-3 py-2 gap-2">
-                <Plus size={18} />
-                <span>{t("add")}</span>
-              </Button>
+                  <Plus size={18} />
+                  <span>{t("add")}</span>
+                </Button>
               <Button onClick={openBulkAddModal} className="bg-green-600 text-white hover:bg-green-700 border border-transparent font-medium px-3 py-2 gap-2">
-                <Plus size={18} />
-                <span>{t("bulkAdd")}</span>
-              </Button>
-            </div>
+                  <Plus size={18} />
+                  <span>{t("bulkAdd")}</span>
+                </Button>
+              </div>
           </div>
           
           {/* Filter Section */}
@@ -740,10 +742,10 @@ const Products = () => {
               <div className="flex items-center gap-2">
                 <div className="relative flex-1">
                   <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10" />
-                  <Input
-                    placeholder={t("search") + " " + t("products").toLowerCase() + "..."}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                <Input
+                  placeholder={t("search") + " " + t("products").toLowerCase() + "..."}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-9 bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-gray-500 rounded-lg w-full"
                   />
                 </div>
@@ -757,8 +759,42 @@ const Products = () => {
                 >
                   <Filter size={18} />
                 </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 rounded-lg px-3 py-2"
+                    >
+                      <MoreVertical size={18} />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setIsSelectionMode(!isSelectionMode)}>
+                      {isSelectionMode ? "Cancel Selection" : (t("selectProducts") || "Select Products")}
+                    </DropdownMenuItem>
+                    {isSelectionMode && (
+                      <DropdownMenuItem onClick={() => handleSelectAll(true)}>
+                        {t("selectAll") || "Select All"}
+                      </DropdownMenuItem>
+                    )}
+                    {isSelectionMode && selectedProducts.size > 0 && (
+                      <DropdownMenuItem 
+                        onClick={handleDeleteSelected}
+                        className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                      >
+                        {t("delete")} Selected ({selectedProducts.size})
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem 
+                      onClick={handleDeleteAll}
+                      className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                    >
+                      {t("delete")} All Products
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
-              
+                
               {/* Selected Products Indicator */}
               {selectedProducts.size > 0 && (
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 border border-gray-300 rounded-lg">
@@ -772,96 +808,96 @@ const Products = () => {
               {showFilters && (
                 <div className="rounded-lg p-4 bg-white/80 backdrop-blur-sm border border-gray-200 space-y-3">
                   <div className="grid grid-cols-2 gap-2">
-                    {/* Category Filter */}
-                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                      <SelectTrigger className="lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-900 focus:border-gray-500 rounded-lg w-full">
-                        <SelectValue placeholder={t("allCategories")} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">{t("allCategories")}</SelectItem>
-                        {uniqueCategories.map((category) => (
-                          <SelectItem key={category} value={category}>
-                            {category}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    
-                    {/* Stock Status Filter */}
-                    <Select value={stockStatusFilter} onValueChange={setStockStatusFilter}>
-                      <SelectTrigger className="lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-900 focus:border-gray-500 rounded-lg w-full">
-                        <SelectValue placeholder={t("status")} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">{t("allStatus")}</SelectItem>
-                        <SelectItem value="in-stock">{t("inStock")}</SelectItem>
-                        <SelectItem value="low-stock">{t("lowStock")}</SelectItem>
-                        {/* Out of stock products are shown in Low Stock Alert, not in product list */}
-                      </SelectContent>
-                    </Select>
-                    
-                    {/* Product Type Filter */}
-                    {uniqueProductTypes.length > 0 && (
-                      <Select value={productTypeFilter} onValueChange={setProductTypeFilter}>
-                        <SelectTrigger className="lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-900 focus:border-gray-500 rounded-lg w-full">
-                          <SelectValue placeholder="Type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Types</SelectItem>
-                          {uniqueProductTypes.map((type) => (
-                            <SelectItem key={type} value={type}>
-                              {type}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                    
-                    {/* Package Filter */}
-                    <Select value={packageFilter} onValueChange={setPackageFilter}>
-                      <SelectTrigger className="lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-900 focus:border-gray-500 rounded-lg w-full">
-                        <SelectValue placeholder="Package" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">{t("allProducts")}</SelectItem>
-                        <SelectItem value="package">Packaged</SelectItem>
-                        <SelectItem value="non-package">Non-Packaged</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    
-                    {/* Sort By */}
-                    <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
-                      <SelectTrigger className="lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-900 focus:border-gray-500 rounded-lg w-full">
-                        <div className="flex items-center gap-2">
-                          <ArrowUpDown size={14} className="text-gray-400" />
-                          <SelectValue placeholder={t("sortBy")} />
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="newest">{t("newest")}</SelectItem>
-                        <SelectItem value="oldest">{t("oldest")}</SelectItem>
-                        <SelectItem value="name-asc">{t("nameAsc")}</SelectItem>
-                        <SelectItem value="name-desc">{t("nameDesc")}</SelectItem>
-                        <SelectItem value="price-asc">{t("priceAsc")}</SelectItem>
-                        <SelectItem value="price-desc">{t("priceDesc")}</SelectItem>
-                        <SelectItem value="stock-asc">{t("stock")} ({t("language") === "rw" ? "Guke-Gukomeye" : "Low to High"})</SelectItem>
-                        <SelectItem value="stock-desc">{t("stock")} ({t("language") === "rw" ? "Gukomeye-Guke" : "High to Low"})</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    
-                    {/* Clear Filters */}
-                    <Button
-                      onClick={handleClearFilters}
-                      variant="outline"
+                {/* Category Filter */}
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger className="lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-900 focus:border-gray-500 rounded-lg w-full">
+                    <SelectValue placeholder={t("allCategories")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("allCategories")}</SelectItem>
+                    {uniqueCategories.map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                {/* Stock Status Filter */}
+                <Select value={stockStatusFilter} onValueChange={setStockStatusFilter}>
+                  <SelectTrigger className="lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-900 focus:border-gray-500 rounded-lg w-full">
+                    <SelectValue placeholder={t("status")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("allStatus")}</SelectItem>
+                    <SelectItem value="in-stock">{t("inStock")}</SelectItem>
+                    <SelectItem value="low-stock">{t("lowStock")}</SelectItem>
+                    {/* Out of stock products are shown in Low Stock Alert, not in product list */}
+                  </SelectContent>
+                </Select>
+                
+                {/* Product Type Filter */}
+                {uniqueProductTypes.length > 0 && (
+                  <Select value={productTypeFilter} onValueChange={setProductTypeFilter}>
+                    <SelectTrigger className="lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-900 focus:border-gray-500 rounded-lg w-full">
+                      <SelectValue placeholder="Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Types</SelectItem>
+                      {uniqueProductTypes.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                
+                {/* Package Filter */}
+                <Select value={packageFilter} onValueChange={setPackageFilter}>
+                  <SelectTrigger className="lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-900 focus:border-gray-500 rounded-lg w-full">
+                    <SelectValue placeholder="Package" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("allProducts")}</SelectItem>
+                    <SelectItem value="package">Packaged</SelectItem>
+                    <SelectItem value="non-package">Non-Packaged</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                {/* Sort By */}
+                <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
+                  <SelectTrigger className="lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-900 focus:border-gray-500 rounded-lg w-full">
+                    <div className="flex items-center gap-2">
+                      <ArrowUpDown size={14} className="text-gray-400" />
+                      <SelectValue placeholder={t("sortBy")} />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="newest">{t("newest")}</SelectItem>
+                    <SelectItem value="oldest">{t("oldest")}</SelectItem>
+                    <SelectItem value="name-asc">{t("nameAsc")}</SelectItem>
+                    <SelectItem value="name-desc">{t("nameDesc")}</SelectItem>
+                    <SelectItem value="price-asc">{t("priceAsc")}</SelectItem>
+                    <SelectItem value="price-desc">{t("priceDesc")}</SelectItem>
+                    <SelectItem value="stock-asc">{t("stock")} ({t("language") === "rw" ? "Guke-Gukomeye" : "Low to High"})</SelectItem>
+                    <SelectItem value="stock-desc">{t("stock")} ({t("language") === "rw" ? "Gukomeye-Guke" : "High to Low"})</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                {/* Clear Filters */}
+                <Button
+                  onClick={handleClearFilters}
+                  variant="outline"
                       className="bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 rounded-lg w-full"
-                    >
-                      <X size={14} className="mr-2" />
-                      {t("cancel")}
-                    </Button>
-                  </div>
+                >
+                  <X size={14} className="mr-2" />
+                  {t("cancel")}
+              </Button>
+              </div>
                   <div className="text-xs text-gray-500">
-                    {t("language") === "rw" ? "Byerekana" : "Showing"} {filteredProducts.length} {t("language") === "rw" ? "bya" : "of"} {products.length} {t("products").toLowerCase()}
-                  </div>
+                {t("language") === "rw" ? "Byerekana" : "Showing"} {filteredProducts.length} {t("language") === "rw" ? "bya" : "of"} {products.length} {t("products").toLowerCase()}
+            </div>
                 </div>
               )}
             </div>
@@ -872,10 +908,10 @@ const Products = () => {
               <div className="flex items-center gap-3">
                 <div className="relative flex-1">
                   <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10" />
-                  <Input
-                    placeholder={t("search") + " " + t("products").toLowerCase() + "..."}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                <Input
+                  placeholder={t("search") + " " + t("products").toLowerCase() + "..."}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-9 bg-white border border-gray-300 text-gray-900 placeholder:text-gray-500 focus:border-gray-500 rounded-lg w-full"
                   />
                 </div>
@@ -925,7 +961,7 @@ const Products = () => {
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-              
+                
               {/* Selected Products Indicator */}
               {selectedProducts.size > 0 && (
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 border border-gray-300 rounded-lg">
@@ -939,98 +975,98 @@ const Products = () => {
               {showFilters && (
                 <div className="space-y-3">
                   <div className="grid grid-cols-4 xl:grid-cols-7 gap-3">
-                    {/* Category Filter */}
-                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                      <SelectTrigger className="bg-white border border-gray-300 text-gray-900 focus:border-gray-500 rounded-lg">
-                        <SelectValue placeholder={t("allCategories")} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">{t("allCategories")}</SelectItem>
-                        {uniqueCategories.map((category) => (
-                          <SelectItem key={category} value={category}>
-                            {category}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    
-                    {/* Stock Status Filter */}
-                    <Select value={stockStatusFilter} onValueChange={setStockStatusFilter}>
-                      <SelectTrigger className="bg-white border border-gray-300 text-gray-900 focus:border-gray-500 rounded-lg">
-                        <SelectValue placeholder={t("status")} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">{t("allStatus")}</SelectItem>
-                        <SelectItem value="in-stock">{t("inStock")}</SelectItem>
-                        <SelectItem value="low-stock">{t("lowStock")}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    
-                    {/* Product Type Filter */}
-                    {uniqueProductTypes.length > 0 && (
-                      <Select value={productTypeFilter} onValueChange={setProductTypeFilter}>
-                        <SelectTrigger className="bg-white border border-gray-300 text-gray-900 focus:border-gray-500 rounded-lg">
-                          <SelectValue placeholder="Product Type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Types</SelectItem>
-                          {uniqueProductTypes.map((type) => (
-                            <SelectItem key={type} value={type}>
-                              {type}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                    
-                    {/* Package Filter */}
-                    <Select value={packageFilter} onValueChange={setPackageFilter}>
-                      <SelectTrigger className="bg-white border border-gray-300 text-gray-900 focus:border-gray-500 rounded-lg">
-                        <SelectValue placeholder="Package Type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">{t("allProducts")}</SelectItem>
-                        <SelectItem value="package">Packaged Only</SelectItem>
-                        <SelectItem value="non-package">Non-Packaged Only</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    
-                    {/* Sort By */}
-                    <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
-                      <SelectTrigger className="bg-white border border-gray-300 text-gray-900 focus:border-gray-500 rounded-lg">
-                        <div className="flex items-center gap-2">
-                          <ArrowUpDown size={14} className="text-gray-400" />
-                          <SelectValue placeholder={t("sortBy")} />
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="newest">{t("newest")}</SelectItem>
-                        <SelectItem value="oldest">{t("oldest")}</SelectItem>
-                        <SelectItem value="name-asc">{t("nameAsc")}</SelectItem>
-                        <SelectItem value="name-desc">{t("nameDesc")}</SelectItem>
-                        <SelectItem value="price-asc">{t("priceAsc")}</SelectItem>
-                        <SelectItem value="price-desc">{t("priceDesc")}</SelectItem>
-                        <SelectItem value="stock-asc">{t("stock")} ({t("language") === "rw" ? "Guke-Gukomeye" : "Low to High"})</SelectItem>
-                        <SelectItem value="stock-desc">{t("stock")} ({t("language") === "rw" ? "Gukomeye-Guke" : "High to Low"})</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    
-                    {/* Clear Filters */}
-                    <Button
-                      onClick={handleClearFilters}
-                      variant="outline"
+                {/* Category Filter */}
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger className="bg-white border border-gray-300 text-gray-900 focus:border-gray-500 rounded-lg">
+                    <SelectValue placeholder={t("allCategories")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("allCategories")}</SelectItem>
+                    {uniqueCategories.map((category) => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                {/* Stock Status Filter */}
+                <Select value={stockStatusFilter} onValueChange={setStockStatusFilter}>
+                  <SelectTrigger className="bg-white border border-gray-300 text-gray-900 focus:border-gray-500 rounded-lg">
+                    <SelectValue placeholder={t("status")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("allStatus")}</SelectItem>
+                    <SelectItem value="in-stock">{t("inStock")}</SelectItem>
+                    <SelectItem value="low-stock">{t("lowStock")}</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                {/* Product Type Filter */}
+                {uniqueProductTypes.length > 0 && (
+                  <Select value={productTypeFilter} onValueChange={setProductTypeFilter}>
+                    <SelectTrigger className="bg-white border border-gray-300 text-gray-900 focus:border-gray-500 rounded-lg">
+                      <SelectValue placeholder="Product Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Types</SelectItem>
+                      {uniqueProductTypes.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                
+                {/* Package Filter */}
+                <Select value={packageFilter} onValueChange={setPackageFilter}>
+                  <SelectTrigger className="bg-white border border-gray-300 text-gray-900 focus:border-gray-500 rounded-lg">
+                    <SelectValue placeholder="Package Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("allProducts")}</SelectItem>
+                    <SelectItem value="package">Packaged Only</SelectItem>
+                    <SelectItem value="non-package">Non-Packaged Only</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                {/* Sort By */}
+                <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
+                  <SelectTrigger className="bg-white border border-gray-300 text-gray-900 focus:border-gray-500 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <ArrowUpDown size={14} className="text-gray-400" />
+                      <SelectValue placeholder={t("sortBy")} />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="newest">{t("newest")}</SelectItem>
+                    <SelectItem value="oldest">{t("oldest")}</SelectItem>
+                    <SelectItem value="name-asc">{t("nameAsc")}</SelectItem>
+                    <SelectItem value="name-desc">{t("nameDesc")}</SelectItem>
+                    <SelectItem value="price-asc">{t("priceAsc")}</SelectItem>
+                    <SelectItem value="price-desc">{t("priceDesc")}</SelectItem>
+                    <SelectItem value="stock-asc">{t("stock")} ({t("language") === "rw" ? "Guke-Gukomeye" : "Low to High"})</SelectItem>
+                    <SelectItem value="stock-desc">{t("stock")} ({t("language") === "rw" ? "Gukomeye-Guke" : "High to Low"})</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                {/* Clear Filters */}
+                <Button
+                  onClick={handleClearFilters}
+                  variant="outline"
                       className="bg-white border border-gray-300 text-gray-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 rounded-lg"
-                    >
-                      <X size={14} className="mr-2" />
-                      {t("cancel")}
-                    </Button>
-                  </div>
+                >
+                  <X size={14} className="mr-2" />
+                  {t("cancel")}
+              </Button>
+              </div>
                   <div className="text-xs text-gray-500">
-                    {t("language") === "rw" ? "Byerekana" : "Showing"} {filteredProducts.length} {t("language") === "rw" ? "bya" : "of"} {products.length} {t("products").toLowerCase()}
-                  </div>
-                </div>
-              )}
+                {t("language") === "rw" ? "Byerekana" : "Showing"} {filteredProducts.length} {t("language") === "rw" ? "bya" : "of"} {products.length} {t("products").toLowerCase()}
             </div>
+          </div>
+              )}
+        </div>
           </div>
           
         {/* Desktop Table - Sticky Header with Scrollable Body */}
@@ -1050,7 +1086,6 @@ const Products = () => {
                       />
                     </th>
                   )}
-                  <th className="text-left text-sm font-semibold text-gray-700 py-4 px-6 w-12"></th>
                   <th className="text-left text-sm font-semibold text-gray-700 py-4 px-6">{t("productName")}</th>
                   <th className="text-left text-sm font-semibold text-gray-700 py-4 px-6">{t("productType")}</th>
                 <th className="text-left text-sm font-semibold text-gray-700 py-4 px-6">{t("costPrice")}</th>
@@ -1079,29 +1114,10 @@ const Products = () => {
                             />
                           </td>
                         )}
-                        <td className="py-4 px-6 w-12">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <button className="p-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded">
-                                <MoreVertical size={16} />
-                              </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="start">
-                              <DropdownMenuItem onClick={() => openEditModal(product)}>
-                                <Pencil size={14} className="mr-2" />
-                                {t("editProduct")}
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                onClick={() => handleDeleteClick(product)}
-                                className="text-red-600 focus:text-red-600 focus:bg-red-50"
-                              >
-                                <Trash2 size={14} className="mr-2" />
-                                {t("deleteProduct")}
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </td>
-                        <td className="py-4 px-6">
+                        <td 
+                          className="py-4 px-6 cursor-pointer hover:bg-gray-100 transition-colors"
+                          onClick={() => !isSelectionMode && openEditModal(product)}
+                        >
                           <div className="flex items-center gap-2">
                       <div className="text-sm text-gray-900">{product.name}</div>
                             {product.isPackage && (
@@ -1178,7 +1194,7 @@ const Products = () => {
                   })
                 ) : (
                   <tr>
-                    <td colSpan={isSelectionMode ? 8 : 7} className="py-12 text-center">
+                    <td colSpan={isSelectionMode ? 7 : 6} className="py-12 text-center">
                       <div className="flex flex-col items-center justify-center text-gray-400">
                         <Package size={48} className="mb-4 opacity-50" />
                         <p className="text-base font-medium">{t("noProducts")}</p>
@@ -1192,11 +1208,14 @@ const Products = () => {
           </div>
             </div>
           </div>
+      </div>
           
-          {/* Mobile Table View - Full Page Scroll */}
-          <div className="lg:hidden overflow-auto pb-20">
-            <div className="min-w-full">
-              <table className="w-full border-collapse">
+      {/* Mobile Table View - Full Page Scroll - Outside flex container */}
+      <div className="lg:hidden mt-4 pb-20">
+            
+            <div className="overflow-auto">
+              <div className="min-w-full">
+                <table className="w-full border-collapse">
                 <thead className="sticky top-0 z-10 bg-gray-100 border-b border-gray-200">
                   <tr>
                     {isSelectionMode && (
@@ -1208,7 +1227,6 @@ const Products = () => {
                         />
                       </th>
                     )}
-                    <th className="text-left text-xs font-semibold text-gray-700 py-3 px-3 w-10"></th>
                     <th className="text-left text-xs font-semibold text-gray-700 py-3 px-3">{t("productName")}</th>
                     <th className="text-left text-xs font-semibold text-gray-700 py-3 px-3">{t("costPrice")}</th>
                     <th className="text-left text-xs font-semibold text-gray-700 py-3 px-3">{t("sellingPrice")}</th>
@@ -1217,11 +1235,11 @@ const Products = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white">
-                  {filteredProducts.length > 0 ? (
+            {filteredProducts.length > 0 ? (
                     filteredProducts.map((product, index) => {
-                      const status = getStockStatus(product);
-                      const productId = (product as any)._id || product.id;
-                      return (
+                const status = getStockStatus(product);
+                const productId = (product as any)._id || product.id;
+                return (
                         <tr key={productId} className={cn(
                           "border-b border-gray-200",
                           index % 2 === 0 ? "bg-white" : "bg-gray-50",
@@ -1236,44 +1254,25 @@ const Products = () => {
                               />
                             </td>
                           )}
-                          <td className="py-3 px-3 w-10">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <button className="p-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded">
-                                  <MoreVertical size={14} />
-                                </button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="start">
-                                <DropdownMenuItem onClick={() => openEditModal(product)}>
-                                  <Pencil size={14} className="mr-2" />
-                                  {t("editProduct")}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem 
-                                  onClick={() => handleDeleteClick(product)}
-                                  className="text-red-600 focus:text-red-600 focus:bg-red-50"
-                                >
-                                  <Trash2 size={14} className="mr-2" />
-                                  {t("deleteProduct")}
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </td>
-                          <td className="py-3 px-3">
+                          <td 
+                            className="py-3 px-3 cursor-pointer hover:bg-gray-100 transition-colors"
+                            onClick={() => !isSelectionMode && openEditModal(product)}
+                          >
                             <div className="flex flex-col gap-1">
                               <div className="text-xs font-medium text-gray-900">{product.name}</div>
-                              {product.isPackage && (
+                          {product.isPackage && (
                                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium bg-purple-100 text-purple-700 rounded w-fit">
                                   <Package size={10} />
-                                  Box of {product.packageQuantity}
-                                </span>
-                              )}
-                              {product.productType && (
+                              Box of {product.packageQuantity}
+                            </span>
+                          )}
+                        {product.productType && (
                                 <span className="inline-flex px-1.5 py-0.5 text-[10px] font-medium bg-gray-100 text-gray-700 rounded w-fit">
-                                  {product.productType}
-                                </span>
-                              )}
+                            {product.productType}
+                          </span>
+                        )}
                               <span className="text-[10px] text-gray-500">{product.category}</span>
-                            </div>
+                      </div>
                           </td>
                           <td className="py-3 px-3">
                             <div className="text-xs text-gray-700">{product.costPrice.toLocaleString()} rwf</div>
@@ -1284,12 +1283,12 @@ const Products = () => {
                           <td className="py-3 px-3">
                             <div className="flex flex-col gap-1">
                               <div className="text-xs font-medium text-gray-900">
-                                {product.stock} {t("language") === "rw" ? "ibicuruzwa" : "units"}
+                            {product.stock} {t("language") === "rw" ? "ibicuruzwa" : "units"}
                               </div>
-                              {product.minStock && (
+                            {product.minStock && (
                                 <span className="text-[10px] text-gray-500">min: {product.minStock}</span>
-                              )}
-                            </div>
+                            )}
+                        </div>
                           </td>
                           <td className="py-3 px-3">
                             <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded", 
@@ -1298,27 +1297,27 @@ const Products = () => {
                                 : "bg-green-100 text-green-700"
                             )}>
                               {status.icon && <status.icon size={10} />}
-                              {status.label}
-                            </span>
+                          {status.label}
+                        </span>
                           </td>
                         </tr>
-                      );
-                    })
-                  ) : (
+                );
+              })
+            ) : (
                       <tr>
-                        <td colSpan={isSelectionMode ? 7 : 6} className="py-12 text-center">
+                        <td colSpan={isSelectionMode ? 6 : 5} className="py-12 text-center">
                         <div className="flex flex-col items-center justify-center text-gray-400">
                           <Package size={48} className="mb-4 opacity-50" />
                           <p className="text-sm font-medium">{t("noProducts")}</p>
                           <p className="text-xs mt-1">Try adjusting your filters or add a new product</p>
-                        </div>
+              </div>
                       </td>
                     </tr>
-                  )}
+            )}
                 </tbody>
               </table>
+              </div>
             </div>
-          </div>
         </div>
       </div>
 
