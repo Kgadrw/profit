@@ -1,6 +1,6 @@
 // Service Worker for PWA, offline support, and background notifications
 
-const CACHE_VERSION = Date.now().toString();
+const CACHE_VERSION = "v1"; // Change this only when you deploy a new version
 const CACHE_NAME = `trippo-${CACHE_VERSION}`;
 const API_BASE_URL = 'https://profit-backend-e4w1.onrender.com/api';
 const NOTIFICATION_CHECK_INTERVAL = 5 * 60 * 1000; // 5 minutes
@@ -11,15 +11,15 @@ self.addEventListener("install", (event) => {
   self.skipWaiting(); // Activate immediately
 });
 
-// Activate event - clean up only app's old caches and start background sync
+// Activate event - clean up only app's old caches
 self.addEventListener("activate", (event) => {
   console.log("Service Worker activating, clearing old caches...");
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
-        // Only delete caches that belong to this app (trippo- prefix)
+        // Only delete caches that belong to this app (trippo- prefix) but not current version
         cacheNames
-          .filter((name) => name.startsWith("trippo-"))
+          .filter((name) => name.startsWith("trippo-") && name !== CACHE_NAME)
           .map((cacheName) => {
             console.log("Deleting old cache:", cacheName);
             return caches.delete(cacheName);
@@ -28,9 +28,6 @@ self.addEventListener("activate", (event) => {
     }).then(() => {
       console.log("App caches cleared");
       return self.clients.claim();
-    }).then(() => {
-      // Start background notification checking
-      startBackgroundNotificationCheck();
     })
   );
 });
@@ -45,17 +42,11 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
   // ✅ 1) NEVER cache backend API calls - always fetch fresh
+  // Don't override headers - let the request pass through as-is
   if (url.origin === "https://profit-backend-e4w1.onrender.com" || url.pathname.startsWith("/api")) {
-    event.respondWith(
-      fetch(event.request, { 
-        cache: "no-store", // Force fresh data, never cache
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
-      })
-    );
+    // Create a new request with no-store cache, preserving original headers
+    const req = new Request(event.request, { cache: "no-store" });
+    event.respondWith(fetch(req));
     return;
   }
 

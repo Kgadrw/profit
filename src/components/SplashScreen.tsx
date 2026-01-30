@@ -4,51 +4,58 @@ export function SplashScreen() {
   const [isRemoved, setIsRemoved] = useState(false);
 
   useEffect(() => {
-    // Ensure body is visible (in case it was hidden by initial script)
-    document.body.classList.add('loaded');
-    
-    // Remove the HTML splash screen when React app is ready
+    // Wait for React to fully render before removing splash
     const removeSplash = () => {
       if (isRemoved) return;
       
       const htmlSplash = document.getElementById("splash-screen");
-      if (htmlSplash) {
-        // Use requestAnimationFrame to ensure smooth transition
+      const root = document.getElementById("root");
+      
+      // First, show the root content (fade in)
+      if (root) {
         requestAnimationFrame(() => {
-          htmlSplash.style.transition = "opacity 0.3s ease-out";
-          htmlSplash.style.opacity = "0";
-          setTimeout(() => {
-            if (htmlSplash.parentNode) {
-              htmlSplash.remove();
-              setIsRemoved(true);
-            }
-          }, 300);
+          root.classList.add('loaded');
+        });
+      }
+      
+      // Then remove splash screen smoothly
+      if (htmlSplash) {
+        // Use double requestAnimationFrame to ensure smooth transition
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            htmlSplash.style.transition = "opacity 0.2s ease-out";
+            htmlSplash.style.opacity = "0";
+            setTimeout(() => {
+              if (htmlSplash.parentNode) {
+                htmlSplash.remove();
+                setIsRemoved(true);
+                
+                // Finally, allow body scrolling (this prevents bounce)
+                requestAnimationFrame(() => {
+                  document.body.classList.add('loaded');
+                });
+              }
+            }, 200);
+          });
+        });
+      } else {
+        // If splash already removed, just mark everything as loaded
+        if (root) {
+          root.classList.add('loaded');
+        }
+        requestAnimationFrame(() => {
+          document.body.classList.add('loaded');
         });
       }
     };
 
-    // Wait for React to fully hydrate before removing splash
-    // Use a small delay to ensure all components are rendered
+    // Wait for React to fully hydrate - slightly longer delay
     const timer = setTimeout(() => {
       removeSplash();
-    }, 100);
-
-    // Also remove when window is fully loaded (fallback)
-    const handleLoad = () => {
-      clearTimeout(timer);
-      removeSplash();
-    };
-
-    if (document.readyState === "complete") {
-      clearTimeout(timer);
-      removeSplash();
-    } else {
-      window.addEventListener("load", handleLoad, { once: true });
-    }
+    }, 200);
 
     return () => {
       clearTimeout(timer);
-      window.removeEventListener("load", handleLoad);
     };
   }, [isRemoved]);
 

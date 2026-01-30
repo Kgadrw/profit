@@ -33,9 +33,7 @@ Promise.all([
     logger.error("Failed to register service worker:", error);
   }),
 ]).then(() => {
-  // Ensure body is visible before rendering
-  document.body.classList.add('loaded');
-  
+  // Render immediately - don't mark body as loaded yet (let SplashScreen handle it)
   // Use requestAnimationFrame to ensure smooth render
   requestAnimationFrame(() => {
     createRoot(document.getElementById("root")!).render(<App />);

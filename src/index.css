@@ -39,13 +39,18 @@
     position: relative;
   }
   
-  /* Prevent flash of unstyled content */
+  /* Prevent flash of unstyled content - use opacity instead of visibility to prevent layout shift */
   body:not(.loaded) {
-    visibility: hidden;
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
   }
   
   body.loaded {
-    visibility: visible;
+    overflow: auto;
+    position: relative;
+    height: auto;
   }
 }
 
@@ -334,12 +339,16 @@
   @keyframes fadeIn {
     from {
       opacity: 0;
-      transform: translateY(8px);
     }
     to {
       opacity: 1;
-      transform: translateY(0);
     }
+  }
+  
+  /* Disable animations on initial load to prevent bounce */
+  body:not(.loaded) * {
+    animation: none !important;
+    transition: none !important;
   }
 
   @keyframes slideUpFade {

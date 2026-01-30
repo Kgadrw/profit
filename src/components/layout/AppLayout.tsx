@@ -295,12 +295,13 @@ export function AppLayout({ children, title }: AppLayoutProps) {
       {/* Main content */}
       <div
         className={cn(
-          "transition-all duration-300 relative z-10",
+          "relative z-10",
           // On mobile, no margin (bottom nav instead of sidebar), add top padding for header
           // On desktop, adjust based on sidebar state
+          // Use transition only for sidebar changes, not initial load
           isMobile 
             ? "ml-0 pb-16 pt-20" // Add bottom padding for bottom nav and top padding for mobile header
-            : "lg:ml-0",
+            : "lg:ml-0 transition-all duration-300",
           !isMobile && ((sidebarHovered && sidebarCollapsed) || !sidebarCollapsed 
             ? "lg:ml-56" 
             : "lg:ml-16")
@@ -310,7 +311,7 @@ export function AppLayout({ children, title }: AppLayoutProps) {
         onTouchEnd={onTouchEnd}
         style={{ touchAction: 'pan-y' }}
       >
-        <main className="p-6 animate-fade-in lg:pt-6 pt-6">{children}</main>
+        <main className="p-6 lg:pt-6 pt-6">{children}</main>
       </div>
     </div>
   );

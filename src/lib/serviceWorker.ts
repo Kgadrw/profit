@@ -35,60 +35,55 @@ export function registerServiceWorker(): Promise<ServiceWorkerRegistration | nul
 
   // In production, register service worker normally
   if ("serviceWorker" in navigator) {
-    // First, unregister any existing service workers to force update
-    return navigator.serviceWorker.getRegistrations().then((registrations) => {
-      return Promise.all(
-        registrations.map((registration) => registration.unregister())
-      );
-    }).then(() => {
-      // Clear old caches
-      return caches.keys().then((cacheNames) => {
-        return Promise.all(
-          cacheNames.map((cacheName) => caches.delete(cacheName))
-        );
-      });
-    }).then(() => {
-      // Register new service worker with cache busting
-      const swUrl = `/sw.js?t=${Date.now()}`;
-      return navigator.serviceWorker
-        .register(swUrl)
-        .then((registration) => {
-          console.log("Service Worker registered successfully:", registration.scope);
+    // Register service worker (don't unregister first - let browser handle updates)
+    return navigator.serviceWorker
+      .register("/sw.js")
+      .then((registration) => {
+        console.log("Service Worker registered successfully:", registration.scope);
 
-          // ✅ Force update check on registration
-          registration.update();
-
-          // ✅ Check for updates and auto-activate new worker
-          registration.addEventListener("updatefound", () => {
-            const newWorker = registration.installing;
-            if (newWorker) {
-              newWorker.addEventListener("statechange", () => {
-                if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-                  // New service worker is ready - activate it immediately
-                  console.log("New service worker available, activating...");
-                  newWorker.postMessage({ type: "SKIP_WAITING" });
-                } else if (newWorker.state === "installed") {
-                  console.log("Service Worker installed for the first time");
-                }
-              });
-            }
-          });
-
-          // ✅ Reload when controller changes (new SW activated)
-          const handleControllerChange = () => {
-            console.log("Service Worker controller changed, reloading to use new version");
-            window.location.reload();
-          };
-
-          navigator.serviceWorker.addEventListener("controllerchange", handleControllerChange);
-
-          return registration;
-        })
-        .catch((error) => {
-          console.error("Service Worker registration failed:", error);
-          return null;
+        // Check for updates periodically (but don't force reload loop)
+        // Only check for updates, don't auto-reload
+        registration.addEventListener("updatefound", () => {
+          const newWorker = registration.installing;
+          if (newWorker) {
+            newWorker.addEventListener("statechange", () => {
+              if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+                // New service worker is available - notify user but don't auto-reload
+                console.log("New service worker available. Reload page to update.");
+                // Optionally show a toast/notification to user to reload
+              } else if (newWorker.state === "installed") {
+                console.log("Service Worker installed for the first time");
+              }
+            });
+          }
         });
-    });
+
+        // Only reload once when controller changes (not on every change)
+        let hasReloaded = false;
+        const handleControllerChange = () => {
+          if (!hasReloaded && navigator.serviceWorker.controller) {
+            hasReloaded = true;
+            console.log("Service Worker controller changed, reloading to use new version");
+            // Remove listener to prevent multiple reloads
+            navigator.serviceWorker.removeEventListener("controllerchange", handleControllerChange);
+            window.location.reload();
+          }
+        };
+
+        // Only listen for controller change if there's already a controller
+        if (navigator.serviceWorker.controller) {
+          navigator.serviceWorker.addEventListener("controllerchange", handleControllerChange, { once: true });
+        }
+
+        // Check for updates on page load (but not continuously)
+        registration.update();
+
+        return registration;
+      })
+      .catch((error) => {
+        console.error("Service Worker registration failed:", error);
+        return null;
+      });
   }
   return Promise.resolve(null);
 }
