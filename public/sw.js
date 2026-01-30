@@ -265,9 +265,15 @@ async function checkAndNotify(userId) {
           const currentProductIds = new Set();
           
           for (const product of productsData.data) {
-            const minStock = product.minStock || 5;
-            const productId = product._id || product.id;
-            const currentStock = product.stock || 0;
+            const minStock = Number(product.minStock ?? 5);
+            // Safely get productId - ensure it's a string
+            const productId = String(product._id ?? product.id ?? '');
+            if (!productId || productId === 'undefined') {
+              console.warn('Skipping product with invalid ID:', product);
+              continue;
+            }
+            // Safely get currentStock - null/undefined becomes 0
+            const currentStock = Number(product.stock ?? 0);
             const lowTag = `low-stock-${productId}`;
             const outTag = `out-of-stock-${productId}`;
             

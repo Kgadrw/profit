@@ -74,6 +74,43 @@ export function NotificationManager() {
     }
   }, [user]);
 
+  // ✅ Poll service worker to check notifications every 60 seconds while app is open
+  // This ensures stale notifications get closed quickly when stock changes
+  useEffect(() => {
+    if (!notificationService.isAllowed() || !user) {
+      return;
+    }
+
+    // Trigger notification check using the background sync manager
+    const triggerNotificationCheck = async () => {
+      try {
+        await backgroundSyncManager.requestNotificationCheck();
+      } catch (error) {
+        console.error('Error triggering notification check:', error);
+      }
+    };
+
+    // Check immediately on mount
+    triggerNotificationCheck();
+
+    // Then check every 60 seconds while app is open
+    const interval = setInterval(() => {
+      triggerNotificationCheck();
+    }, 60000); // 60 seconds
+
+    // ✅ Also listen for product update events to trigger immediate check
+    const handleProductUpdate = () => {
+      triggerNotificationCheck();
+    };
+
+    window.addEventListener('products-should-refresh', handleProductUpdate);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('products-should-refresh', handleProductUpdate);
+    };
+  }, [user]);
+
   // No custom modal UI – rely entirely on the browser's system notification prompt
   return null;
 }

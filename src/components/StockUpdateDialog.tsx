@@ -90,6 +90,18 @@ export function StockUpdateDialog({
     try {
       await updateProduct({ ...product, stock: stockNum } as any);
       await refreshProducts();
+      
+      // ✅ Trigger notification check immediately after stock update
+      // This ensures stale notifications are closed if stock is now resolved
+      if ('serviceWorker' in navigator) {
+        try {
+          const { backgroundSyncManager } = await import('@/lib/backgroundSync');
+          await backgroundSyncManager.requestNotificationCheck();
+        } catch (error) {
+          // Silently fail - notification check is not critical
+        }
+      }
+      
       playUpdateBeep();
       toast({
         title: "Stock Updated",
