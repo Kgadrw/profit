@@ -71,9 +71,9 @@ export function LowStockAlert() {
           }
         }
 
-        // Show products with stock <= minStock OR stock = 0 (out of stock)
+        // Show products with stock equals minStock (exact match) OR stock < minStock OR stock = 0 (out of stock)
         // OR products that are expiring soon
-        return product.stock <= minStock || product.stock === 0 || isExpiringSoon;
+        return product.stock === minStock || product.stock < minStock || product.stock === 0 || isExpiringSoon;
       })
       .map((product) => ({
         id: product._id || product.id || '',

@@ -254,10 +254,10 @@ export function useLowStockNotifications() {
         continue;
       }
 
-      // Notify if stock is at or below minStock OR stock is 0 (out of stock)
+      // Notify if stock equals minStock (exact match) OR stock is below minStock OR stock is 0 (out of stock)
       // OR if product is expiring soon (within 30 days)
       // This mostly matches the LowStockAlert component logic, with added expiry check
-      if (currentStock <= minStock || currentStock === 0 || isExpiringSoon) {
+      if (currentStock === minStock || currentStock < minStock || currentStock === 0 || isExpiringSoon) {
         // Only notify if we haven't notified about this product recently
         if (!lastNotifiedProducts.current.has(productId)) {
           console.log(`[Notifications] Sending low stock notification for ${product.name} (stock: ${currentStock}, min: ${minStock})`);

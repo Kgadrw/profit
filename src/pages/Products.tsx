@@ -653,7 +653,16 @@ const Products = () => {
 
   const getStockStatus = (product: Product) => {
     const minStock = product.minStock || 5;
-    if (product.stock <= minStock) {
+    // Check for sold out first
+    if (product.stock === 0) {
+      return { 
+        label: "Sold Out", 
+        className: "text-gray-600 font-medium",
+        icon: AlertTriangle 
+      };
+    }
+    // Check if stock equals minStock (exact match) or is below minStock
+    if (product.stock === minStock || product.stock < minStock) {
       return { 
         label: "Low Stock", 
         className: "text-red-600 font-medium",
@@ -1238,7 +1247,13 @@ const Products = () => {
                     <td className="py-4 px-6">
                       <div className="flex flex-col gap-2 min-w-[120px]">
                         <div className="text-sm font-medium text-gray-900">
-                          {product.stock} {t("language") === "rw" ? "ibicuruzwa" : "units"}
+                          {product.stock === 0 ? (
+                            <span className="text-gray-500 italic">Sold Out</span>
+                          ) : (
+                            <>
+                              {product.stock} {t("language") === "rw" ? "ibicuruzwa" : "units"}
+                            </>
+                          )}
                         </div>
                         {/* Stock Level Meter */}
                         <div className="w-full">
@@ -1271,7 +1286,9 @@ const Products = () => {
                     </td>
                     <td className="py-4 px-6">
                           <span className={cn("inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded", 
-                            status.label === "Low Stock" 
+                            status.label === "Sold Out"
+                              ? "bg-gray-100 text-gray-700"
+                              : status.label === "Low Stock" 
                               ? "bg-red-100 text-red-700" 
                               : "bg-green-100 text-green-700"
                           )}>
@@ -1373,7 +1390,13 @@ const Products = () => {
                           <td className="py-3 px-3">
                             <div className="flex flex-col gap-1">
                               <div className="text-xs font-medium text-gray-900">
-                            {product.stock} {t("language") === "rw" ? "ibicuruzwa" : "units"}
+                            {product.stock === 0 ? (
+                              <span className="text-gray-500 italic">Sold Out</span>
+                            ) : (
+                              <>
+                                {product.stock} {t("language") === "rw" ? "ibicuruzwa" : "units"}
+                              </>
+                            )}
                               </div>
                             {product.minStock && (
                                 <span className="text-[10px] text-gray-500">min: {product.minStock}</span>
@@ -1382,13 +1405,15 @@ const Products = () => {
                           </td>
                           <td className="py-3 px-3">
                             <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded", 
-                              status.label === "Low Stock" 
+                              status.label === "Sold Out"
+                                ? "bg-gray-100 text-gray-700"
+                                : status.label === "Low Stock" 
                                 ? "bg-red-100 text-red-700" 
                                 : "bg-green-100 text-green-700"
                             )}>
                               {status.icon && <status.icon size={10} />}
                           {status.label}
-                        </span>
+                            </span>
                           </td>
                         </tr>
                 );
