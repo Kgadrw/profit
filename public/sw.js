@@ -213,6 +213,25 @@ async function checkForNotifications() {
 const lastNotificationTimes = new Map();
 // Store last known product IDs to track when products are removed
 let lastKnownProductIds = new Set();
+// Store last known stock state per product (for state-based notifications)
+const lastKnownStock = new Map(); // productId -> stock number
+
+// Helper to close notifications by tag
+async function closeNotificationByTag(tag) {
+  try {
+    const registration = self.registration;
+    if (!registration || !('getNotifications' in registration)) {
+      return;
+    }
+    const notifs = await registration.getNotifications({ tag });
+    notifs.forEach(n => n.close());
+    if (notifs.length > 0) {
+      console.log(`Closed ${notifs.length} notification(s) with tag: ${tag}`);
+    }
+  } catch (e) {
+    console.error("Failed to close notifications:", e);
+  }
+}
 
 async function checkAndNotify(userId) {
   try {
@@ -226,12 +245,7 @@ async function checkAndNotify(userId) {
       // ✅ Force fresh data - never use cache for API calls
       const productsResponse = await fetch(`${API_BASE_URL}/products`, {
         method: 'GET',
-        headers: {
-          ...headers,
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        },
+        headers: headers,
         cache: 'no-store', // Explicitly disable caching
       });
 
@@ -253,29 +267,44 @@ async function checkAndNotify(userId) {
           for (const product of productsData.data) {
             const minStock = product.minStock || 5;
             const productId = product._id || product.id;
-            const notificationKey = `product-${productId}`;
-            const now = Date.now();
-            const lastTime = lastNotificationTimes.get(notificationKey) || 0;
+            const currentStock = product.stock || 0;
+            const lowTag = `low-stock-${productId}`;
+            const outTag = `out-of-stock-${productId}`;
             
             // Track this product ID
             currentProductIds.add(productId?.toString());
             
             // Check if we should notify (out of stock or low stock)
-            const isOutOfStock = product.stock === 0;
-            const isLowStock = product.stock > 0 && product.stock <= minStock;
+            const isOutOfStock = currentStock === 0;
+            const isLowStock = currentStock > 0 && currentStock <= minStock;
             
-            // Only notify if enough time has passed since last notification
-            if ((isOutOfStock || isLowStock) && (now - lastTime >= NOTIFICATION_DEBOUNCE)) {
-              lastNotificationTimes.set(notificationKey, now);
-              
+            // Get previous stock state
+            const prevStock = lastKnownStock.get(productId);
+            const stockChanged = prevStock === undefined ? true : prevStock !== currentStock;
+            
+            // Update last known stock
+            lastKnownStock.set(productId, currentStock);
+            
+            // ✅ Close resolved notifications (stock is no longer low/out)
+            if (!isLowStock) {
+              await closeNotificationByTag(lowTag);
+            }
+            if (!isOutOfStock) {
+              await closeNotificationByTag(outTag);
+            }
+            
+            // ✅ State-based notification (only notify when stock actually changes)
+            // This replaces time-based debounce with state-based logic
+            if ((isOutOfStock || isLowStock) && stockChanged) {
+              // Use same tag to replace existing notification if it exists
               if (isOutOfStock) {
                 await showNotification({
                   title: 'Out of Stock Alert',
                   body: `${product.name} is out of stock!`,
                   icon: '/logo.png',
                   badge: '/logo.png',
-                  tag: `out-of-stock-${productId}`,
-                  requireInteraction: true,
+                  tag: outTag, // Same tag replaces previous notification
+                  requireInteraction: false, // Don't stick forever - auto-close after a few seconds
                   data: {
                     route: '/products',
                     type: 'low_stock',
@@ -289,16 +318,16 @@ async function checkAndNotify(userId) {
               } else if (isLowStock) {
                 await showNotification({
                   title: 'Low Stock Alert',
-                  body: `${product.name} is running low (${product.stock} left, minimum: ${minStock})`,
+                  body: `${product.name} is running low (${currentStock} left, minimum: ${minStock})`,
                   icon: '/logo.png',
                   badge: '/logo.png',
-                  tag: `low-stock-${productId}`,
-                  requireInteraction: true,
+                  tag: lowTag, // Same tag replaces previous notification
+                  requireInteraction: false, // Don't stick forever - auto-close after a few seconds
                   data: {
                     route: '/products',
                     type: 'low_stock',
                     productName: product.name,
-                    currentStock: product.stock,
+                    currentStock: currentStock,
                     minStock: minStock,
                     productId: productId,
                     action: 'update_stock',
@@ -311,9 +340,15 @@ async function checkAndNotify(userId) {
           // Clean up notifications for products that no longer exist
           for (const oldProductId of lastKnownProductIds) {
             if (!currentProductIds.has(oldProductId)) {
-              // Product was removed, clear its notification tracking
+              // Product was removed, clear its notification tracking and close notifications
               const oldNotificationKey = `product-${oldProductId}`;
               lastNotificationTimes.delete(oldNotificationKey);
+              lastKnownStock.delete(oldProductId);
+              
+              // Close any existing notifications for this product
+              await closeNotificationByTag(`low-stock-${oldProductId}`);
+              await closeNotificationByTag(`out-of-stock-${oldProductId}`);
+              
               console.log(`Cleared notification tracking for removed product: ${oldProductId}`);
             }
           }
@@ -433,6 +468,10 @@ if ('periodicSync' in self.registration) {
 
 // ✅ Push notification support for real-time notifications when app is closed
 // This is the proper way to get real-time notifications - server sends push events
+// When backend implements push notifications, it should:
+// 1. Send push when stock becomes low/out-of-stock (immediate)
+// 2. Send push when stock is replenished (to clear stale alerts)
+// 3. Use same tags as polling notifications for consistency
 self.addEventListener("push", (event) => {
   console.log("Push event received:", event);
   
@@ -449,6 +488,12 @@ self.addEventListener("push", (event) => {
     };
   }
 
+  // If push indicates stock is resolved, close the notification
+  if (data.resolved === true && data.tag) {
+    event.waitUntil(closeNotificationByTag(data.tag));
+    return;
+  }
+
   event.waitUntil(
     self.registration.showNotification(data.title || "Trippo", {
       body: data.body || "You have a new update",
@@ -456,7 +501,7 @@ self.addEventListener("push", (event) => {
       badge: data.badge || "/logo.png",
       data: data.data || {},
       tag: data.tag || "trippo-push",
-      requireInteraction: !!data.requireInteraction,
+      requireInteraction: false, // Don't stick forever - auto-close
       vibrate: [200, 100, 200],
       timestamp: Date.now(),
     })
