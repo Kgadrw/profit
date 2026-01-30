@@ -512,32 +512,19 @@ const Products = () => {
       <div className="lg:bg-white flex-1 flex flex-col lg:min-h-0 lg:overflow-hidden rounded-lg">
           {/* Summary Section - Today's Items and Current Stock */}
           <div className="lg:bg-white lg:border-b lg:border-gray-200 lg:px-4 lg:py-3 flex-shrink-0 hidden lg:flex">
-            <div className="flex items-center justify-between w-full">
-              <div className="flex items-center gap-6">
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">{t("todaysItems")}</p>
-                  <p className="text-lg font-bold text-orange-600">
-                    {todayStats.totalItems} {t("language") === "rw" ? "ibintu" : "items"}
-                  </p>
-                </div>
-                <div className="h-8 w-px bg-gray-300"></div>
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">{t("currentStock") || "Current Stock"}</p>
-                  <p className="text-lg font-bold text-purple-600">
-                    {stockStats.totalItems} {t("language") === "rw" ? "ibicuruzwa" : "items"}
-                  </p>
-                </div>
+            <div className="flex items-center gap-6">
+              <div>
+                <p className="text-xs text-gray-500 mb-1">{t("todaysItems")}</p>
+                <p className="text-lg font-bold text-blue-600">
+                  {todayStats.totalItems} {t("language") === "rw" ? "ibintu" : "items"}
+                </p>
               </div>
-              {/* Add Product Buttons - Desktop */}
-              <div className="flex flex-row gap-2">
-                <Button onClick={openAddModal} className="bg-blue-600 text-white hover:bg-blue-700 font-semibold px-4 py-2 gap-2">
-                  <Plus size={18} />
-                  <span>{t("addProduct")}</span>
-                </Button>
-                <Button onClick={openBulkAddModal} className="bg-green-600 text-white hover:bg-green-700 border border-transparent font-medium px-4 py-2 gap-2">
-                  <Plus size={18} />
-                  <span>{t("bulkAddProducts")}</span>
-                </Button>
+              <div className="h-8 w-px bg-gray-300"></div>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">{t("currentStock") || "Current Stock"}</p>
+                <p className="text-lg font-bold text-purple-600">
+                  {stockStats.totalItems} {t("language") === "rw" ? "ibicuruzwa" : "items"}
+                </p>
               </div>
             </div>
           </div>
@@ -545,10 +532,10 @@ const Products = () => {
           {/* Mobile Summary Section */}
           <div className="lg:hidden p-4 pb-2">
             <div className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-gray-200">
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <p className="text-xs text-gray-500 mb-1">{t("todaysItems")}</p>
-                  <p className="text-base font-bold text-orange-600">
+                  <p className="text-base font-bold text-blue-600">
                     {todayStats.totalItems} {t("language") === "rw" ? "ibintu" : "items"}
                   </p>
                 </div>
@@ -560,17 +547,34 @@ const Products = () => {
                   </p>
                 </div>
               </div>
-              {/* Add Product Buttons - Mobile */}
-              <div className="flex flex-row gap-2 justify-end">
-                <Button onClick={openAddModal} className="bg-blue-600 text-white hover:bg-blue-700 font-semibold px-3 py-2 gap-2">
-                  <Plus size={18} />
-                  <span>{t("add")}</span>
-                </Button>
-                <Button onClick={openBulkAddModal} className="bg-green-600 text-white hover:bg-green-700 border border-transparent font-medium px-3 py-2 gap-2">
-                  <Plus size={18} />
-                  <span>{t("bulkAdd")}</span>
-                </Button>
-              </div>
+            </div>
+          </div>
+          
+          {/* Add Product Buttons - Desktop - Below Card */}
+          <div className="hidden lg:flex justify-end lg:px-4 lg:py-2 flex-shrink-0">
+            <div className="flex flex-row gap-2">
+              <Button onClick={openAddModal} className="bg-blue-600 text-white hover:bg-blue-700 font-semibold px-4 py-2 gap-2">
+                <Plus size={18} />
+                <span>{t("addProduct")}</span>
+              </Button>
+              <Button onClick={openBulkAddModal} className="bg-green-600 text-white hover:bg-green-700 border border-transparent font-medium px-4 py-2 gap-2">
+                <Plus size={18} />
+                <span>{t("bulkAddProducts")}</span>
+              </Button>
+            </div>
+          </div>
+          
+          {/* Add Product Buttons - Mobile - Below Card */}
+          <div className="lg:hidden flex justify-end px-4 py-2 flex-shrink-0">
+            <div className="flex flex-row gap-2">
+              <Button onClick={openAddModal} className="bg-blue-600 text-white hover:bg-blue-700 font-semibold px-3 py-2 gap-2">
+                <Plus size={18} />
+                <span>{t("add")}</span>
+              </Button>
+              <Button onClick={openBulkAddModal} className="bg-green-600 text-white hover:bg-green-700 border border-transparent font-medium px-3 py-2 gap-2">
+                <Plus size={18} />
+                <span>{t("bulkAdd")}</span>
+              </Button>
             </div>
           </div>
           
@@ -960,115 +964,108 @@ const Products = () => {
             </div>
           </div>
           
-          {/* Mobile Card View - Full Page Scroll */}
-          <div className="lg:hidden p-4 space-y-4 pb-20">
-            {filteredProducts.length > 0 ? (
-              filteredProducts.map((product) => {
-                const status = getStockStatus(product);
-                const productId = (product as any)._id || product.id;
-                return (
-                  <div key={productId} className="lg:bg-white bg-white/80 backdrop-blur-sm border border-gray-200 rounded-lg p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap mb-2">
-                          <h4 className="text-base font-semibold text-gray-900 truncate">{product.name}</h4>
-                          {product.isPackage && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-700 rounded shrink-0">
-                              <Package size={12} />
-                              Box of {product.packageQuantity}
+          {/* Mobile Table View - Full Page Scroll */}
+          <div className="lg:hidden overflow-auto pb-20">
+            <div className="min-w-full">
+              <table className="w-full border-collapse">
+                <thead className="sticky top-0 z-10 bg-gray-100 border-b border-gray-200">
+                  <tr>
+                    <th className="text-left text-xs font-semibold text-gray-700 py-3 px-3">{t("productName")}</th>
+                    <th className="text-left text-xs font-semibold text-gray-700 py-3 px-3">{t("costPrice")}</th>
+                    <th className="text-left text-xs font-semibold text-gray-700 py-3 px-3">{t("sellingPrice")}</th>
+                    <th className="text-left text-xs font-semibold text-gray-700 py-3 px-3">{t("stock")}</th>
+                    <th className="text-left text-xs font-semibold text-gray-700 py-3 px-3">{t("status")}</th>
+                    <th className="text-left text-xs font-semibold text-gray-700 py-3 px-3">{t("actions")}</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white">
+                  {filteredProducts.length > 0 ? (
+                    filteredProducts.map((product, index) => {
+                      const status = getStockStatus(product);
+                      const productId = (product as any)._id || product.id;
+                      return (
+                        <tr key={productId} className={cn(
+                          "border-b border-gray-200",
+                          index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                        )}>
+                          <td className="py-3 px-3">
+                            <div className="flex flex-col gap-1">
+                              <div className="text-xs font-medium text-gray-900">{product.name}</div>
+                              {product.isPackage && (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium bg-purple-100 text-purple-700 rounded w-fit">
+                                  <Package size={10} />
+                                  Box of {product.packageQuantity}
+                                </span>
+                              )}
+                              {product.productType && (
+                                <span className="inline-flex px-1.5 py-0.5 text-[10px] font-medium bg-gray-100 text-gray-700 rounded w-fit">
+                                  {product.productType}
+                                </span>
+                              )}
+                              <span className="text-[10px] text-gray-500">{product.category}</span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-3">
+                            <div className="text-xs text-gray-700">{product.costPrice.toLocaleString()} rwf</div>
+                          </td>
+                          <td className="py-3 px-3">
+                            <div className="text-xs text-gray-700">{product.sellingPrice.toLocaleString()} rwf</div>
+                          </td>
+                          <td className="py-3 px-3">
+                            <div className="flex flex-col gap-1">
+                              <div className="text-xs font-medium text-gray-900">
+                                {product.stock} {t("language") === "rw" ? "ibicuruzwa" : "units"}
+                              </div>
+                              {product.minStock && (
+                                <span className="text-[10px] text-gray-500">min: {product.minStock}</span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-3 px-3">
+                            <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded", 
+                              status.label === "Low Stock" 
+                                ? "bg-red-100 text-red-700" 
+                                : "bg-green-100 text-green-700"
+                            )}>
+                              {status.icon && <status.icon size={10} />}
+                              {status.label}
                             </span>
-                          )}
+                          </td>
+                          <td className="py-3 px-3">
+                            <div className="flex gap-1">
+                              <button
+                                onClick={() => openEditModal(product)}
+                                className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                title={t("editProduct")}
+                              >
+                                <Pencil size={14} />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteClick(product)}
+                                className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                title={t("deleteProduct")}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan={6} className="py-12 text-center">
+                        <div className="flex flex-col items-center justify-center text-gray-400">
+                          <Package size={48} className="mb-4 opacity-50" />
+                          <p className="text-sm font-medium">{t("noProducts")}</p>
+                          <p className="text-xs mt-1">Try adjusting your filters or add a new product</p>
                         </div>
-                        {product.productType && (
-                          <span className="inline-flex px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded mb-2">
-                            {product.productType}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex gap-1 ml-2 shrink-0">
-                        <button
-                          onClick={() => openEditModal(product)}
-                          className="p-2 text-gray-700 hover:bg-gray-50 rounded transition-colors"
-                          title={t("editProduct")}
-                        >
-                          <Pencil size={16} />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteClick(product)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
-                          title={t("deleteProduct")}
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                      <div>
-                        <span className="text-gray-500">Cost:</span>
-                        <span className="ml-2 font-medium text-gray-900">{product.costPrice.toLocaleString()} rwf</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Price:</span>
-                        <span className="ml-2 font-semibold text-gray-900">{product.sellingPrice.toLocaleString()} rwf</span>
-                      </div>
-                      <div className="col-span-2">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-gray-500">Stock:</span>
-                          <span className="font-medium text-gray-900">
-                            {product.stock} {t("language") === "rw" ? "ibicuruzwa" : "units"}
-                            {product.minStock && (
-                              <span className="text-xs text-gray-500 ml-1">(min: {product.minStock})</span>
-                            )}
-                          </span>
-                        </div>
-                        {/* Stock Level Meter */}
-                        <div className="w-full mb-1">
-                          <div className="flex-1 h-2.5 bg-gray-200 rounded-full overflow-hidden">
-                            {(() => {
-                              const minStock = product.minStock || 5;
-                              const maxStock = Math.max(product.stock, minStock * 3, 10);
-                              const stockPercentage = maxStock > 0 ? Math.min((product.stock / maxStock) * 100, 100) : 0;
-                              const getColor = () => {
-                                if (product.stock === 0) return "bg-gray-400";
-                                if (product.stock <= minStock) return "bg-red-500";
-                                if (product.stock <= minStock * 2) return "bg-yellow-500";
-                                return "bg-green-500";
-                              };
-                              return (
-                                <div
-                                  className={cn("h-full rounded-full transition-all duration-300", getColor())}
-                                  style={{ width: `${stockPercentage}%` }}
-                                />
-                              );
-                            })()}
-                          </div>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {t("language") === "rw" 
-                            ? "Umubare w'ibicuruzwa bisigaye mu stoki (bikurwaho igihe ubucuruzi bukorerwa)" 
-                            : "Remaining quantity (automatically reduced when sales are made)"}
-                        </p>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">Status:</span>
-                        <span className={cn("ml-2 inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded", status.className)}>
-                          {status.icon && <status.icon size={12} />}
-                          {status.label}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="mt-2 pt-2 border-t border-gray-100">
-                      <span className="text-xs text-gray-500">Category: </span>
-                      <span className="text-xs font-medium text-gray-700">{product.category}</span>
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="text-center py-8 text-gray-500">
-                No products found
-              </div>
-            )}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>

@@ -5,6 +5,7 @@ import { KPICard } from "@/components/dashboard/KPICard";
 import { SalesTrendChart } from "@/components/dashboard/SalesTrendChart";
 import { LowStockAlert } from "@/components/dashboard/LowStockAlert";
 import { AddToHomeScreen } from "@/components/AddToHomeScreen";
+import { RecordSaleModal } from "@/components/mobile/RecordSaleModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -341,6 +342,7 @@ const Dashboard = () => {
   const [sellingPrice, setSellingPrice] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [saleDate, setSaleDate] = useState(getTodayDate());
+  const [saleModalOpen, setSaleModalOpen] = useState(false);
   const [bulkSales, setBulkSales] = useState<BulkSaleFormData[]>([
     { product: "", quantity: "1", sellingPrice: "", paymentMethod: "cash", saleDate: getTodayDate() }
   ]);
@@ -1254,19 +1256,18 @@ const Dashboard = () => {
             <div className="grid grid-cols-2 gap-3">
               {/* Record Sale */}
               <Button
-                onClick={handleRecordSale}
-                disabled={isRecordingSale}
-                className="h-16 flex flex-col items-center justify-center gap-1.5 bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => navigate("/sales")}
+                className="h-16 flex flex-col items-center justify-center gap-1.5 bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-sm hover:shadow-md transition-all"
               >
                 <ShoppingCart size={18} />
                 <span className="text-xs font-medium">
-                  {isRecordingSale ? t("recording") : t("recordSale")}
+                  {t("recordSale")}
                 </span>
               </Button>
 
               {/* Add Product */}
               <Button
-                onClick={() => navigate("/add-product")}
+                onClick={() => navigate("/products/add")}
                 className="h-16 flex flex-col items-center justify-center gap-1.5 bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-sm hover:shadow-md transition-all"
               >
                 <Plus size={18} />
@@ -1338,19 +1339,18 @@ const Dashboard = () => {
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {/* Record Sale */}
               <Button
-                onClick={handleRecordSale}
-                disabled={isRecordingSale}
-                className="h-16 flex flex-col items-center justify-center gap-1.5 bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => setSaleModalOpen(true)}
+                className="h-16 flex flex-col items-center justify-center gap-1.5 bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-sm hover:shadow-md transition-all"
               >
                 <ShoppingCart size={18} />
                 <span className="text-xs font-medium">
-                  {isRecordingSale ? t("recording") : t("recordSale")}
+                  {t("recordSale")}
                 </span>
               </Button>
 
               {/* Add Product */}
               <Button
-                onClick={() => navigate("/add-product")}
+                onClick={() => navigate("/products/add")}
                 className="h-16 flex flex-col items-center justify-center gap-1.5 bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-sm hover:shadow-md transition-all"
               >
                 <Plus size={18} />
@@ -1531,6 +1531,12 @@ const Dashboard = () => {
       </div>
 
       <AddToHomeScreen />
+      
+      {/* Record Sale Modal - Mobile Only */}
+      <RecordSaleModal 
+        open={saleModalOpen} 
+        onOpenChange={setSaleModalOpen}
+      />
     </AppLayout>
   );
 };
