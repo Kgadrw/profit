@@ -199,9 +199,10 @@ const AddProduct = () => {
         return;
       }
       playErrorBeep();
+      console.error("Error updating out-of-stock product:", error);
       toast({
         title: "Update Failed",
-        description: "Failed to update product. Please try again.",
+        description: error?.message || error?.response?.error || "Failed to update product. Please check your connection and try again.",
         variant: "destructive",
       });
     }
@@ -302,6 +303,13 @@ const AddProduct = () => {
                   updatedCount++;
                 } else {
                   console.warn(`Failed to add product: ${product.name}`, error);
+                  // Show error notification for failed product
+                  playErrorBeep();
+                  toast({
+                    title: "Failed to Add Product",
+                    description: `Failed to add "${product.name}": ${error?.message || "Unknown error occurred"}. Please try again.`,
+                    variant: "destructive",
+                  });
                 }
               }
             }
@@ -348,7 +356,7 @@ const AddProduct = () => {
             playErrorBeep();
             toast({
               title: "Processing Failed",
-              description: "Failed to process some products. Please try again.",
+              description: error?.message || error?.response?.error || "Failed to process some products. Please check your connection and try again.",
               variant: "destructive",
             });
           }
@@ -420,9 +428,10 @@ const AddProduct = () => {
             return;
           }
           playErrorBeep();
+          console.error("Error adding products:", error);
           toast({
             title: "Add Failed",
-            description: "Failed to add products. Please try again.",
+            description: error?.message || error?.response?.error || "Failed to add products. Please check your connection and try again.",
             variant: "destructive",
           });
         }
@@ -536,7 +545,7 @@ const AddProduct = () => {
         } else {
           toast({
             title: "Add Failed",
-            description: "Failed to add product. Please try again.",
+            description: error?.message || error?.response?.error || "Failed to add product. Please check your connection and try again.",
             variant: "destructive",
           });
         }

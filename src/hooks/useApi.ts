@@ -911,6 +911,10 @@ export function useApi<T extends { _id?: string; id?: number }>({
         })
       );
 
+      // Invalidate cache for this endpoint since data changed
+      apiCache.invalidateStore(endpoint);
+      localStorage.setItem(`profit-pilot-${endpoint}-changed`, "true");
+
       // Try to sync with backend (silently fail if offline)
       try {
         if (endpoint === 'products') {
@@ -924,10 +928,23 @@ export function useApi<T extends { _id?: string; id?: number }>({
         } else {
           throw new Error(`Unknown endpoint: ${endpoint}`);
         }
+        
+        // Dispatch event to notify other components/pages to refresh after successful deletion
+        if (endpoint === 'products') {
+          window.dispatchEvent(new CustomEvent('products-should-refresh'));
+        } else if (endpoint === 'sales') {
+          window.dispatchEvent(new CustomEvent('sales-should-refresh'));
+        }
       } catch (apiError: any) {
         // For sales and products, don't queue for sync - just log the error
         if (endpoint === 'sales' || endpoint === 'products') {
           // logger.error(`[useApi] API error for ${endpoint} delete:`, apiError);
+          // Still dispatch event even if API call failed (item is already removed from UI)
+          if (endpoint === 'products') {
+            window.dispatchEvent(new CustomEvent('products-should-refresh'));
+          } else if (endpoint === 'sales') {
+            window.dispatchEvent(new CustomEvent('sales-should-refresh'));
+          }
           return;
         }
         

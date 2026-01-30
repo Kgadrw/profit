@@ -650,11 +650,12 @@ const Sales = () => {
                 variant: "destructive",
               });
             } else {
-              // Real error - show error message
+              // Real error - show error message with details
               playErrorBeep();
+              console.error("Error recording bulk sales:", bulkError);
               toast({
                 title: "Record Failed",
-                description: bulkError.message || "Failed to record sales. Please try again.",
+                description: bulkError?.message || bulkError?.response?.error || "Failed to record sales. Please check your connection and try again.",
                 variant: "destructive",
               });
             }
@@ -890,11 +891,12 @@ const Sales = () => {
               variant: "destructive",
             });
           } else {
-            // Real error - show error message
+            // Real error - show error message with details
             playErrorBeep();
+            console.error("Error recording sale:", saleError);
             toast({
               title: "Record Failed",
-              description: saleError.message || "Failed to record sale. Please try again.",
+              description: saleError?.message || saleError?.response?.error || "Failed to record sale. Please check your connection and try again.",
               variant: "destructive",
             });
           }
@@ -904,9 +906,10 @@ const Sales = () => {
         // Errors are already handled in inner catch blocks
         if (!error?.response?.connectionError) {
           playErrorBeep();
+          console.error("Error recording sale:", error);
           toast({
             title: "Record Failed",
-            description: error.message || "Failed to record sale. Please try again.",
+            description: error?.message || error?.response?.error || "Failed to record sale. Please check your connection and try again.",
             variant: "destructive",
           });
         }

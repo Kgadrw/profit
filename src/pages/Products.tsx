@@ -372,15 +372,16 @@ const Products = () => {
           description: "Product has been updated successfully.",
         });
         setIsModalOpen(false);
-      setEditingProduct(null);
-      } catch (error) {
+        setEditingProduct(null);
+      } catch (error: any) {
         playErrorBeep();
+        console.error("Error updating product:", error);
         toast({
           title: "Update Failed",
-          description: "Failed to update product. Please try again.",
+          description: error?.message || error?.response?.error || "Failed to update product. Please check your connection and try again.",
           variant: "destructive",
         });
-    }
+      }
   };
 
   const handleDeleteClick = (product: Product) => {
@@ -511,14 +512,24 @@ const Products = () => {
             await removeProduct(product);
             deletedCount++;
             playDeleteBeep();
-          } catch (error) {
+          } catch (error: any) {
             failedCount++;
-            console.error("Error deleting product:", error);
+            console.error(`Error deleting product ${product.name}:`, error);
+            // Show error notification for each failed deletion
+            playErrorBeep();
+            toast({
+              title: "Failed to Delete Product",
+              description: `Failed to delete "${product.name}": ${error?.message || error?.response?.error || "Unknown error"}.`,
+              variant: "destructive",
+            });
           }
         }
 
         await refreshProducts();
         setSelectedProducts(new Set());
+        
+        // Dispatch event to notify other pages to refresh
+        window.dispatchEvent(new CustomEvent('products-should-refresh'));
         
         playUpdateBeep();
         toast({
@@ -540,15 +551,25 @@ const Products = () => {
             await removeProduct(product);
             deletedCount++;
             playDeleteBeep();
-          } catch (error) {
+          } catch (error: any) {
             failedCount++;
-            console.error("Error deleting product:", error);
+            console.error(`Error deleting product ${product.name}:`, error);
+            // Show error notification for each failed deletion
+            playErrorBeep();
+            toast({
+              title: "Failed to Delete Product",
+              description: `Failed to delete "${product.name}": ${error?.message || error?.response?.error || "Unknown error"}.`,
+              variant: "destructive",
+            });
           }
         }
 
         await refreshProducts();
         setSelectedProducts(new Set());
         setIsSelectionMode(false);
+        
+        // Dispatch event to notify other pages to refresh
+        window.dispatchEvent(new CustomEvent('products-should-refresh'));
         
         playUpdateBeep();
         toast({
@@ -584,7 +605,7 @@ const Products = () => {
           console.error("Error deleting product:", error);
           toast({
             title: "Delete Failed",
-            description: error?.message || "Failed to delete product. Please try again.",
+            description: error?.message || error?.response?.error || "Failed to delete product. Please check your connection and try again.",
             variant: "destructive",
           });
         }
@@ -593,11 +614,12 @@ const Products = () => {
       setShowPinDialog(false);
       setPinInput("");
       setProductToDelete(null);
-    } catch (error) {
+    } catch (error: any) {
       playErrorBeep();
+      console.error("Error deleting products:", error);
       toast({
         title: "Delete Failed",
-        description: "Failed to delete products. Please try again.",
+        description: error?.message || error?.response?.error || "Failed to delete products. Please check your connection and try again.",
         variant: "destructive",
       });
     } finally {

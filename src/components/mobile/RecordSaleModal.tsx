@@ -559,11 +559,12 @@ export function RecordSaleModal({ open, onOpenChange, onSaleRecorded }: RecordSa
           onOpenChange(false);
         }, 500);
       } else {
-        // Real error - show error message
+        // Real error - show error message with details
         playErrorBeep();
+        console.error("Error recording sale:", error);
         toast({
-          title: "Error",
-          description: error.message || "Failed to record sale. Please try again.",
+          title: "Error Recording Sale",
+          description: error?.message || error?.response?.error || "Failed to record sale. Please check your connection and try again.",
           variant: "destructive",
         });
       }

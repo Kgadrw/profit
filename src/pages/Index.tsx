@@ -935,11 +935,12 @@ const Dashboard = () => {
           setPaymentMethod("cash");
           setSaleDate(getTodayDate());
         } else {
-          // Real error - show error message
+          // Real error - show error message with details
           playErrorBeep();
+          console.error("Error recording sale:", error);
           toast({
             title: "Record Failed",
-            description: "Failed to record sale. Please try again.",
+            description: error?.message || error?.response?.error || "Failed to record sale. Please check your connection and try again.",
             variant: "destructive",
           });
         }
