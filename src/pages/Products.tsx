@@ -21,7 +21,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
-import { Plus, Search, Pencil, Trash2, ArrowUpDown, X, Package, AlertTriangle, Filter } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, ArrowUpDown, X, Package, AlertTriangle, Filter, MoreVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Select,
@@ -36,6 +36,14 @@ import { playUpdateBeep, playDeleteBeep, playErrorBeep } from "@/lib/sound";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslation } from "@/hooks/useTranslation";
+import { usePinAuth } from "@/hooks/usePinAuth";
+import { PinDialog } from "@/components/PinDialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Product {
   id?: number;
@@ -120,6 +128,13 @@ const Products = () => {
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [showPinDialog, setShowPinDialog] = useState(false);
+  const [pinInput, setPinInput] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteMode, setDeleteMode] = useState<"all" | "selected">("all");
+  const { hasPin, verifyPin } = usePinAuth();
   const [formData, setFormData] = useState<ProductFormData>({
     name: "",
     category: "",
@@ -344,6 +359,185 @@ const Products = () => {
     setDeleteDialogOpen(true);
   };
 
+  // Handle individual product selection
+  const handleSelectProduct = (productId: string) => {
+    setSelectedProducts((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(productId)) {
+        newSet.delete(productId);
+      } else {
+        newSet.add(productId);
+      }
+      return newSet;
+    });
+  };
+
+  // Handle select all
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allIds = new Set(filteredProducts.map((p) => {
+        const id = (p as any)._id || p.id;
+        return id?.toString() || '';
+      }).filter(Boolean));
+      setSelectedProducts(allIds);
+    } else {
+      setSelectedProducts(new Set());
+    }
+  };
+
+  const allSelected = filteredProducts.length > 0 && filteredProducts.every((p) => {
+    const id = (p as any)._id || p.id;
+    return selectedProducts.has(id?.toString() || '');
+  });
+
+  // Handle delete selected products
+  const handleDeleteSelected = () => {
+    if (selectedProducts.size === 0) {
+      toast({
+        title: "No Selection",
+        description: "Please select at least one product to delete.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!hasPin) {
+      toast({
+        title: "PIN Required",
+        description: "Please set a PIN in Settings before deleting products.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setDeleteMode("selected");
+    setShowPinDialog(true);
+    setPinInput("");
+  };
+
+  // Handle delete all products
+  const handleDeleteAll = () => {
+    if (products.length === 0) {
+      toast({
+        title: "No Products",
+        description: "There are no products to delete.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!hasPin) {
+      toast({
+        title: "PIN Required",
+        description: "Please set a PIN in Settings before deleting products.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setDeleteMode("all");
+    setShowPinDialog(true);
+    setPinInput("");
+  };
+
+  // Handle PIN verification
+  const handlePinVerification = async () => {
+    if (pinInput.length !== 4 || !/^\d{4}$/.test(pinInput)) {
+      playErrorBeep();
+      toast({
+        title: "Invalid PIN",
+        description: "PIN must be exactly 4 digits.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!verifyPin(pinInput)) {
+      playErrorBeep();
+      toast({
+        title: "Incorrect PIN",
+        description: "The PIN you entered is incorrect.",
+        variant: "destructive",
+      });
+      setPinInput("");
+      return;
+    }
+
+    // PIN verified, proceed with deletion
+    setIsDeleting(true);
+    try {
+      if (deleteMode === "all") {
+        // Delete all products
+        let deletedCount = 0;
+        let failedCount = 0;
+
+        for (const product of products) {
+          try {
+            await removeProduct(product);
+            deletedCount++;
+            playDeleteBeep();
+          } catch (error) {
+            failedCount++;
+            console.error("Error deleting product:", error);
+          }
+        }
+
+        await refreshProducts();
+        setSelectedProducts(new Set());
+        
+        playUpdateBeep();
+        toast({
+          title: "All Products Deleted",
+          description: `Successfully deleted ${deletedCount} product(s).${failedCount > 0 ? ` ${failedCount} failed.` : ''}`,
+        });
+      } else {
+        // Delete selected products
+        const productsToDelete = filteredProducts.filter((p) => {
+          const id = (p as any)._id || p.id;
+          return selectedProducts.has(id?.toString() || '');
+        });
+
+        let deletedCount = 0;
+        let failedCount = 0;
+
+        for (const product of productsToDelete) {
+          try {
+            await removeProduct(product);
+            deletedCount++;
+            playDeleteBeep();
+          } catch (error) {
+            failedCount++;
+            console.error("Error deleting product:", error);
+          }
+        }
+
+        await refreshProducts();
+        setSelectedProducts(new Set());
+        setIsSelectionMode(false);
+        
+        playUpdateBeep();
+        toast({
+          title: "Products Deleted",
+          description: `Successfully deleted ${deletedCount} product(s).${failedCount > 0 ? ` ${failedCount} failed.` : ''}`,
+        });
+      }
+    } catch (error) {
+      playErrorBeep();
+      toast({
+        title: "Delete Failed",
+        description: "Failed to delete products. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+      setShowPinDialog(false);
+      setPinInput("");
+    }
+  };
+
+  // Clear selection when exiting selection mode
+  useEffect(() => {
+    if (!isSelectionMode) {
+      setSelectedProducts(new Set());
+    }
+  }, [isSelectionMode]);
+
   const handleDeleteConfirm = async () => {
     if (!productToDelete) return;
     
@@ -510,46 +704,6 @@ const Products = () => {
     <AppLayout title="Products">
       <div className="flex flex-col lg:h-[calc(100vh-3rem)]">
       <div className="lg:bg-white flex-1 flex flex-col lg:min-h-0 lg:overflow-hidden rounded-lg">
-          {/* Summary Section - Today's Items and Current Stock */}
-          <div className="lg:bg-white lg:border-b lg:border-gray-200 lg:px-4 lg:py-3 flex-shrink-0 hidden lg:flex">
-            <div className="flex items-center gap-6">
-              <div>
-                <p className="text-xs text-gray-500 mb-1">{t("todaysItems")}</p>
-                <p className="text-lg font-bold text-blue-600">
-                  {todayStats.totalItems} {t("language") === "rw" ? "ibintu" : "items"}
-                </p>
-              </div>
-              <div className="h-8 w-px bg-gray-300"></div>
-              <div>
-                <p className="text-xs text-gray-500 mb-1">{t("currentStock") || "Current Stock"}</p>
-                <p className="text-lg font-bold text-purple-600">
-                  {stockStats.totalItems} {t("language") === "rw" ? "ibicuruzwa" : "items"}
-                </p>
-              </div>
-            </div>
-          </div>
-          
-          {/* Mobile Summary Section */}
-          <div className="lg:hidden p-4 pb-2">
-            <div className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-gray-200">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <p className="text-xs text-gray-500 mb-1">{t("todaysItems")}</p>
-                  <p className="text-base font-bold text-blue-600">
-                    {todayStats.totalItems} {t("language") === "rw" ? "ibintu" : "items"}
-                  </p>
-                </div>
-                <div className="h-8 w-px bg-gray-300 mx-3"></div>
-                <div className="flex-1 text-right">
-                  <p className="text-xs text-gray-500 mb-1">{t("currentStock") || "Current Stock"}</p>
-                  <p className="text-base font-bold text-purple-600">
-                    {stockStats.totalItems} {t("language") === "rw" ? "ibicuruzwa" : "items"}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-          
           {/* Add Product Buttons - Desktop - Below Card */}
           <div className="hidden lg:flex justify-end lg:px-4 lg:py-2 flex-shrink-0">
             <div className="flex flex-row gap-2">
@@ -604,6 +758,15 @@ const Products = () => {
                   <Filter size={18} />
                 </Button>
               </div>
+              
+              {/* Selected Products Indicator */}
+              {selectedProducts.size > 0 && (
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 border border-gray-300 rounded-lg">
+                  <span className="text-xs font-semibold text-gray-700">
+                    {selectedProducts.size} {selectedProducts.size === 1 ? 'product' : 'products'} selected
+                  </span>
+                </div>
+              )}
               
               {/* Filter Options - Collapsible */}
               {showFilters && (
@@ -727,7 +890,50 @@ const Products = () => {
                   <Filter size={18} className="mr-2" />
                   {t("filter")}
                 </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="bg-white border border-gray-300 text-gray-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 rounded-lg px-4 py-2"
+                    >
+                      <MoreVertical size={18} />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setIsSelectionMode(!isSelectionMode)}>
+                      {isSelectionMode ? "Cancel Selection" : (t("selectProducts") || "Select Products")}
+                    </DropdownMenuItem>
+                    {isSelectionMode && (
+                      <DropdownMenuItem onClick={() => handleSelectAll(true)}>
+                        {t("selectAll") || "Select All"}
+                      </DropdownMenuItem>
+                    )}
+                    {isSelectionMode && selectedProducts.size > 0 && (
+                      <DropdownMenuItem 
+                        onClick={handleDeleteSelected}
+                        className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                      >
+                        {t("delete")} Selected ({selectedProducts.size})
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem 
+                      onClick={handleDeleteAll}
+                      className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                    >
+                      {t("delete")} All Products
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
+              
+              {/* Selected Products Indicator */}
+              {selectedProducts.size > 0 && (
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 border border-gray-300 rounded-lg">
+                  <span className="text-xs font-semibold text-gray-700">
+                    {selectedProducts.size} {selectedProducts.size === 1 ? 'product' : 'products'} selected
+                  </span>
+                </div>
+              )}
               
               {/* Filter Options - Collapsible */}
               {showFilters && (
@@ -835,13 +1041,22 @@ const Products = () => {
           <table className="w-full border-collapse">
               <thead className="sticky top-0 z-10 bg-gray-100 border-b border-gray-200">
               <tr>
+                  {isSelectionMode && (
+                    <th className="text-left text-sm font-semibold text-gray-700 py-4 px-6 w-12">
+                      <Checkbox
+                        checked={allSelected}
+                        onCheckedChange={handleSelectAll}
+                        className="h-4 w-4"
+                      />
+                    </th>
+                  )}
+                  <th className="text-left text-sm font-semibold text-gray-700 py-4 px-6 w-12"></th>
                   <th className="text-left text-sm font-semibold text-gray-700 py-4 px-6">{t("productName")}</th>
                   <th className="text-left text-sm font-semibold text-gray-700 py-4 px-6">{t("productType")}</th>
                 <th className="text-left text-sm font-semibold text-gray-700 py-4 px-6">{t("costPrice")}</th>
                 <th className="text-left text-sm font-semibold text-gray-700 py-4 px-6">{t("sellingPrice")}</th>
                 <th className="text-left text-sm font-semibold text-gray-700 py-4 px-6">{t("stock")}</th>
                 <th className="text-left text-sm font-semibold text-gray-700 py-4 px-6">{t("status")}</th>
-                  <th className="text-left text-sm font-semibold text-gray-700 py-4 px-6">{t("actions")}</th>
               </tr>
             </thead>
             <tbody className="bg-white">
@@ -852,8 +1067,40 @@ const Products = () => {
                 return (
                   <tr key={productId} className={cn(
                     "border-b border-gray-200",
-                    index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                    index % 2 === 0 ? "bg-white" : "bg-gray-50",
+                    isSelectionMode && selectedProducts.has(productId?.toString() || '') && "bg-blue-50"
                   )}>
+                        {isSelectionMode && (
+                          <td className="py-4 px-6 w-12">
+                            <Checkbox
+                              checked={selectedProducts.has(productId?.toString() || '')}
+                              onCheckedChange={() => handleSelectProduct(productId?.toString() || '')}
+                              className="h-4 w-4"
+                            />
+                          </td>
+                        )}
+                        <td className="py-4 px-6 w-12">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button className="p-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded">
+                                <MoreVertical size={16} />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start">
+                              <DropdownMenuItem onClick={() => openEditModal(product)}>
+                                <Pencil size={14} className="mr-2" />
+                                {t("editProduct")}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => handleDeleteClick(product)}
+                                className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                              >
+                                <Trash2 size={14} className="mr-2" />
+                                {t("deleteProduct")}
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
                         <td className="py-4 px-6">
                           <div className="flex items-center gap-2">
                       <div className="text-sm text-gray-900">{product.name}</div>
@@ -926,30 +1173,12 @@ const Products = () => {
                         {status.label}
                       </span>
                     </td>
-                        <td className="py-4 px-6">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => openEditModal(product)}
-                          className="p-2 text-blue-600 rounded"
-                          title={t("editProduct")}
-                        >
-                          <Pencil size={16} />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteClick(product)}
-                          className="p-2 text-red-600 rounded"
-                          title={t("deleteProduct")}
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
                   </tr>
                 );
                   })
                 ) : (
                   <tr>
-                    <td colSpan={7} className="py-12 text-center">
+                    <td colSpan={isSelectionMode ? 8 : 7} className="py-12 text-center">
                       <div className="flex flex-col items-center justify-center text-gray-400">
                         <Package size={48} className="mb-4 opacity-50" />
                         <p className="text-base font-medium">{t("noProducts")}</p>
@@ -970,12 +1199,21 @@ const Products = () => {
               <table className="w-full border-collapse">
                 <thead className="sticky top-0 z-10 bg-gray-100 border-b border-gray-200">
                   <tr>
+                    {isSelectionMode && (
+                      <th className="text-left text-xs font-semibold text-gray-700 py-3 px-3 w-10">
+                        <Checkbox
+                          checked={allSelected}
+                          onCheckedChange={handleSelectAll}
+                          className="h-4 w-4"
+                        />
+                      </th>
+                    )}
+                    <th className="text-left text-xs font-semibold text-gray-700 py-3 px-3 w-10"></th>
                     <th className="text-left text-xs font-semibold text-gray-700 py-3 px-3">{t("productName")}</th>
                     <th className="text-left text-xs font-semibold text-gray-700 py-3 px-3">{t("costPrice")}</th>
                     <th className="text-left text-xs font-semibold text-gray-700 py-3 px-3">{t("sellingPrice")}</th>
                     <th className="text-left text-xs font-semibold text-gray-700 py-3 px-3">{t("stock")}</th>
                     <th className="text-left text-xs font-semibold text-gray-700 py-3 px-3">{t("status")}</th>
-                    <th className="text-left text-xs font-semibold text-gray-700 py-3 px-3">{t("actions")}</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white">
@@ -986,8 +1224,40 @@ const Products = () => {
                       return (
                         <tr key={productId} className={cn(
                           "border-b border-gray-200",
-                          index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                          index % 2 === 0 ? "bg-white" : "bg-gray-50",
+                          isSelectionMode && selectedProducts.has(productId?.toString() || '') && "bg-blue-50"
                         )}>
+                          {isSelectionMode && (
+                            <td className="py-3 px-3 w-10">
+                              <Checkbox
+                                checked={selectedProducts.has(productId?.toString() || '')}
+                                onCheckedChange={() => handleSelectProduct(productId?.toString() || '')}
+                                className="h-4 w-4"
+                              />
+                            </td>
+                          )}
+                          <td className="py-3 px-3 w-10">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <button className="p-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded">
+                                  <MoreVertical size={14} />
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="start">
+                                <DropdownMenuItem onClick={() => openEditModal(product)}>
+                                  <Pencil size={14} className="mr-2" />
+                                  {t("editProduct")}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={() => handleDeleteClick(product)}
+                                  className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                                >
+                                  <Trash2 size={14} className="mr-2" />
+                                  {t("deleteProduct")}
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </td>
                           <td className="py-3 px-3">
                             <div className="flex flex-col gap-1">
                               <div className="text-xs font-medium text-gray-900">{product.name}</div>
@@ -1031,30 +1301,12 @@ const Products = () => {
                               {status.label}
                             </span>
                           </td>
-                          <td className="py-3 px-3">
-                            <div className="flex gap-1">
-                              <button
-                                onClick={() => openEditModal(product)}
-                                className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                title={t("editProduct")}
-                              >
-                                <Pencil size={14} />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteClick(product)}
-                                className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
-                                title={t("deleteProduct")}
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </div>
-                          </td>
                         </tr>
                       );
                     })
                   ) : (
-                    <tr>
-                      <td colSpan={6} className="py-12 text-center">
+                      <tr>
+                        <td colSpan={isSelectionMode ? 7 : 6} className="py-12 text-center">
                         <div className="flex flex-col items-center justify-center text-gray-400">
                           <Package size={48} className="mb-4 opacity-50" />
                           <p className="text-sm font-medium">{t("noProducts")}</p>
@@ -1219,6 +1471,20 @@ const Products = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* PIN Dialog for Delete Operations */}
+      <PinDialog
+        open={showPinDialog}
+        onOpenChange={setShowPinDialog}
+        pinInput={pinInput}
+        onPinInputChange={setPinInput}
+        onVerify={handlePinVerification}
+        isLoading={isDeleting}
+        title={deleteMode === "all" ? "Delete All Products" : "Delete Selected Products"}
+        description={deleteMode === "all" 
+          ? "Enter your PIN to delete all products. This action cannot be undone."
+          : `Enter your PIN to delete ${selectedProducts.size} selected product(s). This action cannot be undone.`}
+      />
     </AppLayout>
   );
 };

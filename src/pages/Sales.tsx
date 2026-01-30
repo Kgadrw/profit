@@ -23,7 +23,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { ShoppingCart, Plus, X, Check, ChevronsUpDown, Package, Search, Calendar, Filter, ArrowUpDown, Trash2, Lock } from "lucide-react";
+import { ShoppingCart, Plus, X, Check, ChevronsUpDown, Package, Search, Calendar, Filter, ArrowUpDown, Trash2, Lock, MoreVertical } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useApi } from "@/hooks/useApi";
 import { playSaleBeep, playErrorBeep, playWarningBeep, playUpdateBeep, initAudio } from "@/lib/sound";
@@ -41,6 +41,12 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { saleApi } from "@/lib/api";
 
 interface Product {
@@ -337,6 +343,7 @@ const Sales = () => {
   
   // Selection and deletion states
   const [selectedSales, setSelectedSales] = useState<Set<string>>(new Set());
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [showPinDialog, setShowPinDialog] = useState(false);
   const [pinInput, setPinInput] = useState("");
   const [isClearing, setIsClearing] = useState(false);
@@ -860,6 +867,13 @@ const Sales = () => {
     setSortBy("date-desc");
   };
 
+  // Clear selection when exiting selection mode
+  useEffect(() => {
+    if (!isSelectionMode) {
+      setSelectedSales(new Set());
+    }
+  }, [isSelectionMode]);
+
   // Handle individual sale selection
   const handleSelectSale = (saleId: string) => {
     setSelectedSales((prev) => {
@@ -1213,6 +1227,40 @@ const Sales = () => {
               >
                 <Filter size={18} />
               </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 rounded-lg px-3 py-2"
+                  >
+                    <MoreVertical size={18} />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setIsSelectionMode(!isSelectionMode)}>
+                    {isSelectionMode ? "Cancel Selection" : (t("selectSales") || "Select Sales")}
+                  </DropdownMenuItem>
+                  {isSelectionMode && (
+                    <DropdownMenuItem onClick={() => handleSelectAll(true)}>
+                      {t("selectAll") || "Select All"}
+                    </DropdownMenuItem>
+                  )}
+                  {isSelectionMode && selectedSales.size > 0 && (
+                    <DropdownMenuItem 
+                      onClick={handleDeleteSelected}
+                      className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                    >
+                      {t("delete")} Selected ({selectedSales.size})
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem 
+                    onClick={handleDeleteAll}
+                    className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                  >
+                    {t("delete")} All Sales
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
             
             {/* Selected Sales Indicator */}
@@ -1290,8 +1338,8 @@ const Sales = () => {
                     {t("cancel")}
                   </Button>
                   
-                  {/* Delete Selected Sales */}
-                  {selectedSales.size > 0 && (
+                  {/* Delete Selected Sales - Hidden */}
+                  {false && selectedSales.size > 0 && (
                     <Button
                       onClick={handleDeleteSelected}
                       className="bg-red-600 hover:bg-red-700 text-white border-0 rounded-lg px-4 py-2 font-semibold flex items-center gap-2 w-full col-span-2"
@@ -1339,6 +1387,40 @@ const Sales = () => {
                 <Filter size={18} className="mr-2" />
                 {t("filter")}
               </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="bg-white border border-gray-300 text-gray-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 rounded-lg px-4 py-2"
+                  >
+                    <MoreVertical size={18} />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setIsSelectionMode(!isSelectionMode)}>
+                    {isSelectionMode ? "Cancel Selection" : (t("selectSales") || "Select Sales")}
+                  </DropdownMenuItem>
+                  {isSelectionMode && (
+                    <DropdownMenuItem onClick={() => handleSelectAll(true)}>
+                      {t("selectAll") || "Select All"}
+                    </DropdownMenuItem>
+                  )}
+                  {isSelectionMode && selectedSales.size > 0 && (
+                    <DropdownMenuItem 
+                      onClick={handleDeleteSelected}
+                      className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                    >
+                      {t("delete")} Selected ({selectedSales.size})
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem 
+                    onClick={handleDeleteAll}
+                    className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                  >
+                    {t("delete")} All Sales
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
             
             {/* Selected Sales Indicator */}
@@ -1416,8 +1498,8 @@ const Sales = () => {
                     {t("cancel")}
                   </Button>
                   
-                  {/* Delete Selected Sales */}
-                  {selectedSales.size > 0 && (
+                  {/* Delete Selected Sales - Hidden */}
+                  {false && selectedSales.size > 0 && (
                     <Button
                       onClick={handleDeleteSelected}
                       className="bg-red-600 hover:bg-red-700 text-white border-0 rounded-lg px-4 py-2 font-semibold flex items-center gap-2"
@@ -1447,26 +1529,25 @@ const Sales = () => {
           <table className="w-full border-collapse">
             <thead className="sticky top-0 z-10 bg-gray-100 border-b border-gray-200">
               <tr>
-                <th className="text-left text-sm font-semibold text-gray-700 py-2 px-4 w-12">
-                  {selectedSales.size > 0 && (
+                {isSelectionMode && (
+                  <th className="text-left text-sm font-semibold text-gray-700 py-4 px-6 w-12">
                     <Checkbox
                       checked={allSelected}
                       onCheckedChange={handleSelectAll}
                       className="h-4 w-4"
                     />
-                  )}
-                </th>
-                <th className="text-left text-sm font-semibold text-gray-700 py-2 px-4">{t("product")}</th>
-                <th className="text-left text-sm font-semibold text-gray-700 py-2 px-4">{t("quantity")}</th>
-                <th className="text-left text-sm font-semibold text-gray-700 py-2 px-4">{t("revenue")}</th>
-                <th className="text-left text-sm font-semibold text-gray-700 py-2 px-4">{t("language") === "rw" ? "Agaciro" : "Cost"}</th>
-                <th className="text-left text-sm font-semibold text-gray-700 py-2 px-4">{t("profit")}</th>
-                <th className="text-left text-sm font-semibold text-gray-700 py-2 px-4">{t("paymentMethod")}</th>
-                <th className="text-left text-sm font-semibold text-gray-700 py-2 px-4">{t("date")}</th>
-                <th className="text-left text-sm font-semibold text-gray-700 py-2 px-4">{t("actions")}</th>
+                  </th>
+                )}
+                <th className="text-left text-sm font-semibold text-gray-700 py-4 px-6">{t("product")}</th>
+                <th className="text-left text-sm font-semibold text-gray-700 py-4 px-6">{t("quantity")}</th>
+                <th className="text-left text-sm font-semibold text-gray-700 py-4 px-6">{t("revenue")}</th>
+                <th className="text-left text-sm font-semibold text-gray-700 py-4 px-6">{t("language") === "rw" ? "Agaciro" : "Cost"}</th>
+                <th className="text-left text-sm font-semibold text-gray-700 py-4 px-6">{t("profit")}</th>
+                <th className="text-left text-sm font-semibold text-gray-700 py-4 px-6">{t("paymentMethod")}</th>
+                <th className="text-left text-sm font-semibold text-gray-700 py-4 px-6">{t("date")}</th>
               </tr>
             </thead>
-            <tbody className="lg:bg-white bg-white/80 backdrop-blur-sm divide-y divide-gray-200">
+            <tbody className="bg-white">
               {filteredSales.length > 0 ? (
                 filteredSales.map((sale, index) => {
                   const saleId = (sale as any)._id || sale.id;
@@ -1476,38 +1557,40 @@ const Sales = () => {
                   return (
                     <tr key={saleId || index} className={cn(
                       "border-b border-gray-200",
-                      index % 2 === 0 ? "lg:bg-white bg-white/80 backdrop-blur-sm" : "bg-gray-50",
+                      index % 2 === 0 ? "bg-white" : "bg-gray-50",
                       isSelected && "bg-blue-50"
                     )}>
-                      <td className="py-2 px-4">
-                        <Checkbox
-                          checked={isSelected}
-                          onCheckedChange={() => handleSelectSale(idString)}
-                          className="h-4 w-4"
-                        />
+                      {isSelectionMode && (
+                        <td className="py-4 px-6 w-12">
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => handleSelectSale(idString)}
+                            className="h-4 w-4"
+                          />
+                        </td>
+                      )}
+                      <td className="py-4 px-6">
+                        <div className="text-sm text-gray-900">{sale.product}</div>
                       </td>
-                      <td className="py-2 px-4">
-                        <div className="text-xs text-gray-900">{sale.product}</div>
+                      <td className="py-4 px-6">
+                        <div className="text-sm text-gray-700">{sale.quantity}</div>
                       </td>
-                      <td className="py-2 px-4">
-                        <div className="text-xs text-gray-700">{sale.quantity}</div>
+                      <td className="py-4 px-6">
+                        <div className="text-sm text-gray-700">{sale.revenue.toLocaleString()} rwf</div>
                       </td>
-                      <td className="py-2 px-4">
-                        <div className="text-xs text-gray-700">{sale.revenue.toLocaleString()} rwf</div>
+                      <td className="py-4 px-6">
+                        <div className="text-sm text-gray-700">{sale.cost.toLocaleString()} rwf</div>
                       </td>
-                      <td className="py-2 px-4">
-                        <div className="text-xs text-gray-700">{sale.cost.toLocaleString()} rwf</div>
-                      </td>
-                      <td className="py-2 px-4">
+                      <td className="py-4 px-6">
                         <div className={cn(
-                          "text-xs",
+                          "text-sm",
                           sale.profit >= 0 ? "text-green-700" : "text-red-700"
                         )}>
                           {sale.profit >= 0 ? "+" : ""}{sale.profit.toLocaleString()} rwf
                         </div>
                       </td>
-                      <td className="py-2 px-4">
-                        <div className="text-xs text-gray-700">
+                      <td className="py-4 px-6">
+                        <div className="text-sm text-gray-700">
                           {sale.paymentMethod === 'cash' && t("cash")}
                           {sale.paymentMethod === 'card' && t("card")}
                           {sale.paymentMethod === 'momo' && t("momoPay")}
@@ -1516,24 +1599,15 @@ const Sales = () => {
                           {!sale.paymentMethod && t("cash")}
                         </div>
                       </td>
-                      <td className="py-2 px-4">
-                        <div className="text-xs text-gray-600">{formatDateWithTime(sale.timestamp || sale.date)}</div>
-                      </td>
-                      <td className="py-2 px-4">
-                        <button
-                          onClick={() => handleDeleteSingle(sale)}
-                          className="p-1.5 text-red-600 rounded"
-                          title="Delete sale"
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                      <td className="py-4 px-6">
+                        <div className="text-sm text-gray-700">{formatDateWithTime(sale.timestamp || sale.date)}</div>
                       </td>
                     </tr>
                   );
                 })
               ) : (
                 <tr>
-                  <td colSpan={9} className="py-12 text-center">
+                  <td colSpan={isSelectionMode ? 8 : 7} className="py-12 text-center px-6">
                     <div className="flex flex-col items-center justify-center text-gray-400">
                       <ShoppingCart size={48} className="mb-4 opacity-50" />
                       <p className="text-base font-medium">No sales found matching your filters</p>
@@ -1549,38 +1623,25 @@ const Sales = () => {
           
       {/* Mobile Table View - Full Page Scroll - Outside flex container */}
       <div className="lg:hidden mt-4 pb-20">
-            {/* Mobile Delete All Button */}
-            {sales.length > 0 && (
-              <div className="mb-4 px-4 pt-4 pb-4 border-b border-gray-200">
-                <Button
-                  onClick={handleDeleteAll}
-                  className="w-full bg-red-600 hover:bg-red-700 text-white border-0 rounded-lg px-4 py-2.5 font-semibold flex items-center justify-center gap-2"
-                >
-                  <Trash2 size={18} />
-                  <span>{t("delete")} All Sales ({sales.length})</span>
-                </Button>
-              </div>
-            )}
             
             <div className="overflow-auto">
               <div className="min-w-full">
                 <table className="w-full border-collapse">
                   <thead className="sticky top-0 z-10 bg-gray-100 border-b border-gray-200">
                     <tr>
-                      <th className="text-left text-xs font-semibold text-gray-700 py-3 px-3 w-10">
-                        {selectedSales.size > 0 && (
+                      {isSelectionMode && (
+                        <th className="text-left text-xs font-semibold text-gray-700 py-3 px-3 w-10">
                           <Checkbox
                             checked={allSelected}
                             onCheckedChange={handleSelectAll}
                             className="h-4 w-4"
                           />
-                        )}
-                      </th>
+                        </th>
+                      )}
                       <th className="text-left text-xs font-semibold text-gray-700 py-3 px-3">{t("product")}</th>
                       <th className="text-left text-xs font-semibold text-gray-700 py-3 px-3">{t("quantity")}</th>
                       <th className="text-left text-xs font-semibold text-gray-700 py-3 px-3">{t("revenue")}</th>
                       <th className="text-left text-xs font-semibold text-gray-700 py-3 px-3">{t("profit")}</th>
-                      <th className="text-left text-xs font-semibold text-gray-700 py-3 px-3">{t("actions")}</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white">
@@ -1595,13 +1656,15 @@ const Sales = () => {
                             index % 2 === 0 ? "bg-white" : "bg-gray-50",
                             isSelected && "bg-blue-50"
                           )}>
-                            <td className="py-3 px-3">
-                              <Checkbox
-                                checked={isSelected}
-                                onCheckedChange={() => handleSelectSale(idString)}
-                                className="h-4 w-4"
-                              />
-                            </td>
+                            {isSelectionMode && (
+                              <td className="py-3 px-3 w-10">
+                                <Checkbox
+                                  checked={isSelected}
+                                  onCheckedChange={() => handleSelectSale(idString)}
+                                  className="h-4 w-4"
+                                />
+                              </td>
+                            )}
                             <td className="py-3 px-3">
                               <div className="flex flex-col gap-1">
                                 <div className="text-xs font-medium text-gray-900">{sale.product}</div>
@@ -1632,21 +1695,12 @@ const Sales = () => {
                                 {sale.profit >= 0 ? "+" : ""}{sale.profit.toLocaleString()} rwf
                               </div>
                             </td>
-                            <td className="py-3 px-3">
-                              <button
-                                onClick={() => handleDeleteSingle(sale)}
-                                className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
-                                title="Delete sale"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </td>
                           </tr>
                         );
                       })
                     ) : (
                       <tr>
-                        <td colSpan={6} className="py-12 text-center">
+                        <td colSpan={isSelectionMode ? 5 : 4} className="py-12 text-center">
                           <div className="flex flex-col items-center justify-center text-gray-400">
                             <ShoppingCart size={48} className="mb-4 opacity-50" />
                             <p className="text-sm font-medium">No sales found matching your filters</p>
