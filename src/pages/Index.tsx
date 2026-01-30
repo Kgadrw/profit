@@ -631,7 +631,7 @@ const Dashboard = () => {
           }
         });
         
-        // Update each product's stock
+        // Update each product's stock immediately for instant UI feedback
         for (const [productId, totalQuantity] of stockReductions.entries()) {
           try {
             const product = products.find((p) => {
@@ -639,26 +639,32 @@ const Dashboard = () => {
               return id.toString() === productId;
             });
             if (product) {
+              // Ensure we have the correct ID format
+              const productId = (product as any)._id || product.id;
               const updatedProduct = {
                 ...product,
+                _id: productId,
+                id: productId,
                 stock: Math.max(0, product.stock - totalQuantity),
               };
+              // Update via useApi hook (this updates IndexedDB and UI state immediately)
               await updateProduct(updatedProduct);
+              console.log(`[Dashboard] Stock updated: ${product.name} - ${product.stock} -> ${updatedProduct.stock}`);
             }
           } catch (updateError) {
-            // Silently ignore update errors - backend will handle stock reduction
-            console.warn(`Failed to update product stock locally for product ${productId}:`, updateError);
+            // If update fails, log but continue - backend will handle stock reduction
+            console.warn(`Failed to update product stock via API for product ${productId}:`, updateError);
           }
         }
         
-        // Don't refresh sales - bulkAdd already updates the UI with synced items
-        // Refresh products to sync with backend (if online)
+        // Don't refresh products immediately - the updateProduct already updated the UI
+        // Refresh products in the background after a short delay to sync with backend (if online)
         if (isOnline) {
-          try {
-            await refreshProducts();
-          } catch (refreshError) {
-            // Silently ignore refresh errors when offline
-          }
+          setTimeout(() => {
+            refreshProducts(true).catch(() => {
+              // Silently ignore refresh errors
+            });
+          }, 1000);
         }
         
         // Dispatch event to notify other pages (like Products page) to refresh
@@ -875,25 +881,32 @@ const Dashboard = () => {
         });
         
         // Reduce product stock locally immediately for instant UI feedback
+        // Ensure we have the correct ID format
+        const productId = (product as any)._id || product.id;
+        const updatedProduct = {
+          ...product,
+          _id: productId,
+          id: productId,
+          stock: Math.max(0, product.stock - stockReduction),
+        };
+        
+        // Update via useApi hook (this updates IndexedDB and UI state immediately)
         try {
-          const updatedProduct = {
-            ...product,
-            stock: Math.max(0, product.stock - stockReduction),
-          };
           await updateProduct(updatedProduct);
+          console.log(`[Dashboard] Stock updated: ${product.name} - ${product.stock} -> ${updatedProduct.stock}`);
         } catch (updateError) {
-          // Silently ignore update errors - backend will handle stock reduction
-          console.warn("Failed to update product stock locally:", updateError);
+          // If update fails, log but continue - backend will handle stock reduction
+          console.warn("Failed to update product stock via API:", updateError);
         }
         
-        // Don't refresh sales - add already updates the UI with synced item
-        // Refresh products to sync with backend (if online)
+        // Don't refresh products immediately - the updateProduct already updated the UI
+        // Refresh products in the background after a short delay to sync with backend (if online)
         if (isOnline) {
-          try {
-            await refreshProducts();
-          } catch (refreshError) {
-            // Silently ignore refresh errors when offline
-          }
+          setTimeout(() => {
+            refreshProducts(true).catch(() => {
+              // Silently ignore refresh errors
+            });
+          }, 1000);
         }
         
         // Dispatch event to notify other pages (like Products page) to refresh

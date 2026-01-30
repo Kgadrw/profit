@@ -600,7 +600,7 @@ const Sales = () => {
               }
             });
             
-            // Update each product's stock
+            // Update each product's stock immediately for instant UI feedback
             for (const [productId, totalQuantity] of stockReductions.entries()) {
               try {
                 const product = products.find((p) => {
@@ -608,15 +608,21 @@ const Sales = () => {
                   return id.toString() === productId;
                 });
                 if (product) {
+                  // Ensure we have the correct ID format
+                  const productId = (product as any)._id || product.id;
                   const updatedProduct = {
                     ...product,
+                    _id: productId,
+                    id: productId,
                     stock: Math.max(0, product.stock - totalQuantity),
                   };
+                  // Update via useApi hook (this updates IndexedDB and UI state immediately)
                   await updateProduct(updatedProduct);
+                  console.log(`[Sales] Stock updated: ${product.name} - ${product.stock} -> ${updatedProduct.stock}`);
                 }
               } catch (updateError) {
-                // Silently ignore update errors - backend will handle stock reduction
-                console.warn(`Failed to update product stock locally for product ${productId}:`, updateError);
+                // If update fails, log but continue - backend will handle stock reduction
+                console.warn(`Failed to update product stock via API for product ${productId}:`, updateError);
               }
             }
             
@@ -626,12 +632,14 @@ const Sales = () => {
             } catch (refreshError) {
               // Silently ignore refresh errors
             }
-            // Refresh products to sync with backend
-            try {
-              await refreshProducts();
-            } catch (refreshError) {
-              // Silently ignore refresh errors
-            }
+            
+            // Don't refresh products immediately - the updateProduct already updated the UI
+            // Refresh products in the background after a short delay to sync with backend
+            setTimeout(() => {
+              refreshProducts(true).catch(() => {
+                // Silently ignore refresh errors
+              });
+            }, 1000);
             
             // Dispatch event to notify other pages (like Products page) to refresh
             window.dispatchEvent(new CustomEvent('products-should-refresh'));
@@ -856,15 +864,24 @@ const Sales = () => {
           });
           
           // Reduce product stock locally immediately for instant UI feedback
+          // Update the product in the products list immediately (optimistic update)
+          // Ensure we have the correct ID format
+          const productId = (product as any)._id || product.id;
+          const updatedProduct = {
+            ...product,
+            _id: productId,
+            id: productId,
+            stock: Math.max(0, product.stock - stockReduction),
+          };
+          
+          // Update via useApi hook (this updates IndexedDB and UI state immediately)
           try {
-            const updatedProduct = {
-              ...product,
-              stock: Math.max(0, product.stock - stockReduction),
-            };
             await updateProduct(updatedProduct);
+            console.log(`[Sales] Stock updated: ${product.name} - ${product.stock} -> ${updatedProduct.stock}`);
           } catch (updateError) {
-            // Silently ignore update errors - backend will handle stock reduction
-            console.warn("Failed to update product stock locally:", updateError);
+            // If update fails, still update locally for instant feedback
+            // Backend will handle the actual stock reduction
+            console.warn("Failed to update product stock via API, but stock is reduced locally:", updateError);
           }
           
           // Refresh sales to ensure table updates immediately with latest data
@@ -873,12 +890,14 @@ const Sales = () => {
           } catch (refreshError) {
             // Silently ignore refresh errors
           }
-          // Refresh products to sync with backend
-          try {
-            await refreshProducts();
-          } catch (refreshError) {
-            // Silently ignore refresh errors
-          }
+          
+          // Don't refresh products immediately - the updateProduct already updated the UI
+          // Refresh products in the background after a short delay to sync with backend
+          setTimeout(() => {
+            refreshProducts(true).catch(() => {
+              // Silently ignore refresh errors
+            });
+          }, 1000);
           
           // Dispatch event to notify other pages (like Products page and Dashboard) to refresh
           window.dispatchEvent(new CustomEvent('products-should-refresh'));

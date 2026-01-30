@@ -233,6 +233,7 @@ export function RecordSaleModal({ open, onOpenChange, onSaleRecorded }: RecordSa
   const {
     items: products,
     isLoading: productsLoading,
+    update: updateProduct,
   } = useApi<Product>({
     endpoint: "products",
     defaultValue: [],
@@ -502,6 +503,22 @@ export function RecordSaleModal({ open, onOpenChange, onSaleRecorded }: RecordSa
         });
       }
 
+      // Reduce product stock locally immediately for instant UI feedback
+      try {
+        // Ensure we have the correct ID format
+        const productId = (product as any)._id || product.id;
+        const updatedProduct = {
+          ...product,
+          _id: productId,
+          id: productId,
+          stock: Math.max(0, product.stock - stockReduction),
+        };
+        await updateProduct(updatedProduct);
+        console.log(`[RecordSaleModal] Stock updated: ${product.name} - ${product.stock} -> ${updatedProduct.stock}`);
+      } catch (updateError) {
+        console.warn("Failed to update product stock in modal:", updateError);
+      }
+
       // Reset form
       setSelectedProduct("");
       setQuantity("1");
@@ -509,7 +526,7 @@ export function RecordSaleModal({ open, onOpenChange, onSaleRecorded }: RecordSa
       setPaymentMethod("cash");
       setSaleDate(new Date().toISOString().split("T")[0]);
 
-      // Refresh sales and products (only if online, otherwise skip to avoid errors)
+      // Refresh sales (only if online, otherwise skip to avoid errors)
       if (isOnline) {
         try {
           await refreshSales();
@@ -520,7 +537,7 @@ export function RecordSaleModal({ open, onOpenChange, onSaleRecorded }: RecordSa
       
       // Dispatch custom event to notify all pages (especially Sales page and Dashboard) to refresh
       window.dispatchEvent(new CustomEvent('sale-recorded', { 
-        detail: { sale: newSale } 
+        detail: { sale: newSale, productId: product._id || product.id, stockReduction } 
       }));
       window.dispatchEvent(new CustomEvent('sales-should-refresh'));
       
