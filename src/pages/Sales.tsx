@@ -319,13 +319,13 @@ const Sales = () => {
     },
   });
 
-  // Refresh sales every time this page is opened
+  // Refresh sales every time this page is opened (only once on mount)
   useEffect(() => {
     console.log('[Sales] Page opened, dispatching refresh event');
     window.dispatchEvent(new CustomEvent('page-opened'));
-    // Also trigger immediate refresh
-    refreshSales();
-  }, [refreshSales]);
+    // Note: useApi hook will handle the actual refresh via the event listener
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount, not when refreshSales changes
   const { hasPin, verifyPin } = usePinAuth();
   const getTodayDate = () => new Date().toISOString().split("T")[0];
   const getYearStartDate = () => {

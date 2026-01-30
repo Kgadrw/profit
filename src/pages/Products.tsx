@@ -112,13 +112,13 @@ const Products = () => {
     },
   });
 
-  // Refresh products every time this page is opened
+  // Refresh products every time this page is opened (only once on mount)
   useEffect(() => {
     console.log('[Products] Page opened, dispatching refresh event');
     window.dispatchEvent(new CustomEvent('page-opened'));
-    // Also trigger immediate refresh
-    refreshProducts();
-  }, [refreshProducts]);
+    // Note: useApi hook will handle the actual refresh via the event listener
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount, not when refreshProducts changes
   const {
     items: sales,
     isLoading: salesLoading,

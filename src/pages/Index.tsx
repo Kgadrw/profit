@@ -298,14 +298,13 @@ const Dashboard = () => {
     },
   });
 
-  // Refresh products and sales every time dashboard is opened
+  // Refresh products and sales every time dashboard is opened (only once on mount)
   useEffect(() => {
     console.log('[Dashboard] Page opened, dispatching refresh event');
     window.dispatchEvent(new CustomEvent('page-opened'));
-    // Also trigger immediate refresh
-    refreshProducts();
-    refreshSales();
-  }, [refreshProducts, refreshSales]);
+    // Note: useApi hook will handle the actual refresh via the event listener
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount, not when refresh functions change
   
   const getTodayDate = () => new Date().toISOString().split("T")[0];
   

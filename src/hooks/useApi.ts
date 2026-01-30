@@ -518,10 +518,13 @@ export function useApi<T extends { _id?: string; id?: number }>({
   // Track last load time to prevent excessive reloads
   const lastLoadTimeRef = useRef<number>(0);
   const itemsLengthRef = useRef<number>(0);
-  const MIN_RELOAD_INTERVAL = 2000; // 2 seconds minimum between reloads
+  const hasLoadedOnMountRef = useRef<boolean>(false);
+  const MIN_RELOAD_INTERVAL = 5000; // 5 seconds minimum between reloads (increased to prevent loops)
+  const MIN_RELOAD_INTERVAL_FOR_PRODUCTS_SALES = 10000; // 10 seconds for products/sales to prevent loops
   
   // Products and sales should always refresh on mount/page open
   const shouldAlwaysRefresh = endpoint === 'products' || endpoint === 'sales';
+  const minReloadInterval = shouldAlwaysRefresh ? MIN_RELOAD_INTERVAL_FOR_PRODUCTS_SALES : MIN_RELOAD_INTERVAL;
 
   // Update items length ref when items change
   useEffect(() => {
@@ -530,17 +533,29 @@ export function useApi<T extends { _id?: string; id?: number }>({
 
   // Load data on mount and when force refresh is requested
   useEffect(() => {
+    // Only load once on mount - prevent duplicate loads
+    if (hasLoadedOnMountRef.current) {
+      return;
+    }
+    
     // Always reload on mount (especially for products and sales)
     console.log(`[useApi] Loading ${endpoint} on mount${shouldAlwaysRefresh ? ' (always refresh)' : ''}`);
     loadData();
     lastLoadTimeRef.current = Date.now();
     itemsLengthRef.current = items.length;
+    hasLoadedOnMountRef.current = true;
     
     // Listen for force refresh events (when caches are cleared)
     const handleForceRefresh = () => {
-      console.log(`[useApi] Force refresh requested for ${endpoint}`);
-      loadData();
-      lastLoadTimeRef.current = Date.now();
+      const now = Date.now();
+      const timeSinceLastLoad = now - lastLoadTimeRef.current;
+      
+      // Only refresh if enough time has passed
+      if (timeSinceLastLoad >= minReloadInterval && !isLoadingDataRef.current) {
+        console.log(`[useApi] Force refresh requested for ${endpoint}`);
+        loadData();
+        lastLoadTimeRef.current = now;
+      }
     };
     
     // Reload data when page becomes visible (user returns to tab/window)
@@ -550,11 +565,11 @@ export function useApi<T extends { _id?: string; id?: number }>({
         const timeSinceLastLoad = now - lastLoadTimeRef.current;
         const currentItemsLength = itemsLengthRef.current;
         
-        // For products and sales, always reload when page becomes visible
-        // For other endpoints, only reload if items empty or enough time passed
-        const shouldReload = shouldAlwaysRefresh || 
-          currentItemsLength === 0 || 
-          (timeSinceLastLoad >= MIN_RELOAD_INTERVAL && !isLoadingDataRef.current);
+        // Only reload if enough time has passed and not already loading
+        // For products/sales, use longer interval to prevent loops
+        const shouldReload = !isLoadingDataRef.current && 
+          timeSinceLastLoad >= minReloadInterval &&
+          (currentItemsLength === 0 || shouldAlwaysRefresh);
         
         if (shouldReload) {
           console.log(`[useApi] Page became visible, reloading ${endpoint}${currentItemsLength === 0 ? ' (items empty)' : shouldAlwaysRefresh ? ' (always refresh)' : ''}`);
@@ -570,11 +585,11 @@ export function useApi<T extends { _id?: string; id?: number }>({
       const timeSinceLastLoad = now - lastLoadTimeRef.current;
       const currentItemsLength = itemsLengthRef.current;
       
-      // For products and sales, always reload when window regains focus
-      // For other endpoints, only reload if items empty or enough time passed
-      const shouldReload = shouldAlwaysRefresh || 
-        currentItemsLength === 0 || 
-        (timeSinceLastLoad >= MIN_RELOAD_INTERVAL && !isLoadingDataRef.current);
+      // Only reload if enough time has passed and not already loading
+      // For products/sales, use longer interval to prevent loops
+      const shouldReload = !isLoadingDataRef.current && 
+        timeSinceLastLoad >= minReloadInterval &&
+        (currentItemsLength === 0 || shouldAlwaysRefresh);
       
       if (shouldReload) {
         console.log(`[useApi] Window regained focus, reloading ${endpoint}${currentItemsLength === 0 ? ' (items empty)' : shouldAlwaysRefresh ? ' (always refresh)' : ''}`);
@@ -585,10 +600,14 @@ export function useApi<T extends { _id?: string; id?: number }>({
     
     // Listen for page-open events (custom event dispatched when navigating to a page)
     const handlePageOpen = () => {
-      // For products and sales, always reload when page opens
-      if (shouldAlwaysRefresh && !isLoadingDataRef.current) {
+      const now = Date.now();
+      const timeSinceLastLoad = now - lastLoadTimeRef.current;
+      
+      // Only reload if enough time has passed and not already loading
+      // This prevents infinite loops from rapid page navigation
+      if (shouldAlwaysRefresh && !isLoadingDataRef.current && timeSinceLastLoad >= minReloadInterval) {
         console.log(`[useApi] Page opened, reloading ${endpoint}`);
-        lastLoadTimeRef.current = Date.now();
+        lastLoadTimeRef.current = now;
         loadData();
       }
     };
