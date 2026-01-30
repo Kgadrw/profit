@@ -11,6 +11,13 @@ import { playProductBeep, playErrorBeep, playWarningBeep, initAudio } from "@/li
 import { Checkbox } from "@/components/ui/checkbox";
 import { useTranslation } from "@/hooks/useTranslation";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -47,6 +54,8 @@ interface ProductFormData {
   stock: string;
   isPackage: boolean;
   packageQuantity: string;
+  priceType: "perQuantity" | "perPackage";
+  costPriceType: "perQuantity" | "perPackage";
   productType: string;
   minStock: string;
 }
@@ -89,11 +98,13 @@ const AddProduct = () => {
     stock: "",
     isPackage: false,
     packageQuantity: "",
+    priceType: "perQuantity",
+    costPriceType: "perQuantity",
     productType: "",
     minStock: "",
   });
   const [bulkProducts, setBulkProducts] = useState<ProductFormData[]>([
-    { name: "", category: categoryFromUrl || "", manufacturedDate: "", expiryDate: "", costPrice: "", sellingPrice: "", stock: "", isPackage: false, packageQuantity: "", productType: "", minStock: "" }
+    { name: "", category: categoryFromUrl || "", manufacturedDate: "", expiryDate: "", costPrice: "", sellingPrice: "", stock: "", isPackage: false, packageQuantity: "", priceType: "perQuantity", costPriceType: "perQuantity", productType: "", minStock: "" }
   ]);
   
   // State for out-of-stock duplicate dialog
@@ -213,6 +224,8 @@ const AddProduct = () => {
           stock: parseInt(p.stock) || 0,
           isPackage: p.packageQuantity && p.packageQuantity.trim() !== "" ? true : false,
           packageQuantity: p.packageQuantity && p.packageQuantity.trim() !== "" ? parseInt(p.packageQuantity) : undefined,
+          priceType: p.packageQuantity && p.packageQuantity.trim() !== "" ? p.priceType : undefined,
+          costPriceType: p.packageQuantity && p.packageQuantity.trim() !== "" ? p.costPriceType : undefined,
           productType: p.productType || undefined,
           minStock: p.minStock ? parseInt(p.minStock) : undefined,
         }));
@@ -443,6 +456,8 @@ const AddProduct = () => {
         stock: parseInt(formData.stock) || 0,
         isPackage: formData.packageQuantity && formData.packageQuantity.trim() !== "" ? true : false,
         packageQuantity: formData.packageQuantity && formData.packageQuantity.trim() !== "" ? parseInt(formData.packageQuantity) : undefined,
+        priceType: formData.packageQuantity && formData.packageQuantity.trim() !== "" ? formData.priceType : undefined,
+        costPriceType: formData.packageQuantity && formData.packageQuantity.trim() !== "" ? formData.costPriceType : undefined,
         productType: formData.productType || undefined,
         minStock: formData.minStock ? parseInt(formData.minStock) : undefined,
       };
@@ -655,6 +670,24 @@ const AddProduct = () => {
                             className="h-12 text-base"
                             placeholder="0.00"
                           />
+                          {product.packageQuantity && product.packageQuantity.trim() !== "" && (
+                            <Select
+                              value={product.costPriceType}
+                              onValueChange={(value: "perQuantity" | "perPackage") => updateBulkProduct(index, "costPriceType", value)}
+                            >
+                              <SelectTrigger className="h-10 text-sm mt-2">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="perQuantity">
+                                  {t("language") === "rw" ? "Igiciro cy'umubare" : "Cost per Quantity"}
+                                </SelectItem>
+                                <SelectItem value="perPackage">
+                                  {t("language") === "rw" ? "Igiciro cy'igipaki" : "Cost per Package"}
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
                         </div>
                         <div>
                           <Label className="text-sm font-medium text-gray-700 mb-1 block">{t("sellingPrice")}</Label>
@@ -665,6 +698,24 @@ const AddProduct = () => {
                             className="h-12 text-base"
                             placeholder="0.00"
                           />
+                          {product.packageQuantity && product.packageQuantity.trim() !== "" && (
+                            <Select
+                              value={product.priceType}
+                              onValueChange={(value: "perQuantity" | "perPackage") => updateBulkProduct(index, "priceType", value)}
+                            >
+                              <SelectTrigger className="h-10 text-sm mt-2">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="perQuantity">
+                                  {t("language") === "rw" ? "Igiciro cy'umubare" : "Price per Quantity"}
+                                </SelectItem>
+                                <SelectItem value="perPackage">
+                                  {t("language") === "rw" ? "Igiciro cy'igipaki" : "Price per Package"}
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-3">
@@ -946,6 +997,35 @@ const AddProduct = () => {
                     className="input-field"
                     placeholder="0.00"
                   />
+                  {formData.packageQuantity && formData.packageQuantity.trim() !== "" && (
+                    <>
+                      <Select
+                        value={formData.costPriceType}
+                        onValueChange={(value: "perQuantity" | "perPackage") => setFormData({ ...formData, costPriceType: value })}
+                      >
+                        <SelectTrigger className="input-field mt-2">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="perQuantity">
+                            {t("language") === "rw" ? "Igiciro cy'umubare w'ibicuruzwa" : "Cost per Quantity (per item)"}
+                          </SelectItem>
+                          <SelectItem value="perPackage">
+                            {t("language") === "rw" ? "Igiciro cy'igipaki cyose" : "Cost per Package (whole box)"}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        {formData.costPriceType === "perQuantity"
+                          ? (t("language") === "rw" 
+                              ? "Igiciro cy'umubare w'ibicuruzwa (urugero: 80 rwf kuri buri gicuruzwa)"
+                              : "Cost per individual item (e.g., 80 rwf per item)")
+                          : (t("language") === "rw"
+                              ? "Igiciro cy'igipaki cyose (urugero: 1500 rwf kuri gipaki cyose)"
+                              : "Cost for whole package (e.g., 1500 rwf for whole box)")}
+                      </p>
+                    </>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label>Selling Price (rwf)</Label>
@@ -956,6 +1036,35 @@ const AddProduct = () => {
                     className="input-field"
                     placeholder="0.00"
                   />
+                  {formData.packageQuantity && formData.packageQuantity.trim() !== "" && (
+                    <>
+                      <Select
+                        value={formData.priceType}
+                        onValueChange={(value: "perQuantity" | "perPackage") => setFormData({ ...formData, priceType: value })}
+                      >
+                        <SelectTrigger className="input-field mt-2">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="perQuantity">
+                            {t("language") === "rw" ? "Igiciro cy'umubare w'ibicuruzwa" : "Price per Quantity (per item)"}
+                          </SelectItem>
+                          <SelectItem value="perPackage">
+                            {t("language") === "rw" ? "Igiciro cy'igipaki cyose" : "Price per Package (whole box)"}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        {formData.priceType === "perQuantity"
+                          ? (t("language") === "rw" 
+                              ? "Igiciro cy'umubare w'ibicuruzwa (urugero: 100 rwf kuri buri gicuruzwa)"
+                              : "Price per individual item (e.g., 100 rwf per item)")
+                          : (t("language") === "rw"
+                              ? "Igiciro cy'igipaki cyose (urugero: 1200 rwf kuri gipaki cyose)"
+                              : "Price for whole package (e.g., 1200 rwf for whole box)")}
+                      </p>
+                    </>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label>Initial Stock Quantity</Label>

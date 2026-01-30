@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useApi } from "@/hooks/useApi";
-import { playUpdateBeep, playDeleteBeep, playErrorBeep } from "@/lib/sound";
+import { playUpdateBeep, playDeleteBeep, playErrorBeep, initAudio } from "@/lib/sound";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -570,6 +570,7 @@ const Products = () => {
   const handleDeleteConfirm = async () => {
     if (!productToDelete) return;
     
+    initAudio();
     try {
       await removeProduct(productToDelete);
       await refreshProducts();
@@ -580,11 +581,14 @@ const Products = () => {
       });
       setDeleteDialogOpen(false);
       setProductToDelete(null);
-    } catch (error) {
+      // Dispatch event to notify other pages to refresh
+      window.dispatchEvent(new CustomEvent('products-should-refresh'));
+    } catch (error: any) {
       playErrorBeep();
+      console.error("Error deleting product:", error);
       toast({
         title: "Delete Failed",
-        description: "Failed to delete product. Please try again.",
+        description: error?.message || "Failed to delete product. Please try again.",
         variant: "destructive",
       });
     }
@@ -1517,16 +1521,31 @@ const Products = () => {
             </div>
           )}
           
-          <DialogFooter className="flex-shrink-0 border-t pt-4 mt-4">
-            <Button variant="outline" onClick={() => {
-              setIsModalOpen(false);
-              setEditingProduct(null);
-            }} className="btn-secondary">
-              Cancel
+          <DialogFooter className="flex-shrink-0 border-t pt-4 mt-4 flex items-center justify-between">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                if (editingProduct) {
+                  handleDeleteClick(editingProduct);
+                  setIsModalOpen(false);
+                }
+              }}
+              className="bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 border-red-200"
+            >
+              <Trash2 size={16} className="mr-2" />
+              {t("deleteProduct")}
             </Button>
-            <Button onClick={handleSave} className="bg-blue-600 text-white hover:bg-blue-700 font-semibold rounded-lg">
-              Save Changes
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => {
+                setIsModalOpen(false);
+                setEditingProduct(null);
+              }} className="btn-secondary">
+                Cancel
+              </Button>
+              <Button onClick={handleSave} className="bg-blue-600 text-white hover:bg-blue-700 font-semibold rounded-lg">
+                Save Changes
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
