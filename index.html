@@ -69,7 +69,8 @@
     <!-- Preconnect for Performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Use optional font-display to prevent layout shift -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=optional" rel="stylesheet">
     
     <!-- Manifest -->
     <link rel="manifest" href="/manifest.json" />
@@ -197,36 +198,45 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     
-    <!-- Hide splash screen when React app loads -->
+    <!-- Prevent layout shift by setting initial styles -->
+    <style>
+      /* Prevent layout shift on initial load */
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow-x: hidden;
+      }
+      
+      #root {
+        min-height: 100vh;
+        width: 100%;
+      }
+      
+      /* Prevent flash of unstyled content */
+      body {
+        visibility: hidden;
+      }
+      
+      body.loaded {
+        visibility: visible;
+      }
+    </style>
+    
+    <!-- Hide splash screen when React app loads - simplified to prevent conflicts -->
     <script>
-      // Hide splash screen after React app loads
+      // Mark body as loaded when React app is ready
       (function() {
-        function hideSplash() {
-          const splash = document.getElementById('splash-screen');
-          if (splash) {
-            splash.style.transition = 'opacity 0.5s ease-out';
-            splash.style.opacity = '0';
-            setTimeout(function() {
-              if (splash.parentNode) {
-                splash.parentNode.removeChild(splash);
-              }
-            }, 500);
-          }
+        function markLoaded() {
+          document.body.classList.add('loaded');
         }
         
-        // Try to hide when DOM is ready
+        // Mark as loaded when DOM is ready
         if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(hideSplash, 800);
-          });
+          document.addEventListener('DOMContentLoaded', markLoaded);
         } else {
-          setTimeout(hideSplash, 800);
+          markLoaded();
         }
-        
-        // Also hide when window loads
-        window.addEventListener('load', function() {
-          setTimeout(hideSplash, 800);
-        });
       })();
     </script>
   </body>

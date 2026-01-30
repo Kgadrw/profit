@@ -267,6 +267,7 @@ export function AppLayout({ children, title }: AppLayoutProps) {
   return (
     <div 
       className="min-h-screen bg-white lg:bg-background relative"
+      style={{ minHeight: '100vh', width: '100%' }}
     >
       {/* Background image removed for mobile - using white background instead */}
       {/* Mobile Header - Only visible on mobile */}

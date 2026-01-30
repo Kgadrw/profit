@@ -24,6 +24,7 @@ if (import.meta.env.PROD) {
 }
 
 // Initialize IndexedDB and register service worker
+// Don't block rendering - initialize in parallel
 Promise.all([
   initDB().catch((error) => {
     logger.error("Failed to initialize IndexedDB:", error);
@@ -32,5 +33,11 @@ Promise.all([
     logger.error("Failed to register service worker:", error);
   }),
 ]).then(() => {
-  createRoot(document.getElementById("root")!).render(<App />);
+  // Ensure body is visible before rendering
+  document.body.classList.add('loaded');
+  
+  // Use requestAnimationFrame to ensure smooth render
+  requestAnimationFrame(() => {
+    createRoot(document.getElementById("root")!).render(<App />);
+  });
 });
