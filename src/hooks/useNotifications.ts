@@ -124,6 +124,7 @@ export function useLowStockNotifications() {
   const { user } = useCurrentUser();
   const lastNotifiedProducts = useRef<Set<string>>(new Set());
   const checkInterval = useRef<NodeJS.Timeout | null>(null);
+  const lastUserIdRef = useRef<string | null>(null);
   const isAdmin = localStorage.getItem('profit-pilot-is-admin') === 'true';
   const userId = localStorage.getItem('profit-pilot-user-id');
 
@@ -136,8 +137,22 @@ export function useLowStockNotifications() {
     defaultValue: [],
   });
 
+  // Clear notification tracking when user changes
   useEffect(() => {
+    if (userId && lastUserIdRef.current && lastUserIdRef.current !== userId) {
+      console.log('[Notifications] User changed, clearing notification tracking');
+      lastNotifiedProducts.current.clear();
+    }
+    lastUserIdRef.current = userId;
+  }, [userId]);
+
+  useEffect(() => {
+    // Wait for user to be loaded
     if (!user || !userId || isAdmin || !notificationService.isAllowed()) {
+      // Clear tracking if user logged out
+      if (!userId && lastNotifiedProducts.current.size > 0) {
+        lastNotifiedProducts.current.clear();
+      }
       return;
     }
 
@@ -145,11 +160,16 @@ export function useLowStockNotifications() {
     backgroundSyncManager.sendUserIdToServiceWorker(userId);
 
     // Wait for products to load before initial check
-    if (!isLoading && products) {
-      // Small delay to ensure products are fully loaded from database
+    // Add extra delay to ensure user data and products are fully loaded from database
+    if (!isLoading && products && user) {
+      // Longer delay to ensure all data is loaded from database
       const timer = setTimeout(() => {
-        checkLowStock();
-      }, 1000);
+        // Double-check user is still logged in before checking
+        const currentUserId = localStorage.getItem('profit-pilot-user-id');
+        if (currentUserId === userId) {
+          checkLowStock();
+        }
+      }, 2000);
 
       return () => clearTimeout(timer);
     }
@@ -179,6 +199,13 @@ export function useLowStockNotifications() {
   }, [user, isAdmin, userId, refreshProducts]);
 
   const checkLowStock = async () => {
+    // Verify user is still logged in
+    const currentUserId = localStorage.getItem('profit-pilot-user-id');
+    if (!currentUserId || currentUserId !== userId) {
+      console.log('[Notifications] User changed or logged out, skipping low stock check');
+      return;
+    }
+
     // First verify products exist and are loaded
     if (!products || products.length === 0) {
       console.log('[Notifications] No products found, skipping low stock check');
@@ -198,7 +225,7 @@ export function useLowStockNotifications() {
       return;
     }
 
-    console.log(`[Notifications] Checking ${validProducts.length} products for low stock`);
+    console.log(`[Notifications] Checking ${validProducts.length} products for low stock (user: ${userId})`);
 
     for (const product of validProducts) {
       const productId = product._id || product.id?.toString() || '';

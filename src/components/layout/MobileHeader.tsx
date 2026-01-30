@@ -70,11 +70,13 @@ export function MobileHeader({ onNotificationClick }: MobileHeaderProps) {
   // Load notifications and listen for updates
   useEffect(() => {
     const loadNotifications = () => {
+      // Get notifications filtered by current user
       const allNotifications = notificationStore.getAllNotifications();
       setNotifications(allNotifications);
       setUnreadCount(notificationStore.getUnreadCount());
     };
 
+    // Load notifications when component mounts or user changes
     loadNotifications();
 
     // Listen for notification updates
@@ -83,10 +85,27 @@ export function MobileHeader({ onNotificationClick }: MobileHeaderProps) {
     };
 
     window.addEventListener('notifications-updated', handleNotificationUpdate);
+    
+    // Also listen for storage changes (user login/logout)
+    const handleStorageChange = () => {
+      const currentUserId = localStorage.getItem('profit-pilot-user-id');
+      if (currentUserId) {
+        // User logged in - reload notifications for this user
+        loadNotifications();
+      } else {
+        // User logged out - clear notifications
+        setNotifications([]);
+        setUnreadCount(0);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
     return () => {
       window.removeEventListener('notifications-updated', handleNotificationUpdate);
+      window.removeEventListener('storage', handleStorageChange);
     };
-  }, []);
+  }, [user]); // Re-run when user changes
 
   const handleNotificationBellClick = () => {
     setNotificationOpen(!notificationOpen);

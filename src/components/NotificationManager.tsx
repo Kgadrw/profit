@@ -1,18 +1,38 @@
 // Notification Manager Component
 // Handles notification permission checks and background notification setup
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { notificationService } from '@/lib/notifications';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { backgroundSyncManager } from '@/lib/backgroundSync';
+import { notificationStore } from '@/lib/notificationStore';
 
 export function NotificationManager() {
   const { user } = useCurrentUser();
   const [hasCheckedPermission, setHasCheckedPermission] = useState(false);
+  const lastUserIdRef = useRef<string | null>(null);
 
   // Initialize notification checks (only if permission is granted)
   useNotifications();
+
+  // Clear notifications when user changes
+  useEffect(() => {
+    const currentUserId = localStorage.getItem('profit-pilot-user-id');
+    
+    if (currentUserId && lastUserIdRef.current && lastUserIdRef.current !== currentUserId) {
+      console.log('[NotificationManager] User changed, clearing old notifications');
+      notificationStore.clearForUser(lastUserIdRef.current);
+    }
+    
+    if (!currentUserId && lastUserIdRef.current) {
+      // User logged out
+      console.log('[NotificationManager] User logged out, clearing notifications');
+      notificationStore.clearAll();
+    }
+    
+    lastUserIdRef.current = currentUserId;
+  }, [user]);
 
   // Ask for permission using the browser's system notification prompt
   useEffect(() => {
