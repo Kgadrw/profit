@@ -111,46 +111,27 @@ export function LowStockAlert() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<LowStockItem | null>(null);
 
-  // Auto-refresh when products are updated, added, or sales are made
+  // Automatically refresh when products are updated, added, or sales are made
   useEffect(() => {
-    let debounceTimeout: NodeJS.Timeout | null = null;
-    let lastRefreshTime = 0;
-    const DEBOUNCE_DELAY = 1000; // 1 second debounce
-    const MIN_REFRESH_INTERVAL = 30 * 1000; // 30 seconds minimum between refreshes (increased to reduce API calls)
-
-    const handleProductUpdate = () => {
-      const now = Date.now();
-      
-      // Clear any pending debounced refresh
-      if (debounceTimeout) {
-        clearTimeout(debounceTimeout);
-        debounceTimeout = null;
-      }
-      
-      // Check if enough time has passed since last refresh
-      if (now - lastRefreshTime < MIN_REFRESH_INTERVAL) {
-        // Debounce the refresh
-        debounceTimeout = setTimeout(() => {
-          lastRefreshTime = Date.now();
-          refreshProducts();
-        }, DEBOUNCE_DELAY);
-      } else {
-        // Refresh immediately
-        lastRefreshTime = Date.now();
-        refreshProducts();
-      }
+    const handleProductStockUpdate = (event: CustomEvent) => {
+      // Automatically refresh when stock is updated
+      refreshProducts(true);
     };
 
-    // Listen for custom events when products are created, updated, or sales are made
+    const handleProductUpdate = () => {
+      // Automatically refresh when products are updated
+      refreshProducts(true);
+    };
+
+    // Listen for automatic stock updates and general product refresh events
+    window.addEventListener('product-stock-updated', handleProductStockUpdate as EventListener);
     window.addEventListener('products-should-refresh', handleProductUpdate);
     window.addEventListener('sale-recorded', handleProductUpdate);
 
     return () => {
+      window.removeEventListener('product-stock-updated', handleProductStockUpdate as EventListener);
       window.removeEventListener('products-should-refresh', handleProductUpdate);
       window.removeEventListener('sale-recorded', handleProductUpdate);
-      if (debounceTimeout) {
-        clearTimeout(debounceTimeout);
-      }
     };
   }, [refreshProducts]);
 

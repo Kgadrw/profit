@@ -1054,6 +1054,13 @@ export function useApi<T extends { _id?: string; id?: number }>({
               return currentId === itemId ? syncedItem : i;
             })
           );
+          
+          // Automatically dispatch event for product stock updates
+          if (endpoint === 'products') {
+            window.dispatchEvent(new CustomEvent('product-stock-updated', { 
+              detail: { productId: itemId, newStock: (syncedItem as any).stock } 
+            }));
+          }
         }
       } catch (apiError: any) {
         // For sales and products, don't queue for sync - just throw the error

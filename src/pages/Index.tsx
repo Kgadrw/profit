@@ -657,19 +657,20 @@ const Dashboard = () => {
           }
         }
         
-        // Don't refresh products immediately - the updateProduct already updated the UI
-        // Refresh products in the background after a short delay to sync with backend (if online)
-        if (isOnline) {
-          setTimeout(() => {
-            refreshProducts(true).catch(() => {
-              // Silently ignore refresh errors
-            });
-          }, 1000);
+        // Stock is automatically updated via updateProduct above
+        // Dispatch events to automatically notify all components
+        for (const [productId, totalQuantity] of stockReductions.entries()) {
+          const product = products.find((p) => {
+            const id = (p as any)._id || p.id;
+            return id.toString() === productId;
+          });
+          if (product) {
+            window.dispatchEvent(new CustomEvent('product-stock-updated', { 
+              detail: { productId, newStock: Math.max(0, product.stock - totalQuantity) } 
+            }));
+          }
         }
-        
-        // Dispatch event to notify other pages (like Products page) to refresh
         window.dispatchEvent(new CustomEvent('products-should-refresh'));
-        // Dispatch event to refresh sales in dashboard and other pages
         window.dispatchEvent(new CustomEvent('sales-should-refresh'));
 
           playSaleBeep();
@@ -899,17 +900,11 @@ const Dashboard = () => {
           console.warn("Failed to update product stock via API:", updateError);
         }
         
-        // Don't refresh products immediately - the updateProduct already updated the UI
-        // Refresh products in the background after a short delay to sync with backend (if online)
-        if (isOnline) {
-          setTimeout(() => {
-            refreshProducts(true).catch(() => {
-              // Silently ignore refresh errors
-            });
-          }, 1000);
-        }
-        
-        // Dispatch event to notify other pages (like Products page) to refresh
+        // Stock is automatically updated via updateProduct above
+        // Dispatch event to automatically notify all components
+        window.dispatchEvent(new CustomEvent('product-stock-updated', { 
+          detail: { productId, newStock: updatedProduct.stock } 
+        }));
         window.dispatchEvent(new CustomEvent('products-should-refresh'));
         // Dispatch event to refresh sales in dashboard and other pages
         window.dispatchEvent(new CustomEvent('sales-should-refresh'));("Sale Recorded", {

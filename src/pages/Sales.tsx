@@ -633,13 +633,11 @@ const Sales = () => {
               // Silently ignore refresh errors
             }
             
-            // Don't refresh products immediately - the updateProduct already updated the UI
-            // Refresh products in the background after a short delay to sync with backend
-            setTimeout(() => {
-              refreshProducts(true).catch(() => {
-                // Silently ignore refresh errors
-              });
-            }, 1000);
+            // Stock is automatically updated via updateProduct above
+            // Dispatch event to automatically notify all components
+            window.dispatchEvent(new CustomEvent('product-stock-updated', { 
+              detail: { productId, newStock: updatedProduct.stock } 
+            }));
             
             // Dispatch event to notify other pages (like Products page) to refresh
             window.dispatchEvent(new CustomEvent('products-should-refresh'));
@@ -891,13 +889,11 @@ const Sales = () => {
             // Silently ignore refresh errors
           }
           
-          // Don't refresh products immediately - the updateProduct already updated the UI
-          // Refresh products in the background after a short delay to sync with backend
-          setTimeout(() => {
-            refreshProducts(true).catch(() => {
-              // Silently ignore refresh errors
-            });
-          }, 1000);
+          // Stock is automatically updated via updateProduct above
+          // Dispatch event to automatically notify all components
+          window.dispatchEvent(new CustomEvent('product-stock-updated', { 
+            detail: { productId, newStock: updatedProduct.stock } 
+          }));
           
           // Dispatch event to notify other pages (like Products page and Dashboard) to refresh
           window.dispatchEvent(new CustomEvent('products-should-refresh'));
