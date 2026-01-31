@@ -40,7 +40,7 @@ export function BottomNav() {
       {/* Floating Add Sale Button - Only on mobile */}
       <button
         onClick={() => setSaleModalOpen(true)}
-        className="fixed bottom-16 left-1/2 -translate-x-1/2 z-50 lg:hidden w-14 h-14 bg-gradient-to-br from-blue-600 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 flex items-center justify-center backdrop-blur-sm"
+        className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 lg:hidden w-14 h-14 bg-gradient-to-br from-blue-600 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 flex items-center justify-center backdrop-blur-sm"
         aria-label="Add new sale"
       >
         <Plus size={24} strokeWidth={2.5} />
